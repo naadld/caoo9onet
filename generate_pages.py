@@ -169,9 +169,11 @@ def generate_page(folder, display_name, prefix, count, emoji, level, description
         <div class="status-msg" id="status-msg">
           <div>📚 Select a lesson below to start watching</div>
         </div>
-        <video id="player" playsinline style="display:none;width:100%">
-          <source src="" type="application/x-mpegURL">
-        </video>
+        <div id="plyr-container" style="display:none">
+          <video id="player" playsinline style="width:100%">
+            <source src="" type="application/x-mpegURL">
+          </video>
+        </div>
       </div>
 
       <div class="video-info" id="video-info" style="display:none">
@@ -225,6 +227,7 @@ def generate_page(folder, display_name, prefix, count, emoji, level, description
   const buttons     = Array.from(document.querySelectorAll('.lesson-btn'));
   const statusMsg   = document.getElementById('status-msg');
   const playerEl    = document.getElementById('player');
+  const plyrContainer= document.getElementById('plyr-container');
   const videoInfo   = document.getElementById('video-info');
   const videoTitle  = document.getElementById('video-title');
   const videoMeta   = document.getElementById('video-meta');
@@ -242,7 +245,6 @@ def generate_page(folder, display_name, prefix, count, emoji, level, description
   // ---- Init Plyr ----
   function initPlyr() {{
     if (plyr) return;
-    playerEl.style.display = 'block';
     plyr = new Plyr(playerEl, {{
       controls: ['play','progress','current-time','mute','volume','settings','fullscreen'],
       settings: ['quality','speed'],
@@ -265,6 +267,8 @@ def generate_page(folder, display_name, prefix, count, emoji, level, description
         console.error('URL parse error:', e);
       }}
     }}
+
+    plyrContainer.style.display = 'block';
 
     if (Hls.isSupported()) {{
       hls = new Hls({{ enableWorker: true }});
@@ -318,7 +322,7 @@ def generate_page(folder, display_name, prefix, count, emoji, level, description
   function showLoading(code) {{
     statusMsg.innerHTML = '<div class="spinner"></div><div>Loading lesson ' + code + '...</div>';
     statusMsg.style.display = 'block';
-    if (playerEl) playerEl.style.display = 'none';
+    plyrContainer.style.display = 'none';
     videoInfo.style.display = 'none';
     playlistTabs.style.display = 'none';
   }}
