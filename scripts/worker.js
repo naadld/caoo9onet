@@ -40,6 +40,7 @@ async function handleRequest(request) {
       const response = await fetch(targetUrl.toString(), {
         method: request.method,
         headers: headers,
+        referrer: "https://www.o9o.net/",
         redirect: "follow",
       });
 
