@@ -254,6 +254,32 @@ def generate_page(folder, display_name, prefix, count, emoji, level, description
 
   // ---- Load HLS stream ----
   function loadHLS(m3u8Url) {{
+    // Google Drive direct preview iframe support
+    if (m3u8Url.startsWith('gdrive:')) {{
+      if (hls) {{ hls.destroy(); hls = null; }}
+      plyrContainer.style.display = 'none';
+      if (plyr) plyr.pause();
+      
+      let gdriveIframe = document.getElementById('gdrive-iframe');
+      if (!gdriveIframe) {{
+        gdriveIframe = document.createElement('iframe');
+        gdriveIframe.id = 'gdrive-iframe';
+        gdriveIframe.style.width = '100%';
+        gdriveIframe.style.height = '480px';
+        gdriveIframe.style.border = 'none';
+        gdriveIframe.style.borderRadius = 'var(--radius)';
+        gdriveIframe.allow = 'autoplay';
+        document.getElementById('player-wrap').appendChild(gdriveIframe);
+      }}
+      gdriveIframe.style.display = 'block';
+      gdriveIframe.src = 'https://drive.google.com/file/d/' + m3u8Url.slice(7) + '/preview';
+      return;
+    }}
+
+    // Otherwise, show Plyr player and hide GDrive iframe
+    const gdriveIframe = document.getElementById('gdrive-iframe');
+    if (gdriveIframe) gdriveIframe.style.display = 'none';
+    
     initPlyr();
     if (hls) {{ hls.destroy(); hls = null; }}
 
