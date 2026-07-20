@@ -64,7 +64,7 @@ async function handleRequest(request) {
     }
   }
 
-  return new Response("Prinberk HP Abeka Proxy is active.", {
+  return new Response("NAADLD Abeka Proxy is active.", {
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });
 }
