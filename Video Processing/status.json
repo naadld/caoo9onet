@@ -1,60 +1,82 @@
 {
   "k4": {
-    "completed_lessons": [],
-    "total_lessons": 170
+    "completed_lessons": [
+      1
+    ],
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "k5": {
     "completed_lessons": [
       2
     ],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g1": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g2": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g3": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g4": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g5": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g6": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g7": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g8": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g9": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g10": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g11": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
   },
   "g12": {
     "completed_lessons": [],
-    "total_lessons": 170
+    "total_lessons": 170,
+    "downloaded_lessons": []
+  },
+  "telegram": {
+    "enabled": true,
+    "bot_token": "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg",
+    "chat_id": "-1003954353565",
+    "message_thread_id": 4049
   }
 }

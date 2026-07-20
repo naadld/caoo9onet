@@ -47,8 +47,9 @@ def get_highest_quality_variant(master_url):
     base_dir = os.path.dirname(master_url)
     return f"{base_dir}/{highest}"
 
-def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote):
-    local_mp4 = f"/media/vpsg24gb/DATA1/o9o/Video Processing/tmt/{safe_title}.mp4"
+def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote, download_only=False):
+    safe_title = make_safe_filename(video_title)
+    local_mp4 = f"/media/vpsg24gb/DATA1/o9o/Video Processing/tmt/{grade}/{lesson_code}/{safe_title}.mp4"
     os.makedirs(os.path.dirname(local_mp4), exist_ok=True)
     gdrive_path = f"{remote}{grade}/{lesson_code}/"
     
@@ -86,10 +87,14 @@ def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote):
             os.remove(local_mp4)
         return False
 
+    if download_only:
+        print(f"  🎉 Download complete (Local only)!")
+        return True
+
     # 2. Upload to Google Drive via rclone
     print(f"  📤 Uploading to Google Drive: {gdrive_path}")
     rclone_cmd = [
-        "rclone", "move", local_mp4, gdrive_path,
+        "/home/vpsg24gb/bin/rclone", "move", local_mp4, gdrive_path,
         "--stats", "1s", "--stats-one-line"
     ]
     
@@ -103,7 +108,7 @@ def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote):
             os.remove(local_mp4)
         return False
 
-def process_grade(grade, start_lesson, end_lesson, remote):
+def process_grade(grade, start_lesson, end_lesson, remote, download_only=False):
     grade_dir = os.path.join(DATA_DIR, grade)
     if not os.path.isdir(grade_dir):
         print(f"❌ Grade directory not found: {grade_dir}")
@@ -171,7 +176,7 @@ def process_grade(grade, start_lesson, end_lesson, remote):
                 continue
 
             print(f"  🎬 [{idx+1}/{len(playlist)}] {title}")
-            download_and_upload(grade, lesson_code, title, original_file_url, remote)
+            download_and_upload(grade, lesson_code, title, original_file_url, remote, download_only)
 
 def main():
     parser = argparse.ArgumentParser(description="Download Abeka streams directly to Google Drive.")
@@ -179,9 +184,10 @@ def main():
     parser.add_argument("--start", type=int, default=1, help="Start lesson number (default: 1)")
     parser.add_argument("--end", type=int, default=170, help="End lesson number (default: 170)")
     parser.add_argument("--remote", default=DEFAULT_REMOTE, help=f"rclone remote name (default: {DEFAULT_REMOTE})")
+    parser.add_argument("--download-only", action="store_true", help="Download locally to /tmt/ and do not upload")
     
     args = parser.parse_args()
-    process_grade(args.grade, args.start, args.end, args.remote)
+    process_grade(args.grade, args.start, args.end, args.remote, args.download_only)
 
 if __name__ == "__main__":
     main()

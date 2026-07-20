@@ -10,6 +10,9 @@ import os
 import re
 import json
 import urllib.request
+import sys
+sys.path.append("/media/vpsg24gb/DATA1/o9o/scripts")
+from telegram_notifier import send_telegram_notification
 import time
 
 BASE_URL = "https://www.o9o.net"
@@ -104,17 +107,23 @@ def process_playlist_file(grade, filename):
         print(f"  💾 Updated JSON {json_path}")
 
 def main():
-    print("🚀 Starting download_m3u8s process...")
-    prioritized_grades = ["k5", "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9", "g10", "g11", "g12", "k4"]
-    for grade in prioritized_grades:
-        grade_dir = os.path.join(DATA_DIR, grade)
-        if not os.path.isdir(grade_dir):
-            continue
-            
-        print(f"\n📂 Scanning grade {grade}...")
-        files = sorted([f for f in os.listdir(grade_dir) if f.endswith(".json")])
-        for f in files:
-            process_playlist_file(grade, f)
+    try:
+        print("🚀 Starting download_m3u8s process...")
+        send_telegram_notification("🔍 Bắt đầu quét các playlist .m3u8 mới...", agent_name="Inspector")
+        prioritized_grades = ["k5", "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9", "g10", "g11", "g12", "k4"]
+        for grade in prioritized_grades:
+            grade_dir = os.path.join(DATA_DIR, grade)
+            if not os.path.isdir(grade_dir):
+                continue
+                
+            print(f"\n📂 Scanning grade {grade}...")
+            files = sorted([f for f in os.listdir(grade_dir) if f.endswith(".json")])
+            for f in files:
+                process_playlist_file(grade, f)
+        send_telegram_notification("✅ Hoàn tất quét các playlist .m3u8 mới thành công.", agent_name="Inspector")
+    except Exception as e:
+        send_telegram_notification(f"❌ Lỗi trong lúc quét playlist: {e}", agent_name="Inspector")
+        raise e
 
 if __name__ == "__main__":
     main()

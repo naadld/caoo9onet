@@ -25,7 +25,7 @@ def main():
     # Format of rclone lsf: "id;path" (e.g. "1NE-epiVM...;k5/2023-k5-002/K5 Phonics.mp4")
     try:
         res = subprocess.run(
-            ["rclone", "lsf", "--format", "ip", "-R", REMOTE_PATH],
+            ["/home/vpsg24gb/bin/rclone", "lsf", "--format", "ip", "-R", REMOTE_PATH],
             capture_output=True,
             check=True
         )
