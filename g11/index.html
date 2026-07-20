@@ -5,59 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Abeka Grade 11 Video Lessons - o9o.net</title>
   <meta name="description" content="Abeka Grade 11 daily video lessons. Algebra II, physics, and American history.">
-  <meta name="robots" content="follow, index">
   <link rel="canonical" href="https://www.o9o.net/g11/">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Abeka Grade 11 Video Lessons - o9o.net">
-  <meta property="og:description" content="Abeka Grade 11 daily video lessons. Algebra II, physics, and American history.">
   <link rel="icon" type="image/png" sizes="32x32" href="https://www.o9o.net/images/ico/favicon-32x32.png">
   <link rel="stylesheet" href="../css/style.css">
+
+  <!-- HLS.js — plays HLS (.m3u8) in any browser -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+  <!-- Plyr — beautiful open-source HTML5 player -->
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3/dist/plyr.css">
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3/dist/plyr.polyfilled.min.js"></script>
+
+  <style>
+    .player-section { margin: 24px 0 0; }
+    .playlist-tabs {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
+    }
+    .playlist-tabs h4 { width: 100%; margin: 0 0 10px; font-size: 13px;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+    .tab-btn {
+      padding: 7px 14px; border-radius: 6px; border: 1.5px solid var(--border);
+      background: var(--bg); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .15s; color: var(--text);
+    }
+    .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .tab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .plyr { border-radius: var(--radius); overflow: hidden; --plyr-color-main: #0274BE; }
+    .video-info { padding: 14px 20px; background: var(--bg-card);
+      border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius); }
+    .video-info h3 { font-size: 16px; margin-bottom: 4px; }
+    .video-info .meta { font-size: 13px; color: var(--text-muted); }
+    .status-msg {
+      text-align: center; padding: 48px 20px;
+      background: var(--bg-card); border-radius: var(--radius);
+      border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .status-msg .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="site-header">
   <div class="header-top">
     <div class="container">
       <a href="../index.html" class="site-logo">
-        o9o.net
-        <span>Free Abeka Homeschooling Video Lessons</span>
+        Prinberk HP <span>Collected ABEKA Homeschooling Video Lessons</span>
       </a>
-      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">☰</button>
     </div>
   </div>
-  <nav class="site-nav" aria-label="Main navigation">
+  <nav class="site-nav">
     <div class="container">
       <ul class="nav-list" role="list">
         <li><a href="../index.html">Home</a></li>
-        <li><a href="../k4/index.html">K4 (Age 4)</a></li>
-        <li><a href="../k5/index.html">K5 (Age 5)</a></li>
-        <li><a href="../g1/index.html">Grade 1</a></li>
-        <li><a href="../g2/index.html">Grade 2</a></li>
-        <li><a href="../g3/index.html">Grade 3</a></li>
-        <li><a href="../g4/index.html">Grade 4</a></li>
-        <li><a href="../g5/index.html">Grade 5</a></li>
-        <li><a href="../g6/index.html">Grade 6</a></li>
-        <li><a href="../g7/index.html">Grade 7</a></li>
-        <li><a href="../g8/index.html">Grade 8</a></li>
-        <li><a href="../g9/index.html">Grade 9</a></li>
-        <li><a href="../g10/index.html">Grade 10</a></li>
-        <li class="active"><a href="../g11/index.html">Grade 11</a></li>
-        <li><a href="../g12/index.html">Grade 12</a></li>
+        <li><a href="../k4/index.html">K4</a></li>
+        <li><a href="../k5/index.html">K5</a></li>
+        <li><a href="../g1/index.html">G1</a></li>
+        <li><a href="../g2/index.html">G2</a></li>
+        <li><a href="../g3/index.html">G3</a></li>
+        <li><a href="../g4/index.html">G4</a></li>
+        <li><a href="../g5/index.html">G5</a></li>
+        <li><a href="../g6/index.html">G6</a></li>
+        <li><a href="../g7/index.html">G7</a></li>
+        <li><a href="../g8/index.html">G8</a></li>
+        <li><a href="../g9/index.html">G9</a></li>
+        <li><a href="../g10/index.html">G10</a></li>
+        <li class="active"><a href="../g11/index.html">G11</a></li>
+        <li><a href="../g12/index.html">G12</a></li>
       </ul>
     </div>
   </nav>
 </header>
 
-<!-- MAIN -->
 <main>
-
-  <!-- Page Header -->
   <div class="page-header">
     <div class="container">
       <div class="breadcrumb">
-        <a href="../index.html">Home</a>
-        <span class="breadcrumb-sep">›</span>
+        <a href="../index.html">Home</a> <span class="breadcrumb-sep">›</span>
         <span>Grade 11</span>
       </div>
       <h1>📘 Abeka Grade 11 Video Lessons</h1>
@@ -67,273 +98,358 @@
 
   <div class="container">
 
-    <!-- Video Player (iframe embed) -->
-    <div class="video-section" style="margin: 28px 0 0;">
-      <div class="video-container">
-        <div id="video-placeholder" class="video-placeholder">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          <p>Select a lesson below to start watching</p>
-        </div>
-        <iframe id="video-frame" class="video-frame"
-          src="about:blank"
-          style="display:none"
-          allowfullscreen
-          allow="autoplay; fullscreen"
-          loading="lazy"
-          title="Abeka Grade 11 Video Lesson">
-        </iframe>
-        <div class="video-info">
-          <h3 id="video-title">Choose a lesson to watch</h3>
-          <div class="meta" id="video-meta">
-            <span>📚 Abeka Grade 11</span>
-            <span>·</span>
-            <span id="lesson-code-display">Select a lesson</span>
-          </div>
-        </div>
+    <!-- ===== PLAYER ===== -->
+    <div class="player-section">
+
+      <!-- Subject tabs (loaded after lesson is selected) -->
+      <div class="playlist-tabs" id="playlist-tabs" style="display:none">
+        <h4>📋 Subjects in this lesson:</h4>
+        <!-- populated by JS -->
       </div>
 
-      <!-- Prev/Next buttons -->
-      <div class="lesson-nav">
+      <!-- Plyr video element -->
+      <div id="player-wrap">
+        <div class="status-msg" id="status-msg">
+          <div>📚 Select a lesson below to start watching</div>
+        </div>
+        <video id="player" playsinline style="display:none;width:100%">
+          <source src="" type="application/x-mpegURL">
+        </video>
+      </div>
+
+      <div class="video-info" id="video-info" style="display:none">
+        <h3 id="video-title">—</h3>
+        <div class="meta" id="video-meta"></div>
+      </div>
+
+      <!-- Prev/Next -->
+      <div class="lesson-nav" style="margin-top:14px">
         <button class="btn btn-outline" id="btn-prev" disabled>◀ Previous</button>
         <button class="btn btn-primary" id="btn-next" disabled>Next ▶</button>
-        <a class="btn btn-outline" id="btn-original" href="https://www.o9o.net/g11/" target="_blank" rel="noopener" style="margin-left:auto">
-          🔗 Open on o9o.net
+        <a class="btn btn-outline" id="orig-link" href="https://www.o9o.net/g11/"
+           target="_blank" rel="noopener" style="margin-left:auto">
+          🔗 o9o.net ↗
         </a>
       </div>
     </div>
 
-    <!-- Lessons Grid -->
+    <!-- ===== LESSON GRID ===== -->
     <section class="lessons-section">
       <h2 class="lessons-title">📅 Abeka Grade 11 lessons by daily schedule:</h2>
       <div class="lesson-grid" id="lesson-grid">
-        <button class="lesson-btn" data-lesson="2023-11-001">001</button>
-        <button class="lesson-btn" data-lesson="2023-11-002">002</button>
-        <button class="lesson-btn" data-lesson="2023-11-003">003</button>
-        <button class="lesson-btn" data-lesson="2023-11-004">004</button>
-        <button class="lesson-btn" data-lesson="2023-11-005">005</button>
-        <button class="lesson-btn" data-lesson="2023-11-006">006</button>
-        <button class="lesson-btn" data-lesson="2023-11-007">007</button>
-        <button class="lesson-btn" data-lesson="2023-11-008">008</button>
-        <button class="lesson-btn" data-lesson="2023-11-009">009</button>
-        <button class="lesson-btn" data-lesson="2023-11-010">010</button>
-        <button class="lesson-btn" data-lesson="2023-11-011">011</button>
-        <button class="lesson-btn" data-lesson="2023-11-012">012</button>
-        <button class="lesson-btn" data-lesson="2023-11-013">013</button>
-        <button class="lesson-btn" data-lesson="2023-11-014">014</button>
-        <button class="lesson-btn" data-lesson="2023-11-015">015</button>
-        <button class="lesson-btn" data-lesson="2023-11-016">016</button>
-        <button class="lesson-btn" data-lesson="2023-11-017">017</button>
-        <button class="lesson-btn" data-lesson="2023-11-018">018</button>
-        <button class="lesson-btn" data-lesson="2023-11-019">019</button>
-        <button class="lesson-btn" data-lesson="2023-11-020">020</button>
-        <button class="lesson-btn" data-lesson="2023-11-021">021</button>
-        <button class="lesson-btn" data-lesson="2023-11-022">022</button>
-        <button class="lesson-btn" data-lesson="2023-11-023">023</button>
-        <button class="lesson-btn" data-lesson="2023-11-024">024</button>
-        <button class="lesson-btn" data-lesson="2023-11-025">025</button>
-        <button class="lesson-btn" data-lesson="2023-11-026">026</button>
-        <button class="lesson-btn" data-lesson="2023-11-027">027</button>
-        <button class="lesson-btn" data-lesson="2023-11-028">028</button>
-        <button class="lesson-btn" data-lesson="2023-11-029">029</button>
-        <button class="lesson-btn" data-lesson="2023-11-030">030</button>
-        <button class="lesson-btn" data-lesson="2023-11-031">031</button>
-        <button class="lesson-btn" data-lesson="2023-11-032">032</button>
-        <button class="lesson-btn" data-lesson="2023-11-033">033</button>
-        <button class="lesson-btn" data-lesson="2023-11-034">034</button>
-        <button class="lesson-btn" data-lesson="2023-11-035">035</button>
-        <button class="lesson-btn" data-lesson="2023-11-036">036</button>
-        <button class="lesson-btn" data-lesson="2023-11-037">037</button>
-        <button class="lesson-btn" data-lesson="2023-11-038">038</button>
-        <button class="lesson-btn" data-lesson="2023-11-039">039</button>
-        <button class="lesson-btn" data-lesson="2023-11-040">040</button>
-        <button class="lesson-btn" data-lesson="2023-11-041">041</button>
-        <button class="lesson-btn" data-lesson="2023-11-042">042</button>
-        <button class="lesson-btn" data-lesson="2023-11-043">043</button>
-        <button class="lesson-btn" data-lesson="2023-11-044">044</button>
-        <button class="lesson-btn" data-lesson="2023-11-045">045</button>
-        <button class="lesson-btn" data-lesson="2023-11-046">046</button>
-        <button class="lesson-btn" data-lesson="2023-11-047">047</button>
-        <button class="lesson-btn" data-lesson="2023-11-048">048</button>
-        <button class="lesson-btn" data-lesson="2023-11-049">049</button>
-        <button class="lesson-btn" data-lesson="2023-11-050">050</button>
-        <button class="lesson-btn" data-lesson="2023-11-051">051</button>
-        <button class="lesson-btn" data-lesson="2023-11-052">052</button>
-        <button class="lesson-btn" data-lesson="2023-11-053">053</button>
-        <button class="lesson-btn" data-lesson="2023-11-054">054</button>
-        <button class="lesson-btn" data-lesson="2023-11-055">055</button>
-        <button class="lesson-btn" data-lesson="2023-11-056">056</button>
-        <button class="lesson-btn" data-lesson="2023-11-057">057</button>
-        <button class="lesson-btn" data-lesson="2023-11-058">058</button>
-        <button class="lesson-btn" data-lesson="2023-11-059">059</button>
-        <button class="lesson-btn" data-lesson="2023-11-060">060</button>
-        <button class="lesson-btn" data-lesson="2023-11-061">061</button>
-        <button class="lesson-btn" data-lesson="2023-11-062">062</button>
-        <button class="lesson-btn" data-lesson="2023-11-063">063</button>
-        <button class="lesson-btn" data-lesson="2023-11-064">064</button>
-        <button class="lesson-btn" data-lesson="2023-11-065">065</button>
-        <button class="lesson-btn" data-lesson="2023-11-066">066</button>
-        <button class="lesson-btn" data-lesson="2023-11-067">067</button>
-        <button class="lesson-btn" data-lesson="2023-11-068">068</button>
-        <button class="lesson-btn" data-lesson="2023-11-069">069</button>
-        <button class="lesson-btn" data-lesson="2023-11-070">070</button>
-        <button class="lesson-btn" data-lesson="2023-11-071">071</button>
-        <button class="lesson-btn" data-lesson="2023-11-072">072</button>
-        <button class="lesson-btn" data-lesson="2023-11-073">073</button>
-        <button class="lesson-btn" data-lesson="2023-11-074">074</button>
-        <button class="lesson-btn" data-lesson="2023-11-075">075</button>
-        <button class="lesson-btn" data-lesson="2023-11-076">076</button>
-        <button class="lesson-btn" data-lesson="2023-11-077">077</button>
-        <button class="lesson-btn" data-lesson="2023-11-078">078</button>
-        <button class="lesson-btn" data-lesson="2023-11-079">079</button>
-        <button class="lesson-btn" data-lesson="2023-11-080">080</button>
-        <button class="lesson-btn" data-lesson="2023-11-081">081</button>
-        <button class="lesson-btn" data-lesson="2023-11-082">082</button>
-        <button class="lesson-btn" data-lesson="2023-11-083">083</button>
-        <button class="lesson-btn" data-lesson="2023-11-084">084</button>
-        <button class="lesson-btn" data-lesson="2023-11-085">085</button>
-        <button class="lesson-btn" data-lesson="2023-11-086">086</button>
-        <button class="lesson-btn" data-lesson="2023-11-087">087</button>
-        <button class="lesson-btn" data-lesson="2023-11-088">088</button>
-        <button class="lesson-btn" data-lesson="2023-11-089">089</button>
-        <button class="lesson-btn" data-lesson="2023-11-090">090</button>
-        <button class="lesson-btn" data-lesson="2023-11-091">091</button>
-        <button class="lesson-btn" data-lesson="2023-11-092">092</button>
-        <button class="lesson-btn" data-lesson="2023-11-093">093</button>
-        <button class="lesson-btn" data-lesson="2023-11-094">094</button>
-        <button class="lesson-btn" data-lesson="2023-11-095">095</button>
-        <button class="lesson-btn" data-lesson="2023-11-096">096</button>
-        <button class="lesson-btn" data-lesson="2023-11-097">097</button>
-        <button class="lesson-btn" data-lesson="2023-11-098">098</button>
-        <button class="lesson-btn" data-lesson="2023-11-099">099</button>
-        <button class="lesson-btn" data-lesson="2023-11-100">100</button>
-        <button class="lesson-btn" data-lesson="2023-11-101">101</button>
-        <button class="lesson-btn" data-lesson="2023-11-102">102</button>
-        <button class="lesson-btn" data-lesson="2023-11-103">103</button>
-        <button class="lesson-btn" data-lesson="2023-11-104">104</button>
-        <button class="lesson-btn" data-lesson="2023-11-105">105</button>
-        <button class="lesson-btn" data-lesson="2023-11-106">106</button>
-        <button class="lesson-btn" data-lesson="2023-11-107">107</button>
-        <button class="lesson-btn" data-lesson="2023-11-108">108</button>
-        <button class="lesson-btn" data-lesson="2023-11-109">109</button>
-        <button class="lesson-btn" data-lesson="2023-11-110">110</button>
-        <button class="lesson-btn" data-lesson="2023-11-111">111</button>
-        <button class="lesson-btn" data-lesson="2023-11-112">112</button>
-        <button class="lesson-btn" data-lesson="2023-11-113">113</button>
-        <button class="lesson-btn" data-lesson="2023-11-114">114</button>
-        <button class="lesson-btn" data-lesson="2023-11-115">115</button>
-        <button class="lesson-btn" data-lesson="2023-11-116">116</button>
-        <button class="lesson-btn" data-lesson="2023-11-117">117</button>
-        <button class="lesson-btn" data-lesson="2023-11-118">118</button>
-        <button class="lesson-btn" data-lesson="2023-11-119">119</button>
-        <button class="lesson-btn" data-lesson="2023-11-120">120</button>
-        <button class="lesson-btn" data-lesson="2023-11-121">121</button>
-        <button class="lesson-btn" data-lesson="2023-11-122">122</button>
-        <button class="lesson-btn" data-lesson="2023-11-123">123</button>
-        <button class="lesson-btn" data-lesson="2023-11-124">124</button>
-        <button class="lesson-btn" data-lesson="2023-11-125">125</button>
-        <button class="lesson-btn" data-lesson="2023-11-126">126</button>
-        <button class="lesson-btn" data-lesson="2023-11-127">127</button>
-        <button class="lesson-btn" data-lesson="2023-11-128">128</button>
-        <button class="lesson-btn" data-lesson="2023-11-129">129</button>
-        <button class="lesson-btn" data-lesson="2023-11-130">130</button>
-        <button class="lesson-btn" data-lesson="2023-11-131">131</button>
-        <button class="lesson-btn" data-lesson="2023-11-132">132</button>
-        <button class="lesson-btn" data-lesson="2023-11-133">133</button>
-        <button class="lesson-btn" data-lesson="2023-11-134">134</button>
-        <button class="lesson-btn" data-lesson="2023-11-135">135</button>
-        <button class="lesson-btn" data-lesson="2023-11-136">136</button>
-        <button class="lesson-btn" data-lesson="2023-11-137">137</button>
-        <button class="lesson-btn" data-lesson="2023-11-138">138</button>
-        <button class="lesson-btn" data-lesson="2023-11-139">139</button>
-        <button class="lesson-btn" data-lesson="2023-11-140">140</button>
-        <button class="lesson-btn" data-lesson="2023-11-141">141</button>
-        <button class="lesson-btn" data-lesson="2023-11-142">142</button>
-        <button class="lesson-btn" data-lesson="2023-11-143">143</button>
-        <button class="lesson-btn" data-lesson="2023-11-144">144</button>
-        <button class="lesson-btn" data-lesson="2023-11-145">145</button>
-        <button class="lesson-btn" data-lesson="2023-11-146">146</button>
-        <button class="lesson-btn" data-lesson="2023-11-147">147</button>
-        <button class="lesson-btn" data-lesson="2023-11-148">148</button>
-        <button class="lesson-btn" data-lesson="2023-11-149">149</button>
-        <button class="lesson-btn" data-lesson="2023-11-150">150</button>
-        <button class="lesson-btn" data-lesson="2023-11-151">151</button>
-        <button class="lesson-btn" data-lesson="2023-11-152">152</button>
-        <button class="lesson-btn" data-lesson="2023-11-153">153</button>
-        <button class="lesson-btn" data-lesson="2023-11-154">154</button>
-        <button class="lesson-btn" data-lesson="2023-11-155">155</button>
-        <button class="lesson-btn" data-lesson="2023-11-156">156</button>
-        <button class="lesson-btn" data-lesson="2023-11-157">157</button>
-        <button class="lesson-btn" data-lesson="2023-11-158">158</button>
-        <button class="lesson-btn" data-lesson="2023-11-159">159</button>
-        <button class="lesson-btn" data-lesson="2023-11-160">160</button>
-        <button class="lesson-btn" data-lesson="2023-11-161">161</button>
-        <button class="lesson-btn" data-lesson="2023-11-162">162</button>
-        <button class="lesson-btn" data-lesson="2023-11-163">163</button>
-        <button class="lesson-btn" data-lesson="2023-11-164">164</button>
-        <button class="lesson-btn" data-lesson="2023-11-165">165</button>
-        <button class="lesson-btn" data-lesson="2023-11-166">166</button>
-        <button class="lesson-btn" data-lesson="2023-11-167">167</button>
-        <button class="lesson-btn" data-lesson="2023-11-168">168</button>
-        <button class="lesson-btn" data-lesson="2023-11-169">169</button>
-        <button class="lesson-btn" data-lesson="2023-11-170">170</button>
+        <button class="lesson-btn" data-lesson="2023-11-001" id="btn-2023-11-001">001</button>
+        <button class="lesson-btn" data-lesson="2023-11-002" id="btn-2023-11-002">002</button>
+        <button class="lesson-btn" data-lesson="2023-11-003" id="btn-2023-11-003">003</button>
+        <button class="lesson-btn" data-lesson="2023-11-004" id="btn-2023-11-004">004</button>
+        <button class="lesson-btn" data-lesson="2023-11-005" id="btn-2023-11-005">005</button>
+        <button class="lesson-btn" data-lesson="2023-11-006" id="btn-2023-11-006">006</button>
+        <button class="lesson-btn" data-lesson="2023-11-007" id="btn-2023-11-007">007</button>
+        <button class="lesson-btn" data-lesson="2023-11-008" id="btn-2023-11-008">008</button>
+        <button class="lesson-btn" data-lesson="2023-11-009" id="btn-2023-11-009">009</button>
+        <button class="lesson-btn" data-lesson="2023-11-010" id="btn-2023-11-010">010</button>
+        <button class="lesson-btn" data-lesson="2023-11-011" id="btn-2023-11-011">011</button>
+        <button class="lesson-btn" data-lesson="2023-11-012" id="btn-2023-11-012">012</button>
+        <button class="lesson-btn" data-lesson="2023-11-013" id="btn-2023-11-013">013</button>
+        <button class="lesson-btn" data-lesson="2023-11-014" id="btn-2023-11-014">014</button>
+        <button class="lesson-btn" data-lesson="2023-11-015" id="btn-2023-11-015">015</button>
+        <button class="lesson-btn" data-lesson="2023-11-016" id="btn-2023-11-016">016</button>
+        <button class="lesson-btn" data-lesson="2023-11-017" id="btn-2023-11-017">017</button>
+        <button class="lesson-btn" data-lesson="2023-11-018" id="btn-2023-11-018">018</button>
+        <button class="lesson-btn" data-lesson="2023-11-019" id="btn-2023-11-019">019</button>
+        <button class="lesson-btn" data-lesson="2023-11-020" id="btn-2023-11-020">020</button>
+        <button class="lesson-btn" data-lesson="2023-11-021" id="btn-2023-11-021">021</button>
+        <button class="lesson-btn" data-lesson="2023-11-022" id="btn-2023-11-022">022</button>
+        <button class="lesson-btn" data-lesson="2023-11-023" id="btn-2023-11-023">023</button>
+        <button class="lesson-btn" data-lesson="2023-11-024" id="btn-2023-11-024">024</button>
+        <button class="lesson-btn" data-lesson="2023-11-025" id="btn-2023-11-025">025</button>
+        <button class="lesson-btn" data-lesson="2023-11-026" id="btn-2023-11-026">026</button>
+        <button class="lesson-btn" data-lesson="2023-11-027" id="btn-2023-11-027">027</button>
+        <button class="lesson-btn" data-lesson="2023-11-028" id="btn-2023-11-028">028</button>
+        <button class="lesson-btn" data-lesson="2023-11-029" id="btn-2023-11-029">029</button>
+        <button class="lesson-btn" data-lesson="2023-11-030" id="btn-2023-11-030">030</button>
+        <button class="lesson-btn" data-lesson="2023-11-031" id="btn-2023-11-031">031</button>
+        <button class="lesson-btn" data-lesson="2023-11-032" id="btn-2023-11-032">032</button>
+        <button class="lesson-btn" data-lesson="2023-11-033" id="btn-2023-11-033">033</button>
+        <button class="lesson-btn" data-lesson="2023-11-034" id="btn-2023-11-034">034</button>
+        <button class="lesson-btn" data-lesson="2023-11-035" id="btn-2023-11-035">035</button>
+        <button class="lesson-btn" data-lesson="2023-11-036" id="btn-2023-11-036">036</button>
+        <button class="lesson-btn" data-lesson="2023-11-037" id="btn-2023-11-037">037</button>
+        <button class="lesson-btn" data-lesson="2023-11-038" id="btn-2023-11-038">038</button>
+        <button class="lesson-btn" data-lesson="2023-11-039" id="btn-2023-11-039">039</button>
+        <button class="lesson-btn" data-lesson="2023-11-040" id="btn-2023-11-040">040</button>
+        <button class="lesson-btn" data-lesson="2023-11-041" id="btn-2023-11-041">041</button>
+        <button class="lesson-btn" data-lesson="2023-11-042" id="btn-2023-11-042">042</button>
+        <button class="lesson-btn" data-lesson="2023-11-043" id="btn-2023-11-043">043</button>
+        <button class="lesson-btn" data-lesson="2023-11-044" id="btn-2023-11-044">044</button>
+        <button class="lesson-btn" data-lesson="2023-11-045" id="btn-2023-11-045">045</button>
+        <button class="lesson-btn" data-lesson="2023-11-046" id="btn-2023-11-046">046</button>
+        <button class="lesson-btn" data-lesson="2023-11-047" id="btn-2023-11-047">047</button>
+        <button class="lesson-btn" data-lesson="2023-11-048" id="btn-2023-11-048">048</button>
+        <button class="lesson-btn" data-lesson="2023-11-049" id="btn-2023-11-049">049</button>
+        <button class="lesson-btn" data-lesson="2023-11-050" id="btn-2023-11-050">050</button>
+        <button class="lesson-btn" data-lesson="2023-11-051" id="btn-2023-11-051">051</button>
+        <button class="lesson-btn" data-lesson="2023-11-052" id="btn-2023-11-052">052</button>
+        <button class="lesson-btn" data-lesson="2023-11-053" id="btn-2023-11-053">053</button>
+        <button class="lesson-btn" data-lesson="2023-11-054" id="btn-2023-11-054">054</button>
+        <button class="lesson-btn" data-lesson="2023-11-055" id="btn-2023-11-055">055</button>
+        <button class="lesson-btn" data-lesson="2023-11-056" id="btn-2023-11-056">056</button>
+        <button class="lesson-btn" data-lesson="2023-11-057" id="btn-2023-11-057">057</button>
+        <button class="lesson-btn" data-lesson="2023-11-058" id="btn-2023-11-058">058</button>
+        <button class="lesson-btn" data-lesson="2023-11-059" id="btn-2023-11-059">059</button>
+        <button class="lesson-btn" data-lesson="2023-11-060" id="btn-2023-11-060">060</button>
+        <button class="lesson-btn" data-lesson="2023-11-061" id="btn-2023-11-061">061</button>
+        <button class="lesson-btn" data-lesson="2023-11-062" id="btn-2023-11-062">062</button>
+        <button class="lesson-btn" data-lesson="2023-11-063" id="btn-2023-11-063">063</button>
+        <button class="lesson-btn" data-lesson="2023-11-064" id="btn-2023-11-064">064</button>
+        <button class="lesson-btn" data-lesson="2023-11-065" id="btn-2023-11-065">065</button>
+        <button class="lesson-btn" data-lesson="2023-11-066" id="btn-2023-11-066">066</button>
+        <button class="lesson-btn" data-lesson="2023-11-067" id="btn-2023-11-067">067</button>
+        <button class="lesson-btn" data-lesson="2023-11-068" id="btn-2023-11-068">068</button>
+        <button class="lesson-btn" data-lesson="2023-11-069" id="btn-2023-11-069">069</button>
+        <button class="lesson-btn" data-lesson="2023-11-070" id="btn-2023-11-070">070</button>
+        <button class="lesson-btn" data-lesson="2023-11-071" id="btn-2023-11-071">071</button>
+        <button class="lesson-btn" data-lesson="2023-11-072" id="btn-2023-11-072">072</button>
+        <button class="lesson-btn" data-lesson="2023-11-073" id="btn-2023-11-073">073</button>
+        <button class="lesson-btn" data-lesson="2023-11-074" id="btn-2023-11-074">074</button>
+        <button class="lesson-btn" data-lesson="2023-11-075" id="btn-2023-11-075">075</button>
+        <button class="lesson-btn" data-lesson="2023-11-076" id="btn-2023-11-076">076</button>
+        <button class="lesson-btn" data-lesson="2023-11-077" id="btn-2023-11-077">077</button>
+        <button class="lesson-btn" data-lesson="2023-11-078" id="btn-2023-11-078">078</button>
+        <button class="lesson-btn" data-lesson="2023-11-079" id="btn-2023-11-079">079</button>
+        <button class="lesson-btn" data-lesson="2023-11-080" id="btn-2023-11-080">080</button>
+        <button class="lesson-btn" data-lesson="2023-11-081" id="btn-2023-11-081">081</button>
+        <button class="lesson-btn" data-lesson="2023-11-082" id="btn-2023-11-082">082</button>
+        <button class="lesson-btn" data-lesson="2023-11-083" id="btn-2023-11-083">083</button>
+        <button class="lesson-btn" data-lesson="2023-11-084" id="btn-2023-11-084">084</button>
+        <button class="lesson-btn" data-lesson="2023-11-085" id="btn-2023-11-085">085</button>
+        <button class="lesson-btn" data-lesson="2023-11-086" id="btn-2023-11-086">086</button>
+        <button class="lesson-btn" data-lesson="2023-11-087" id="btn-2023-11-087">087</button>
+        <button class="lesson-btn" data-lesson="2023-11-088" id="btn-2023-11-088">088</button>
+        <button class="lesson-btn" data-lesson="2023-11-089" id="btn-2023-11-089">089</button>
+        <button class="lesson-btn" data-lesson="2023-11-090" id="btn-2023-11-090">090</button>
+        <button class="lesson-btn" data-lesson="2023-11-091" id="btn-2023-11-091">091</button>
+        <button class="lesson-btn" data-lesson="2023-11-092" id="btn-2023-11-092">092</button>
+        <button class="lesson-btn" data-lesson="2023-11-093" id="btn-2023-11-093">093</button>
+        <button class="lesson-btn" data-lesson="2023-11-094" id="btn-2023-11-094">094</button>
+        <button class="lesson-btn" data-lesson="2023-11-095" id="btn-2023-11-095">095</button>
+        <button class="lesson-btn" data-lesson="2023-11-096" id="btn-2023-11-096">096</button>
+        <button class="lesson-btn" data-lesson="2023-11-097" id="btn-2023-11-097">097</button>
+        <button class="lesson-btn" data-lesson="2023-11-098" id="btn-2023-11-098">098</button>
+        <button class="lesson-btn" data-lesson="2023-11-099" id="btn-2023-11-099">099</button>
+        <button class="lesson-btn" data-lesson="2023-11-100" id="btn-2023-11-100">100</button>
+        <button class="lesson-btn" data-lesson="2023-11-101" id="btn-2023-11-101">101</button>
+        <button class="lesson-btn" data-lesson="2023-11-102" id="btn-2023-11-102">102</button>
+        <button class="lesson-btn" data-lesson="2023-11-103" id="btn-2023-11-103">103</button>
+        <button class="lesson-btn" data-lesson="2023-11-104" id="btn-2023-11-104">104</button>
+        <button class="lesson-btn" data-lesson="2023-11-105" id="btn-2023-11-105">105</button>
+        <button class="lesson-btn" data-lesson="2023-11-106" id="btn-2023-11-106">106</button>
+        <button class="lesson-btn" data-lesson="2023-11-107" id="btn-2023-11-107">107</button>
+        <button class="lesson-btn" data-lesson="2023-11-108" id="btn-2023-11-108">108</button>
+        <button class="lesson-btn" data-lesson="2023-11-109" id="btn-2023-11-109">109</button>
+        <button class="lesson-btn" data-lesson="2023-11-110" id="btn-2023-11-110">110</button>
+        <button class="lesson-btn" data-lesson="2023-11-111" id="btn-2023-11-111">111</button>
+        <button class="lesson-btn" data-lesson="2023-11-112" id="btn-2023-11-112">112</button>
+        <button class="lesson-btn" data-lesson="2023-11-113" id="btn-2023-11-113">113</button>
+        <button class="lesson-btn" data-lesson="2023-11-114" id="btn-2023-11-114">114</button>
+        <button class="lesson-btn" data-lesson="2023-11-115" id="btn-2023-11-115">115</button>
+        <button class="lesson-btn" data-lesson="2023-11-116" id="btn-2023-11-116">116</button>
+        <button class="lesson-btn" data-lesson="2023-11-117" id="btn-2023-11-117">117</button>
+        <button class="lesson-btn" data-lesson="2023-11-118" id="btn-2023-11-118">118</button>
+        <button class="lesson-btn" data-lesson="2023-11-119" id="btn-2023-11-119">119</button>
+        <button class="lesson-btn" data-lesson="2023-11-120" id="btn-2023-11-120">120</button>
+        <button class="lesson-btn" data-lesson="2023-11-121" id="btn-2023-11-121">121</button>
+        <button class="lesson-btn" data-lesson="2023-11-122" id="btn-2023-11-122">122</button>
+        <button class="lesson-btn" data-lesson="2023-11-123" id="btn-2023-11-123">123</button>
+        <button class="lesson-btn" data-lesson="2023-11-124" id="btn-2023-11-124">124</button>
+        <button class="lesson-btn" data-lesson="2023-11-125" id="btn-2023-11-125">125</button>
+        <button class="lesson-btn" data-lesson="2023-11-126" id="btn-2023-11-126">126</button>
+        <button class="lesson-btn" data-lesson="2023-11-127" id="btn-2023-11-127">127</button>
+        <button class="lesson-btn" data-lesson="2023-11-128" id="btn-2023-11-128">128</button>
+        <button class="lesson-btn" data-lesson="2023-11-129" id="btn-2023-11-129">129</button>
+        <button class="lesson-btn" data-lesson="2023-11-130" id="btn-2023-11-130">130</button>
+        <button class="lesson-btn" data-lesson="2023-11-131" id="btn-2023-11-131">131</button>
+        <button class="lesson-btn" data-lesson="2023-11-132" id="btn-2023-11-132">132</button>
+        <button class="lesson-btn" data-lesson="2023-11-133" id="btn-2023-11-133">133</button>
+        <button class="lesson-btn" data-lesson="2023-11-134" id="btn-2023-11-134">134</button>
+        <button class="lesson-btn" data-lesson="2023-11-135" id="btn-2023-11-135">135</button>
+        <button class="lesson-btn" data-lesson="2023-11-136" id="btn-2023-11-136">136</button>
+        <button class="lesson-btn" data-lesson="2023-11-137" id="btn-2023-11-137">137</button>
+        <button class="lesson-btn" data-lesson="2023-11-138" id="btn-2023-11-138">138</button>
+        <button class="lesson-btn" data-lesson="2023-11-139" id="btn-2023-11-139">139</button>
+        <button class="lesson-btn" data-lesson="2023-11-140" id="btn-2023-11-140">140</button>
+        <button class="lesson-btn" data-lesson="2023-11-141" id="btn-2023-11-141">141</button>
+        <button class="lesson-btn" data-lesson="2023-11-142" id="btn-2023-11-142">142</button>
+        <button class="lesson-btn" data-lesson="2023-11-143" id="btn-2023-11-143">143</button>
+        <button class="lesson-btn" data-lesson="2023-11-144" id="btn-2023-11-144">144</button>
+        <button class="lesson-btn" data-lesson="2023-11-145" id="btn-2023-11-145">145</button>
+        <button class="lesson-btn" data-lesson="2023-11-146" id="btn-2023-11-146">146</button>
+        <button class="lesson-btn" data-lesson="2023-11-147" id="btn-2023-11-147">147</button>
+        <button class="lesson-btn" data-lesson="2023-11-148" id="btn-2023-11-148">148</button>
+        <button class="lesson-btn" data-lesson="2023-11-149" id="btn-2023-11-149">149</button>
+        <button class="lesson-btn" data-lesson="2023-11-150" id="btn-2023-11-150">150</button>
+        <button class="lesson-btn" data-lesson="2023-11-151" id="btn-2023-11-151">151</button>
+        <button class="lesson-btn" data-lesson="2023-11-152" id="btn-2023-11-152">152</button>
+        <button class="lesson-btn" data-lesson="2023-11-153" id="btn-2023-11-153">153</button>
+        <button class="lesson-btn" data-lesson="2023-11-154" id="btn-2023-11-154">154</button>
+        <button class="lesson-btn" data-lesson="2023-11-155" id="btn-2023-11-155">155</button>
+        <button class="lesson-btn" data-lesson="2023-11-156" id="btn-2023-11-156">156</button>
+        <button class="lesson-btn" data-lesson="2023-11-157" id="btn-2023-11-157">157</button>
+        <button class="lesson-btn" data-lesson="2023-11-158" id="btn-2023-11-158">158</button>
+        <button class="lesson-btn" data-lesson="2023-11-159" id="btn-2023-11-159">159</button>
+        <button class="lesson-btn" data-lesson="2023-11-160" id="btn-2023-11-160">160</button>
+        <button class="lesson-btn" data-lesson="2023-11-161" id="btn-2023-11-161">161</button>
+        <button class="lesson-btn" data-lesson="2023-11-162" id="btn-2023-11-162">162</button>
+        <button class="lesson-btn" data-lesson="2023-11-163" id="btn-2023-11-163">163</button>
+        <button class="lesson-btn" data-lesson="2023-11-164" id="btn-2023-11-164">164</button>
+        <button class="lesson-btn" data-lesson="2023-11-165" id="btn-2023-11-165">165</button>
+        <button class="lesson-btn" data-lesson="2023-11-166" id="btn-2023-11-166">166</button>
+        <button class="lesson-btn" data-lesson="2023-11-167" id="btn-2023-11-167">167</button>
+        <button class="lesson-btn" data-lesson="2023-11-168" id="btn-2023-11-168">168</button>
+        <button class="lesson-btn" data-lesson="2023-11-169" id="btn-2023-11-169">169</button>
+        <button class="lesson-btn" data-lesson="2023-11-170" id="btn-2023-11-170">170</button>
       </div>
     </section>
 
-    <!-- About -->
-    <div class="info-card" style="margin-bottom:40px">
-      <span class="icon">📘</span>
-      <h3>About Abeka Grade 11</h3>
-      <p>Abeka Grade 11 daily video lessons. Algebra II, physics, and American history.</p>
-    </div>
-
-  </div>
+  </div><!-- .container -->
 </main>
 
-<!-- FOOTER -->
 <footer class="site-footer">
   <div class="container">
     <div class="footer-inner">
-      <span>
-        <a href="../index.html">o9o.net</a> — Copyright &copy; 2026. Abeka homeschool video lessons.
-      </span>
+      <span><a href="../index.html">Prinberk HP</a> — Copyright &copy; 2026</span>
       <nav class="footer-links">
-        <a href="https://www.o9o.net/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a>
-        <a href="https://www.o9o.net/g11/" target="_blank" rel="noopener">Original Site</a>
+        <a href="https://www.o9o.net/privacy-policy/" target="_blank">Privacy Policy</a>
+        <a href="https://www.o9o.net/g11/" target="_blank">Original Site</a>
       </nav>
     </div>
   </div>
 </footer>
 
 <script>
-// ---- Lesson Page Logic ----
 (function() {
-  const slug = 'g11';
-  const originalBase = 'https://www.o9o.net/g11/';
-  const buttons = document.querySelectorAll('.lesson-btn');
-  const frame = document.getElementById('video-frame');
-  const placeholder = document.getElementById('video-placeholder');
-  const titleEl = document.getElementById('video-title');
-  const codeEl = document.getElementById('lesson-code-display');
-  const prevBtn = document.getElementById('btn-prev');
-  const nextBtn = document.getElementById('btn-next');
-  const origLink = document.getElementById('btn-original');
+  // ---- Config ----
+  const GRADE  = 'g11';
+  const PREFIX = '2023-11';
+  const COUNT  = 170;
+  const ORIG   = 'https://www.o9o.net/g11/';
 
-  let current = -1;
+  // ---- Elements ----
+  const buttons     = Array.from(document.querySelectorAll('.lesson-btn'));
+  const statusMsg   = document.getElementById('status-msg');
+  const playerEl    = document.getElementById('player');
+  const videoInfo   = document.getElementById('video-info');
+  const videoTitle  = document.getElementById('video-title');
+  const videoMeta   = document.getElementById('video-meta');
+  const playlistTabs= document.getElementById('playlist-tabs');
+  const prevBtn     = document.getElementById('btn-prev');
+  const nextBtn     = document.getElementById('btn-next');
+  const origLink    = document.getElementById('orig-link');
 
-  // Read ?lesson= from URL
-  const params = new URLSearchParams(window.location.search);
-  const initLesson = params.get('lesson');
+  let plyr = null;
+  let hls  = null;
+  let currentIdx = -1;
+  let currentPlaylist = [];
+  let currentTabIdx = 0;
 
+  // ---- Init Plyr ----
+  function initPlyr() {
+    if (plyr) return;
+    playerEl.style.display = 'block';
+    plyr = new Plyr(playerEl, {
+      controls: ['play','progress','current-time','mute','volume','settings','fullscreen'],
+      settings: ['quality','speed'],
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+    });
+  }
+
+  // ---- Load HLS stream ----
+  function loadHLS(m3u8Url) {
+    initPlyr();
+    if (hls) { hls.destroy(); hls = null; }
+
+    // Rewrite HLS url to go through our proxy
+    let proxiedUrl = m3u8Url;
+    if (m3u8Url.startsWith('http')) {
+      try {
+        const urlObj = new URL(m3u8Url);
+        proxiedUrl = 'https://abeka-proxy.hothihuong113.workers.dev/cdn/' + urlObj.hostname + urlObj.pathname + urlObj.search;
+      } catch(e) {
+        console.error('URL parse error:', e);
+      }
+    }
+
+    if (Hls.isSupported()) {
+      hls = new Hls({ enableWorker: true });
+      hls.loadSource(proxiedUrl);
+      hls.attachMedia(playerEl);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => plyr.play());
+      hls.on(Hls.Events.ERROR, (e, data) => {
+        if (data.fatal) {
+          console.error('Fatal HLS error:', data);
+          showError('Video không load được. Thử mở trực tiếp trên o9o.net.');
+        }
+      });
+    } else if (playerEl.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari native HLS
+      playerEl.src = proxiedUrl;
+      playerEl.play();
+    } else {
+      showError('Trình duyệt không hỗ trợ HLS. Dùng Chrome hoặc Firefox.');
+    }
+  }
+
+  // ---- Render subject tabs ----
+  function renderTabs(playlist) {
+    // Clear old tabs (keep h4)
+    const h4 = playlistTabs.querySelector('h4');
+    playlistTabs.innerHTML = '';
+    playlistTabs.appendChild(h4);
+    playlistTabs.style.display = 'flex';
+
+    playlist.forEach((item, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (i === currentTabIdx ? ' active' : '');
+      btn.textContent = item.title;
+      btn.onclick = () => {
+        currentTabIdx = i;
+        document.querySelectorAll('.tab-btn').forEach((b,j) =>
+          b.classList.toggle('active', j === i));
+        loadHLS(item.file);
+        updateVideoMeta(item);
+      };
+      playlistTabs.appendChild(btn);
+    });
+  }
+
+  function updateVideoMeta(item) {
+    videoTitle.textContent = item.title + (item.description ? ' — ' + item.description.split('-')[0] : '');
+    videoMeta.textContent  = item.description || '';
+    videoInfo.style.display = 'block';
+  }
+
+  function showLoading(code) {
+    statusMsg.innerHTML = '<div class="spinner"></div><div>Loading lesson ' + code + '...</div>';
+    statusMsg.style.display = 'block';
+    if (playerEl) playerEl.style.display = 'none';
+    videoInfo.style.display = 'none';
+    playlistTabs.style.display = 'none';
+  }
+
+  function showError(msg) {
+    statusMsg.innerHTML = '❌ ' + msg;
+    statusMsg.style.display = 'block';
+  }
+
+  // ---- Activate lesson ----
   function activate(index) {
     if (index < 0 || index >= buttons.length) return;
-    current = index;
-    const btn = buttons[index];
+    currentIdx = index;
+    currentTabIdx = 0;
+    const btn  = buttons[index];
     const code = btn.dataset.lesson;
-    const num = btn.textContent;
+    const num  = btn.textContent;
 
-    // Highlight button
+    // Highlight
     buttons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
@@ -343,57 +459,63 @@
     url.searchParams.set('lesson', code);
     history.pushState({}, '', url);
 
-    // Load iframe
-    const src = originalBase + '?lesson=' + code;
-    frame.src = src;
-    frame.style.display = 'block';
-    placeholder.style.display = 'none';
+    // Update links
+    origLink.href = ORIG + '?lesson=' + code;
 
-    // Update original link
-    origLink.href = src;
-
-    // Update info
-    titleEl.textContent = 'Lesson ' + num + ' — Abeka Grade 11';
-    codeEl.textContent = code;
-
-    // Update nav
+    // Nav buttons
     prevBtn.disabled = index === 0;
     nextBtn.disabled = index === buttons.length - 1;
-    prevBtn.style.opacity = index === 0 ? '0.45' : '1';
-    nextBtn.style.opacity = index === buttons.length - 1 ? '0.45' : '1';
+
+    showLoading(num);
+
+    // Fetch cached JSON playlist
+    const jsonUrl = '../data/' + GRADE + '/' + code + '.json';
+    fetch(jsonUrl)
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(playlist => {
+        statusMsg.style.display = 'none';
+        currentPlaylist = playlist;
+        renderTabs(playlist);
+        loadHLS(playlist[0].file);
+        updateVideoMeta(playlist[0]);
+      })
+      .catch(err => {
+        // JSON not cached yet → fallback redirect to o9o.net
+        statusMsg.innerHTML =
+          '⚠️ Playlist chưa được cache. <br>' +
+          '<a href="' + ORIG + '?lesson=' + code + '" target="_blank" ' +
+          'style="color:var(--primary);font-weight:600">Mở trực tiếp trên o9o.net ↗</a>';
+        statusMsg.style.display = 'block';
+      });
   }
 
-  // Button click
-  buttons.forEach((btn, i) => {
-    btn.addEventListener('click', () => activate(i));
-  });
-
-  prevBtn.addEventListener('click', () => activate(current - 1));
-  nextBtn.addEventListener('click', () => activate(current + 1));
-
-  // Keyboard navigation
+  // ---- Event listeners ----
+  buttons.forEach((btn, i) => btn.addEventListener('click', () => activate(i)));
+  prevBtn.addEventListener('click', () => activate(currentIdx - 1));
+  nextBtn.addEventListener('click', () => activate(currentIdx + 1));
   document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft') activate(current - 1);
-    if (e.key === 'ArrowRight') activate(current + 1);
+    if (e.key === 'ArrowLeft')  activate(currentIdx - 1);
+    if (e.key === 'ArrowRight') activate(currentIdx + 1);
   });
 
-  // Mobile menu
-  const toggle = document.getElementById('menu-toggle');
+  // Mobile nav
+  const toggle  = document.getElementById('menu-toggle');
   const navList = document.querySelector('.nav-list');
   if (toggle) {
-    toggle.addEventListener('click', () => {
-      const open = navList.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', open);
-    });
+    toggle.addEventListener('click', () => navList.classList.toggle('open'));
     document.addEventListener('click', e => {
       if (!toggle.contains(e.target) && !navList.contains(e.target))
         navList.classList.remove('open');
     });
   }
 
-  // Init from URL param
-  if (initLesson) {
-    const idx = Array.from(buttons).findIndex(b => b.dataset.lesson === initLesson);
+  // Init from URL ?lesson=
+  const initCode = new URLSearchParams(window.location.search).get('lesson');
+  if (initCode) {
+    const idx = buttons.findIndex(b => b.dataset.lesson === initCode);
     if (idx >= 0) activate(idx);
   }
 })();
