@@ -48,8 +48,8 @@ def get_highest_quality_variant(master_url):
     return f"{base_dir}/{highest}"
 
 def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote):
-    safe_title = make_safe_filename(video_title)
-    local_mp4 = f"/tmp/{safe_title}.mp4"
+    local_mp4 = f"/media/vpsg24gb/DATA1/o9o/Video Processing/tmt/{safe_title}.mp4"
+    os.makedirs(os.path.dirname(local_mp4), exist_ok=True)
     gdrive_path = f"{remote}{grade}/{lesson_code}/"
     
     # 1. If it's a relative path on o9o.net, resolve it and find the highest quality
