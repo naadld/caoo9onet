@@ -15,7 +15,7 @@ import time
 
 BASE_URL = "https://www.o9o.net"
 DATA_DIR = "/media/vpsg24gb/DATA1/o9o/data"
-DEFAULT_REMOTE = "hariinvpsg16gb:"
+DEFAULT_REMOTE = "vpsg24gb.aleron,root_folder_id=1E_hq6-w6OacdDTlTCvpCC-JKPJoQdz1x:"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120",
@@ -50,7 +50,7 @@ def get_highest_quality_variant(master_url):
 def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote):
     safe_title = make_safe_filename(video_title)
     local_mp4 = f"/tmp/{safe_title}.mp4"
-    gdrive_path = f"{remote}Abeka/{grade}/{lesson_code}/"
+    gdrive_path = f"{remote}{grade}/{lesson_code}/"
     
     # 1. If it's a relative path on o9o.net, resolve it and find the highest quality
     resolved_url = m3u8_url
