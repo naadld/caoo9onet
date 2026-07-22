@@ -233,6 +233,7 @@ def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
         "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "--paths", f"home:{task_tmp_dir}",
         "--paths", f"temp:{task_tmp_dir}",
+        "--remux-video", "mp4",
         "-o", temp_file,
         m3u8_url
     ]

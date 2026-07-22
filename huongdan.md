@@ -17,7 +17,9 @@ Khi người dùng đưa ra yêu cầu cào dữ liệu (ví dụ: *"chạy Lớ
   * Tải video từ `o9o.net` về thư mục tạm `.tmp_stream/{uuid}/` trên máy chủ.
   * Chỉ khi video **tải hoàn tất 100%** (xác minh dung lượng > 100 KB và không lỗi), lệnh mới thực hiện `rclone copyto` đẩy file sang Google Drive (`Abeka_Videos/{Grade}/Ngày {day}/{subject}/{file}.mp4`).
   * Nếu quá trình tải bị hủy hoặc đứt mạng: Tệp tạm bị xóa ngay lập tức, **tuyệt đối không khởi tạo thư mục rỗng/rác trên Google Drive**.
-* **Xác thực luồng**: Luôn truyền cờ `--referer "https://www.o9o.net/"` và `--user-agent` cho `yt-dlp` để tránh lỗi HTTP 403 Forbidden.
+* **Xác thực luồng & Định dạng MP4 chuẩn nguyên bản**:
+  * Luôn truyền cờ `--referer "https://www.o9o.net/"` và `--user-agent` cho `yt-dlp`.
+  * **BẮT BUỘC CHUYỂN ĐỔI CHUẨN MP4**: Luôn truyền cờ `--remux-video mp4` cho `yt-dlp` để `ffmpeg` tự động chuyển đổi luồng MPEG-TS (`.ts`) thành tệp MP4 chuẩn nguyên bản (MPEG-4 / H.264), đảm bảo tất cả file video trên Google Drive 100% là chuẩn MP4 phát được trên trình duyệt, Google Drive Web Previewer, iOS và Android.
 
 ### 🔹 BƯỚC 2: TẠO CHỈ MỤC & ĐỒNG BỘ DASHBOARD ONLINE (Step 2 & Upload)
 * Sau khi cào xong bài học:
