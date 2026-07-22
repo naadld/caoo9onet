@@ -12,17 +12,15 @@ import glob
 import subprocess
 import shutil
 
-BASE_DIR = "/media/vpsg24gb/DATA1/o9o"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 REMOTE_PATH = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 
-RCLONE_BIN = "/home/vpsg24gb/bin/rclone"
-if not os.path.exists(RCLONE_BIN):
-    RCLONE_BIN = shutil.which("rclone") or "rclone"
+RCLONE_BIN = shutil.which("rclone") or "rclone"
 
-RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
-if not os.path.exists(RCLONE_CONF):
-    RCLONE_CONF = os.path.expanduser("~/.config/rclone/rclone.conf")
+RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")
+if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rclone/rclone.conf"):
+    RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
 
 def normalize_path(p):
     return p.replace("\\", "/").strip().lower()

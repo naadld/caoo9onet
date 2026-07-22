@@ -11,7 +11,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-BASE_DIR = "/media/vpsg24gb/DATA1/o9o"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
 LOCAL_FILE = os.path.join(BASE_DIR, "index_songsong.html")
 FILE_ID = "17-iAoi4fK8DuxX7ucDBEvJbtLj4Q2rkX"

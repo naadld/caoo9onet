@@ -33,17 +33,15 @@ except (IOError, OSError):
     sys.exit(0)
 
 # Resolve executables dynamically
-RCLONE_BIN = "/home/vpsg24gb/bin/rclone"
-if not os.path.exists(RCLONE_BIN):
-    RCLONE_BIN = shutil.which("rclone") or "rclone"
+RCLONE_BIN = shutil.which("rclone") or "rclone"
 
-RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
-if not os.path.exists(RCLONE_CONF):
-    RCLONE_CONF = os.path.expanduser("~/.config/rclone/rclone.conf")
+RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")
+if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rclone/rclone.conf"):
+    RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
 
 YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
-GDrive_REMOTE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
+REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 TARGET_PAIRS = [
     ["Grade 2", "Grade 5"],
     ["Grade 1", "Grade 4"],
