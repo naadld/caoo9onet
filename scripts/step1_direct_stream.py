@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 import fcntl
 
 BASE_URL = "https://www.o9o.net"
-BASE_DIR = "/media/vpsg24gb/DATA1/o9o"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCK_FILE = os.path.join(BASE_DIR, "step1_scraper.lock")
 
 # Enforce strict single-instance execution across system
