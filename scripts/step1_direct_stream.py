@@ -44,13 +44,7 @@ YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 TARGET_PAIRS = [
-    ["Grade 2", "Grade 5"],
-    ["K4", "K5"],
-    ["Grade 1", "Grade 4"],
-    ["Grade 3", "Grade 6"],
-    ["Grade 7", "Grade 8"],
-    ["Grade 9", "Grade 10"],
-    ["Grade 11", "Grade 12"]
+    ["Grade 4"]
 ]
 
 def log_to_google_doc(entry_text):
@@ -234,6 +228,7 @@ def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
         "--paths", f"home:{task_tmp_dir}",
         "--paths", f"temp:{task_tmp_dir}",
         "--remux-video", "mp4",
+        "--postprocessor-args", "ffmpeg:-movflags +faststart -avoid_negative_ts make_zero",
         "-o", temp_file,
         m3u8_url
     ]
@@ -464,8 +459,19 @@ def main():
     parser = argparse.ArgumentParser(description="Direct Pipe Streaming Downloader for Abeka Videos.")
     parser.add_argument("--max-days", type=int, default=None, help="Maximum number of days to process in this run")
     parser.add_argument("--grade2-5-only", action="store_true", help="Process only Grade 2 and Grade 5 pair")
+    parser.add_argument("--force-local", action="store_true", help="Force running on local machine/VPS")
     args = parser.parse_args()
     
+    is_github_actions = os.getenv("GITHUB_ACTIONS") == "true"
+    if not is_github_actions and not args.force_local:
+        print("=" * 60)
+        print("⛔ [VPS EXECUTION BLOCKED]")
+        print("Theo nguyên tắc hệ thống, tiến trình cào chỉ được phép chạy 100% trên GitHub Cloud (GitHub Actions).")
+        print("Tiến trình trên VPS đã bị chặn để không tốn CPU/RAM/băng thông VPS.")
+        print("Vui lòng kích hoạt cào trên GitHub Actions Cloud hoặc chờ lịch tự động.")
+        print("=" * 60)
+        sys.exit(0)
+
     pairs = [["Grade 2", "Grade 5"]] if args.grade2_5_only else TARGET_PAIRS
     run_direct_streaming(pairs_to_run=pairs, max_days=args.max_days)
 
