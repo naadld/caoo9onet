@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Step 5: GDrive Copier
+Step 5: GDrive Copier with Status Tracking in Column D
 Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8),
-extracts Source Folder (Column B) and Target Folder (Column C),
-and uses rclone copy to safely copy all contents from Source to Target on Google Drive.
+extracts Source Folder (Column B), Target Folder (Column C), and Status (Column D).
+Skips rows already marked as completed, copies files via rclone copy,
+and updates Status in Column D upon completion.
 """
 
 import os
@@ -91,7 +92,7 @@ def get_google_creds():
         info["private_key"] = str(info["private_key"]).replace("\\n", "\n").replace("\r", "")
 
     scopes = [
-        'https://www.googleapis.com/auth/spreadsheets.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/drive'
     ]
     return service_account.Credentials.from_service_account_info(info, scopes=scopes)
@@ -104,15 +105,16 @@ def fetch_copy_pairs_from_sheets():
 
     print(f"📖 Reading Google Sheet (ID: {SPREADSHEET_ID})...")
     
-    # Try reading range B2:C from Sheet1 or first sheet
+    first_sheet_title = "Sheet1"
     try:
         sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
         sheets = sheet_metadata.get('sheets', [])
-        first_sheet_title = sheets[0]['properties']['title'] if sheets else "Sheet1"
-        range_name = f"'{first_sheet_title}'!B2:C"
+        if sheets:
+            first_sheet_title = sheets[0]['properties']['title']
     except Exception as e:
-        print(f"⚠️ Could not fetch sheet metadata ({e}). Defaulting to 'Sheet1!B2:C'...")
-        range_name = "Sheet1!B2:C"
+        print(f"⚠️ Could not fetch sheet metadata ({e}). Defaulting to 'Sheet1'...")
+
+    range_name = f"'{first_sheet_title}'!B2:D"
 
     result = sheets_service.spreadsheets().values().get(
         spreadsheetId=SPREADSHEET_ID,
@@ -127,18 +129,39 @@ def fetch_copy_pairs_from_sheets():
             continue
         src = row[0].strip()
         dst = row[1].strip()
+        status = row[2].strip() if len(row) >= 3 else ""
 
         if not src or not dst:
             continue
             
-        # Ignore header if row 2 contains header labels
+        # Ignore header row
         if src.lower() in ["folder gốc", "source", "folder goc", "nội dung gốc"] or dst.lower() in ["folder đích", "target", "destination", "folder dich"]:
             continue
 
-        pairs.append({"row": idx, "src": src, "dst": dst})
+        pairs.append({
+            "row": idx,
+            "sheet_title": first_sheet_title,
+            "src": src,
+            "dst": dst,
+            "status": status
+        })
 
     print(f"📊 Found {len(pairs)} folder copy pairs in Google Sheet.")
-    return pairs
+    return sheets_service, pairs
+
+def update_sheet_status(sheets_service, sheet_title, row_num, status_text):
+    try:
+        range_name = f"'{sheet_title}'!D{row_num}"
+        body = {'values': [[status_text]]}
+        sheets_service.spreadsheets().values().update(
+            spreadsheetId=SPREADSHEET_ID,
+            range=range_name,
+            valueInputOption='USER_ENTERED',
+            body=body
+        ).execute()
+        print(f"  📝 [Sheet Updated] Row {row_num} Column D -> '{status_text}'")
+    except Exception as e:
+        print(f"  ⚠️ Failed to update Sheet Column D status at row {row_num}: {e}")
 
 def extract_folder_id(val):
     """Extracts folder ID if val is a Google Drive URL, otherwise returns val."""
@@ -148,16 +171,7 @@ def extract_folder_id(val):
     return val
 
 def resolve_rclone_remote(folder_val):
-    """
-    Resolves a folder value into an rclone remote path string.
-    Supports:
-    - Full Google Drive Folder URL (e.g., https://drive.google.com/drive/folders/1abc...)
-    - Google Drive Folder ID (e.g., 1abc...)
-    - Relative Path on GDrive (e.g., Grade 4/Ngày 001/Arithmetic)
-    """
     folder_id_or_path = extract_folder_id(folder_val)
-    
-    # Check if folder_id_or_path looks like a GDrive Folder ID (alphanumeric, ~25-45 chars, no slashes)
     if re.match(r'^[a-zA-Z0-9_-]{25,50}$', folder_id_or_path) and '/' not in folder_id_or_path:
         return f"vpsg24gb.aleron,root_folder_id={folder_id_or_path}:"
     else:
@@ -190,13 +204,19 @@ def execute_copy(src_val, dst_val):
         print(f"  ❌ Copy exception: {e}")
         return False
 
+def is_already_completed(status_str):
+    if not status_str:
+        return False
+    st = status_str.lower()
+    return any(kw in st for kw in ["hoàn thành", "done", "success", "completed"])
+
 def run_gdrive_copier():
     print("=" * 60)
-    print("🚀 STEP 5: GDRIVE COPIER")
+    print("🚀 STEP 5: GDRIVE COPIER (With Column D Status Tracking)")
     print("=" * 60)
 
     try:
-        pairs = fetch_copy_pairs_from_sheets()
+        sheets_service, pairs = fetch_copy_pairs_from_sheets()
     except Exception as e:
         print(f"❌ Failed to fetch copy pairs from Google Sheet: {e}")
         return
@@ -207,9 +227,21 @@ def run_gdrive_copier():
 
     success_count = 0
     fail_count = 0
+    skipped_count = 0
 
     for idx, item in enumerate(pairs, 1):
-        print(f"\n[{idx}/{len(pairs)}] Processing Row {item['row']} in Sheet:")
+        row_num = item['row']
+        sheet_title = item['sheet_title']
+        status = item['status']
+
+        print(f"\n[{idx}/{len(pairs)}] Checking Row {row_num} (Status: '{status}'):")
+
+        # Skip if already completed
+        if is_already_completed(status):
+            print(f"  ⏭️ Status is already completed ('{status}'). Skipping Row {row_num}.")
+            skipped_count += 1
+            continue
+
         ok = execute_copy(item['src'], item['dst'])
         
         vn_tz = timezone(timedelta(hours=7))
@@ -217,13 +249,17 @@ def run_gdrive_copier():
 
         if ok:
             success_count += 1
+            status_msg = f"Hoàn thành ({now_str})"
+            update_sheet_status(sheets_service, sheet_title, row_num, status_msg)
             log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy từ [{item['src']}] sang [{item['dst']}]")
         else:
             fail_count += 1
+            status_msg = f"Lỗi copy ({now_str})"
+            update_sheet_status(sheets_service, sheet_title, row_num, status_msg)
             log_to_google_doc(f"{now_str}: Lỗi Step 5 Copy từ [{item['src']}] sang [{item['dst']}]")
 
     print("\n" + "=" * 60)
-    print(f"🎉 STEP 5 SUMMARY: {success_count} succeeded, {fail_count} failed out of {len(pairs)} total pairs.")
+    print(f"🎉 STEP 5 SUMMARY: {success_count} succeeded, {skipped_count} skipped, {fail_count} failed out of {len(pairs)} total pairs.")
     print("=" * 60)
 
 def main():
