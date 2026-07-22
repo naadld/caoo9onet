@@ -19,6 +19,8 @@ jobs:
   scrape_and_stream:
     name: Scrape o9o Videos & Stream to GDrive
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 60
     env:
       PYTHONUNBUFFERED: "1"

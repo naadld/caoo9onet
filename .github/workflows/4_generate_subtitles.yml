@@ -12,6 +12,8 @@ jobs:
   generate_subtitles:
     name: Generate Subtitles & Interactive JSON for Abeka Videos
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 120
     env:
       PYTHONUNBUFFERED: "1"

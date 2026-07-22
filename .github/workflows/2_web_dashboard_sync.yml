@@ -18,6 +18,8 @@ jobs:
   build_and_sync_dashboard:
     name: Index GDrive Files & Sync HTML Dashboard
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 30
     env:
       PYTHONUNBUFFERED: "1"
