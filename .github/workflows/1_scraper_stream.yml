@@ -60,11 +60,15 @@ jobs:
           EOF
 
       - name: Run Scraper & Stream to GDrive (Step 1)
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
           MAX_DAYS="${{ github.event.inputs.max_days || '170' }}"
           python3 -u scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
 
       - name: Generate AI Subtitles & Interactive JSON (Step 4)
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
           pip install faster-whisper eng-to-ipa deep-translator
           python3 -u scripts/step4_generate_subtitles.py --folder "Grade 5"

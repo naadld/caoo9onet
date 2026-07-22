@@ -30,6 +30,15 @@ TARGET_PAIRS = [
     ["Grade 4"]
 ]
 
+def clean_private_key(info):
+    if "private_key" in info:
+        pk = str(info["private_key"]).strip()
+        pk = pk.replace("\\n", "\n").replace("\r", "")
+        while "\\n" in pk:
+            pk = pk.replace("\\n", "\n")
+        info["private_key"] = pk
+    return info
+
 def log_to_google_doc(entry_text):
     try:
         from google.oauth2 import service_account
@@ -39,14 +48,24 @@ def log_to_google_doc(entry_text):
         now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
 
         creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
-        if not os.path.exists(creds_path):
+        env_creds = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+
+        info = None
+        if env_creds:
+            try:
+                info = json.loads(env_creds, strict=False)
+            except Exception:
+                pass
+
+        if not info and os.path.exists(creds_path):
+            with open(creds_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                info = json.loads(content, strict=False)
+
+        if not info:
             return
 
-        with open(creds_path, 'r', encoding='utf-8') as f:
-            info = json.load(f)
-
-        if "private_key" in info:
-            info["private_key"] = str(info["private_key"]).replace("\\n", "\n").replace("\r", "")
+        info = clean_private_key(info)
 
         creds = service_account.Credentials.from_service_account_info(
             info,
