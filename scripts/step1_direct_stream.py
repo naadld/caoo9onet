@@ -202,15 +202,17 @@ def fetch_live_gdrive_index():
 def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
     # Ensure zero empty folders are created on Google Drive if stream fails.
     # Download to temporary staging file first, verify 100% completion, then copy to Google Drive.
-    temp_dir = os.path.join(BASE_DIR, ".tmp_stream")
-    os.makedirs(temp_dir, exist_ok=True)
-    temp_file = os.path.join(temp_dir, f"tmp_{uuid.uuid4().hex}.mp4")
+    task_tmp_dir = os.path.join(BASE_DIR, ".tmp_stream", uuid.uuid4().hex)
+    os.makedirs(task_tmp_dir, exist_ok=True)
+    temp_file = os.path.join(task_tmp_dir, "output.mp4")
 
     ytdlp_cmd = [
         YTDLP_BIN,
         "--no-warnings",
         "--referer", "https://www.o9o.net/",
         "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "--paths", f"home:{task_tmp_dir}",
+        "--paths", f"temp:{task_tmp_dir}",
         "-o", temp_file,
         m3u8_url
     ]
@@ -219,8 +221,7 @@ def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
         p1 = subprocess.run(ytdlp_cmd, capture_output=True, text=True)
         if p1.returncode != 0 or not os.path.exists(temp_file) or os.path.getsize(temp_file) < 100000:
             print(f"    ❌ yt-dlp download failed or empty (code {p1.returncode}). Stderr: {p1.stderr.strip()}")
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+            shutil.rmtree(task_tmp_dir, ignore_errors=True)
             return False
 
         # File is 100% complete! Copy directly to Google Drive
@@ -236,17 +237,11 @@ def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
         if not success:
             print(f"    ❌ rclone upload failed (code {p2.returncode}). Stderr: {p2.stderr.strip()}")
 
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-
+        shutil.rmtree(task_tmp_dir, ignore_errors=True)
         return success
     except Exception as e:
         print(f"    ❌ Staging upload failed: {e}")
-        if os.path.exists(temp_file):
-            try:
-                os.remove(temp_file)
-            except Exception:
-                pass
+        shutil.rmtree(task_tmp_dir, ignore_errors=True)
         return False
 
 def process_single_video(item_info):
