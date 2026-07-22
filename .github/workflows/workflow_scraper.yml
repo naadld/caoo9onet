@@ -11,6 +11,10 @@ on:
         required: true
         default: '5'
 
+concurrency:
+  group: abeka-scraper-single-run
+  cancel-in-progress: false
+
 jobs:
   scrape_and_sync:
     runs-on: ubuntu-latest
