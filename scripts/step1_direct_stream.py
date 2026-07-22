@@ -280,7 +280,9 @@ def process_single_video(item_info):
             save_database(actual_g_name, db)
             
         success = direct_stream_to_gdrive(link, gdrive_rel_path)
-        now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+        from datetime import datetime, timezone, timedelta
+        vn_tz = timezone(timedelta(hours=7))
+        now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
         if success:
             with gdrive_index_lock:
                 gdrive_index[gdrive_rel_path.lower()] = 999999999
