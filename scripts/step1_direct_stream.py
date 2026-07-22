@@ -63,8 +63,8 @@ def log_to_google_doc(entry_text):
         with open(creds_path, 'r', encoding='utf-8') as f:
             info = json.load(f)
 
-        if "private_key" in info and "\\n" in info["private_key"]:
-            info["private_key"] = info["private_key"].replace("\\n", "\n")
+        if "private_key" in info:
+            info["private_key"] = str(info["private_key"]).replace("\\n", "\n").replace("\r", "")
 
         creds = service_account.Credentials.from_service_account_info(
             info,
