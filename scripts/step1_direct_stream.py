@@ -44,7 +44,7 @@ YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 TARGET_PAIRS = [
-    ["Grade 4"]
+    ["Grade 5"]
 ]
 
 def log_to_google_doc(entry_text):
@@ -432,11 +432,11 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
                             "gdrive_rel_path": gdrive_rel_path
                         })
 
-                # 2. Process tasks concurrently with ThreadPoolExecutor (max_workers=2)
+                # 2. Process tasks concurrently with ThreadPoolExecutor (max_workers=5)
                 day_success = True
                 if day_tasks:
-                    print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 2 parallel streams)...")
-                    with ThreadPoolExecutor(max_workers=2) as executor:
+                    print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 5 parallel streams)...")
+                    with ThreadPoolExecutor(max_workers=5) as executor:
                         futures = {executor.submit(process_single_video, t): t for t in day_tasks}
                         for future in as_completed(futures):
                             res = future.result()

@@ -67,5 +67,5 @@ jobs:
       - name: Generate AI Subtitles & Interactive JSON (Step 4)
         run: |
           pip install faster-whisper eng-to-ipa deep-translator
-          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 4"
+          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 5"
 
