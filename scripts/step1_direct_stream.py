@@ -80,6 +80,48 @@ def log_to_google_doc(entry_text):
     except Exception as e:
         print(f"⚠️ Doc Logger Warning: {e}")
 
+GDRIVE_LOCK_PATH = f"{REMOTE_BASE}.scraper_lock"
+
+def check_and_acquire_gdrive_lock():
+    try:
+        res = subprocess.run(
+            [RCLONE_BIN, "--config", RCLONE_CONF, "cat", GDRIVE_LOCK_PATH],
+            capture_output=True, text=True, timeout=15
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            try:
+                lock_time = float(res.stdout.strip())
+                age_seconds = time.time() - lock_time
+                if age_seconds < 2700: # Fresh lock (< 45 mins)
+                    print("=" * 60)
+                    print(f"⚠️ Another Cloud Scraper instance is currently actively streaming on GDrive (Lock age: {age_seconds/60:.1f} mins).")
+                    print("🚀 SKIPPING Step 1 immediately so only 1 scraping job runs. Subsequent indexer & dashboard steps will continue.")
+                    print("=" * 60)
+                    sys.exit(0)
+                else:
+                    print(f"ℹ️ Stale GDrive lock detected ({age_seconds/3600:.1f} hours old). Overwriting lock...")
+            except ValueError:
+                pass
+    except Exception as e:
+        print(f"⚠️ Lock check warning: {e}")
+
+    try:
+        p = subprocess.Popen([RCLONE_BIN, "--config", RCLONE_CONF, "rcat", GDRIVE_LOCK_PATH], stdin=subprocess.PIPE)
+        p.communicate(input=str(time.time()).encode("utf-8"))
+        print("🔒 GDrive distributed scraper lock acquired.")
+    except Exception as e:
+        print(f"⚠️ Lock creation warning: {e}")
+
+def release_gdrive_lock():
+    try:
+        subprocess.run(
+            [RCLONE_BIN, "--config", RCLONE_CONF, "deletefile", GDRIVE_LOCK_PATH],
+            capture_output=True, timeout=15
+        )
+        print("🔓 GDrive distributed scraper lock released.")
+    except Exception as e:
+        print(f"⚠️ Lock release warning: {e}")
+
 # Threading locks for synchronization
 db_lock = threading.Lock()
 gdrive_index_lock = threading.Lock()
@@ -267,10 +309,12 @@ def process_single_video(item_info):
 
 def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="SongSong"):
     global gdrive_index
-    print("=" * 60)
-    print(f"🚀 O9O.NET DIRECT PIPE STREAMING DOWNLOADER (Grade 2 & Grade 5 Top Priority - 2 Parallel Streams)")
-    print(f"Target GDrive Remote: {REMOTE_BASE}")
-    print("=" * 60)
+    check_and_acquire_gdrive_lock()
+    try:
+        print("=" * 60)
+        print(f"🚀 O9O.NET DIRECT PIPE STREAMING DOWNLOADER (Grade 2 & Grade 5 Top Priority - 2 Parallel Streams)")
+        print(f"Target GDrive Remote: {REMOTE_BASE}")
+        print("=" * 60)
 
     gdrive_index = fetch_live_gdrive_index()
 
@@ -384,6 +428,8 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
                 print(f"\n⚠️ Day {day} had stream errors. Will retry next run.")
 
     print("\n🎉 Completed processing all grade pairs!")
+    finally:
+        release_gdrive_lock()
 
 def main():
     parser = argparse.ArgumentParser(description="Direct Pipe Streaming Downloader for Abeka Videos.")
