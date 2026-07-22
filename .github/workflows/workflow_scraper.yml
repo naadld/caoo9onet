@@ -2,8 +2,8 @@ name: Abeka Video Scraper Online (Serverless)
 
 on:
   schedule:
-    # Run once daily at 01:00 UTC (08:00 AM VN time) or customizable
-    - cron: '0 1 * * *'
+    # Run every 3 hours automatically
+    - cron: '0 */3 * * *'
   workflow_dispatch:
     inputs:
       max_days:
@@ -53,7 +53,7 @@ jobs:
         run: |
           # Use manual input or default to 5 days
           MAX_DAYS="${{ github.event.inputs.max_days || '5' }}"
-          python3 scripts/step1_direct_stream.py --grade2-5-only --max-days "$MAX_DAYS"
+          python3 scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
 
       - name: Run Web Player Link Indexer (Step 2)
         run: |

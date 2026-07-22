@@ -44,10 +44,41 @@ YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 TARGET_PAIRS = [
     ["Grade 2", "Grade 5"],
+    ["K4", "K5"],
     ["Grade 1", "Grade 4"],
     ["Grade 3", "Grade 6"],
-    ["K5"]
+    ["Grade 7", "Grade 8"],
+    ["Grade 9", "Grade 10"],
+    ["Grade 11", "Grade 12"]
 ]
+
+def log_to_google_doc(entry_text):
+    try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+
+        creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
+        if not os.path.exists(creds_path):
+            return
+        creds = service_account.Credentials.from_service_account_file(
+            creds_path,
+            scopes=['https://www.googleapis.com/auth/documents']
+        )
+        docs_service = build('docs', 'v1', credentials=creds)
+        doc_id = '1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw'
+
+        doc = docs_service.documents().get(documentId=doc_id).execute()
+        end_index = doc.get('body').get('content')[-1].get('endIndex') - 1
+
+        requests = [{
+            'insertText': {
+                'location': {'index': end_index},
+                'text': f'{entry_text}\n'
+            }
+        }]
+        docs_service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+    except Exception as e:
+        print(f"⚠️ Doc Logger Warning: {e}")
 
 # Threading locks for synchronization
 db_lock = threading.Lock()
@@ -211,9 +242,13 @@ def process_single_video(item_info):
             save_database(actual_g_name, db)
             
         success = direct_stream_to_gdrive(link, gdrive_rel_path)
+        now_str = time.strftime("%Y-%m-%d %H:%M:%S")
         if success:
             with gdrive_index_lock:
                 gdrive_index[gdrive_rel_path.lower()] = 999999999
+            log_to_google_doc(f"{now_str}: Hoàn thành {actual_g_name}, {day}, {subject}")
+        else:
+            log_to_google_doc(f"{now_str}: Lỗi cào video {subject} ({actual_g_name}, {day})")
                 
     if success:
         db = load_database(actual_g_name)
