@@ -1,25 +1,18 @@
-name: 1. Abeka Video Scraper & GDrive Streamer
+name: 4. Abeka Subtitle & Interactive JSON Generator
 
 on:
-  schedule:
-    # Run every 3 hours automatically
-    - cron: '0 */3 * * *'
   workflow_dispatch:
     inputs:
-      max_days:
-        description: 'Maximum days to process'
+      target_folder:
+        description: 'Google Drive folder to target'
         required: true
-        default: '5'
-
-concurrency:
-  group: abeka-scraper-stream-group
-  cancel-in-progress: false
+        default: 'Grade 4'
 
 jobs:
-  scrape_and_stream:
-    name: Scrape o9o Videos & Stream to GDrive
+  generate_subtitles:
+    name: Generate Subtitles & Interactive JSON for Abeka Videos
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       PYTHONUNBUFFERED: "1"
       PYTHONPATH: "."
@@ -37,7 +30,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install beautifulsoup4 gspread oauth2client yt-dlp google-api-python-client google-auth
+          pip install beautifulsoup4 gspread oauth2client google-api-python-client google-auth faster-whisper eng-to-ipa deep-translator
 
       - name: Install Rclone & FFmpeg
         run: |
@@ -57,13 +50,7 @@ jobs:
           ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
           EOF
 
-      - name: Run Scraper & Stream to GDrive (Step 1)
+      - name: Run Subtitle Generator (Step 4)
         run: |
-          MAX_DAYS="${{ github.event.inputs.max_days || '5' }}"
-          python3 -u scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
-
-      - name: Generate AI Subtitles & Interactive JSON (Step 4)
-        run: |
-          pip install faster-whisper eng-to-ipa deep-translator
-          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 4"
-
+          FOLDER="${{ github.event.inputs.target_folder || 'Grade 4' }}"
+          python3 -u scripts/step4_generate_subtitles.py --folder "$FOLDER"
