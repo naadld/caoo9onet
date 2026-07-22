@@ -316,118 +316,118 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
         print(f"Target GDrive Remote: {REMOTE_BASE}")
         print("=" * 60)
 
-    gdrive_index = fetch_live_gdrive_index()
+        gdrive_index = fetch_live_gdrive_index()
 
-    print("\n1. Accessing main menu to map grades...")
-    html = fetch(BASE_URL)
-    soup = BeautifulSoup(html, 'html.parser')
-    menu = soup.find('ul', id='menu-menu')
-    
-    all_grade_links = {}
-    if menu:
-        for a in menu.find_all('a'):
-            name = a.text.strip()
-            if "Home" not in name:
-                all_grade_links[name] = a['href']
-                
-    print("2. Mapping lesson days for grade pairs...")
-    grade_days_map = {}
-    for pair in pairs_to_run:
-        for g_name_short in pair:
-            actual_g_name = next((k for k in all_grade_links.keys() if g_name_short.lower() in k.lower()), None)
-            if not actual_g_name or actual_g_name in grade_days_map:
-                continue
-                
-            grade_days_map[actual_g_name] = {}
-            g_html = fetch(all_grade_links[actual_g_name])
-            g_soup = BeautifulSoup(g_html, 'html.parser')
-            lichhoc = g_soup.find('ul', class_='lichhoc')
-            if lichhoc:
-                for lesson in lichhoc.find_all('a'):
-                    grade_days_map[actual_g_name][lesson.text.strip()] = lesson['href']
-
-    progress = load_progress(script_id)
-    start_pair_idx = progress.get("pair_idx", 0)
-    start_day_num = progress.get("day_num", 1)
-
-    print(f"\n[SYSTEM] Resuming from PAIR {start_pair_idx + 1}, DAY {start_day_num:03d}")
-
-    processed_days_count = 0
-    for p_idx in range(start_pair_idx, len(pairs_to_run)):
-        pair = pairs_to_run[p_idx]
-        print(f"\n{'#'*60}\nPROCESSING PAIR: {' & '.join(pair)}\n{'#'*60}")
-
-        current_start_day = start_day_num if p_idx == start_pair_idx else 1
-
-        for day_num in range(current_start_day, 171):
-            if max_days and processed_days_count >= max_days:
-                print(f"\n✋ Reached max_days limit ({max_days}). Stopping Step 1.")
-                return
-
-            day = f"{day_num:03d}"
-            print(f"\n{'='*50}\nPROCESSING DAY: {day}\n{'='*50}")
-
-            day_tasks = []
-
-            # 1. Gather all tasks for this day across both grades
-            for g_name_short in pair:
-                actual_g_name = next((k for k in grade_days_map.keys() if g_name_short.lower() in k.lower()), None)
-                if not actual_g_name:
-                    continue
-
-                day_url = grade_days_map[actual_g_name].get(day)
-                if not day_url:
-                    continue
-
-                print(f"---> [{actual_g_name}] Fetching Day {day} playlist...")
-                l_html = fetch(day_url)
-                data_match = re.search(r'const playlistData = (\[.*?\]);', l_html, re.DOTALL)
-                if not data_match:
-                    continue
-
-                try:
-                    playlist = json.loads(data_match.group(1))
-                except Exception:
-                    continue
-
-                for item in playlist:
-                    subject = item.get('title', 'Unknown')
-                    safe_subject = subject.replace('/', '-').replace(':', '').replace('?', '')
-                    link = item.get('file', '')
-                    if link.startswith('/'):
-                        link = BASE_URL + link
-
-                    file_name = f"{actual_g_name} - {day} - {safe_subject}.mp4"
-                    gdrive_rel_path = f"{actual_g_name}/Ngày {day}/{safe_subject}/{file_name}"
+        print("\n1. Accessing main menu to map grades...")
+        html = fetch(BASE_URL)
+        soup = BeautifulSoup(html, 'html.parser')
+        menu = soup.find('ul', id='menu-menu')
+        
+        all_grade_links = {}
+        if menu:
+            for a in menu.find_all('a'):
+                name = a.text.strip()
+                if "Home" not in name:
+                    all_grade_links[name] = a['href']
                     
-                    day_tasks.append({
-                        "actual_g_name": actual_g_name,
-                        "day": day,
-                        "subject": subject,
-                        "link": link,
-                        "gdrive_rel_path": gdrive_rel_path
-                    })
+        print("2. Mapping lesson days for grade pairs...")
+        grade_days_map = {}
+        for pair in pairs_to_run:
+            for g_name_short in pair:
+                actual_g_name = next((k for k in all_grade_links.keys() if g_name_short.lower() in k.lower()), None)
+                if not actual_g_name or actual_g_name in grade_days_map:
+                    continue
+                    
+                grade_days_map[actual_g_name] = {}
+                g_html = fetch(all_grade_links[actual_g_name])
+                g_soup = BeautifulSoup(g_html, 'html.parser')
+                lichhoc = g_soup.find('ul', class_='lichhoc')
+                if lichhoc:
+                    for lesson in lichhoc.find_all('a'):
+                        grade_days_map[actual_g_name][lesson.text.strip()] = lesson['href']
 
-            # 2. Process tasks concurrently with ThreadPoolExecutor (max_workers=2)
-            day_success = True
-            if day_tasks:
-                print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 2 parallel streams)...")
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    futures = {executor.submit(process_single_video, t): t for t in day_tasks}
-                    for future in as_completed(futures):
-                        res = future.result()
-                        if not res:
-                            day_success = False
-            else:
-                print(f"ℹ️ No tasks to process for Day {day}.")
+        progress = load_progress(script_id)
+        start_pair_idx = progress.get("pair_idx", 0)
+        start_day_num = progress.get("day_num", 1)
 
-            if day_success:
-                save_progress(script_id, p_idx, day_num + 1)
-                processed_days_count += 1
-            else:
-                print(f"\n⚠️ Day {day} had stream errors. Will retry next run.")
+        print(f"\n[SYSTEM] Resuming from PAIR {start_pair_idx + 1}, DAY {start_day_num:03d}")
 
-    print("\n🎉 Completed processing all grade pairs!")
+        processed_days_count = 0
+        for p_idx in range(start_pair_idx, len(pairs_to_run)):
+            pair = pairs_to_run[p_idx]
+            print(f"\n{'#'*60}\nPROCESSING PAIR: {' & '.join(pair)}\n{'#'*60}")
+
+            current_start_day = start_day_num if p_idx == start_pair_idx else 1
+
+            for day_num in range(current_start_day, 171):
+                if max_days and processed_days_count >= max_days:
+                    print(f"\n✋ Reached max_days limit ({max_days}). Stopping Step 1.")
+                    return
+
+                day = f"{day_num:03d}"
+                print(f"\n{'='*50}\nPROCESSING DAY: {day}\n{'='*50}")
+
+                day_tasks = []
+
+                # 1. Gather all tasks for this day across both grades
+                for g_name_short in pair:
+                    actual_g_name = next((k for k in grade_days_map.keys() if g_name_short.lower() in k.lower()), None)
+                    if not actual_g_name:
+                        continue
+
+                    day_url = grade_days_map[actual_g_name].get(day)
+                    if not day_url:
+                        continue
+
+                    print(f"---> [{actual_g_name}] Fetching Day {day} playlist...")
+                    l_html = fetch(day_url)
+                    data_match = re.search(r'const playlistData = (\[.*?\]);', l_html, re.DOTALL)
+                    if not data_match:
+                        continue
+
+                    try:
+                        playlist = json.loads(data_match.group(1))
+                    except Exception:
+                        continue
+
+                    for item in playlist:
+                        subject = item.get('title', 'Unknown')
+                        safe_subject = subject.replace('/', '-').replace(':', '').replace('?', '')
+                        link = item.get('file', '')
+                        if link.startswith('/'):
+                            link = BASE_URL + link
+
+                        file_name = f"{actual_g_name} - {day} - {safe_subject}.mp4"
+                        gdrive_rel_path = f"{actual_g_name}/Ngày {day}/{safe_subject}/{file_name}"
+                        
+                        day_tasks.append({
+                            "actual_g_name": actual_g_name,
+                            "day": day,
+                            "subject": subject,
+                            "link": link,
+                            "gdrive_rel_path": gdrive_rel_path
+                        })
+
+                # 2. Process tasks concurrently with ThreadPoolExecutor (max_workers=2)
+                day_success = True
+                if day_tasks:
+                    print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 2 parallel streams)...")
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        futures = {executor.submit(process_single_video, t): t for t in day_tasks}
+                        for future in as_completed(futures):
+                            res = future.result()
+                            if not res:
+                                day_success = False
+                else:
+                    print(f"ℹ️ No tasks to process for Day {day}.")
+
+                if day_success:
+                    save_progress(script_id, p_idx, day_num + 1)
+                    processed_days_count += 1
+                else:
+                    print(f"\n⚠️ Day {day} had stream errors. Will retry next run.")
+
+        print("\n🎉 Completed processing all grade pairs!")
     finally:
         release_gdrive_lock()
 
