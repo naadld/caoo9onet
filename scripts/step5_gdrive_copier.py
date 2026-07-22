@@ -28,6 +28,15 @@ if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rc
 SPREADSHEET_ID = "1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8"
 DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
+def clean_private_key(info):
+    if "private_key" in info:
+        pk = str(info["private_key"]).strip()
+        pk = pk.replace("\\n", "\n").replace("\r", "")
+        while "\\n" in pk:
+            pk = pk.replace("\\n", "\n")
+        info["private_key"] = pk
+    return info
+
 def log_to_google_doc(entry_text):
     try:
         from google.oauth2 import service_account
@@ -43,8 +52,7 @@ def log_to_google_doc(entry_text):
         with open(creds_path, 'r', encoding='utf-8') as f:
             info = json.load(f)
 
-        if "private_key" in info:
-            info["private_key"] = str(info["private_key"]).replace("\\n", "\n").replace("\r", "")
+        info = clean_private_key(info)
 
         creds = service_account.Credentials.from_service_account_info(
             info,
@@ -88,8 +96,7 @@ def get_google_creds():
     if not info:
         raise RuntimeError("No Google Service Account credentials found.")
 
-    if "private_key" in info:
-        info["private_key"] = str(info["private_key"]).replace("\\n", "\n").replace("\r", "")
+    info = clean_private_key(info)
 
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
