@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Step 5: GDrive Copier with Status Tracking in Column D
+Step 5: GDrive Copier with Column D (Status), Column E (Source files #), Column F (Destination files #)
 Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8),
-extracts Source Folder (Column B), Target Folder (Column C), and Status (Column D).
-Skips rows already marked as completed, copies files via rclone copy,
-and updates Status in Column D upon completion.
+extracts Source Folder (Column B) and Target Folder (Column C).
+Copies files via rclone copy, verifies file counts in Source (Col E) vs Destination (Col F) to prevent missing files,
+and updates status in Column D upon completion.
 """
 
 import os
@@ -114,7 +114,7 @@ def fetch_copy_pairs_from_sheets():
     except Exception as e:
         print(f"⚠️ Could not fetch sheet metadata ({e}). Defaulting to 'Sheet1'...")
 
-    range_name = f"'{first_sheet_title}'!B2:D"
+    range_name = f"'{first_sheet_title}'!B2:F"
 
     result = sheets_service.spreadsheets().values().get(
         spreadsheetId=SPREADSHEET_ID,
@@ -130,6 +130,8 @@ def fetch_copy_pairs_from_sheets():
         src = row[0].strip()
         dst = row[1].strip()
         status = row[2].strip() if len(row) >= 3 else ""
+        src_files_count = row[3].strip() if len(row) >= 4 else ""
+        dst_files_count = row[4].strip() if len(row) >= 5 else ""
 
         if not src or not dst:
             continue
@@ -143,25 +145,28 @@ def fetch_copy_pairs_from_sheets():
             "sheet_title": first_sheet_title,
             "src": src,
             "dst": dst,
-            "status": status
+            "status": status,
+            "src_files_count": src_files_count,
+            "dst_files_count": dst_files_count
         })
 
     print(f"📊 Found {len(pairs)} folder copy pairs in Google Sheet.")
     return sheets_service, pairs
 
-def update_sheet_status(sheets_service, sheet_title, row_num, status_text):
+def update_sheet_row_details(sheets_service, sheet_title, row_num, status_text, src_count, dst_count):
+    """Updates Column D (Status), Column E (Source Files #), and Column F (Destination Files #)."""
     try:
-        range_name = f"'{sheet_title}'!D{row_num}"
-        body = {'values': [[status_text]]}
+        range_name = f"'{sheet_title}'!D{row_num}:F{row_num}"
+        body = {'values': [[status_text, src_count, dst_count]]}
         sheets_service.spreadsheets().values().update(
             spreadsheetId=SPREADSHEET_ID,
             range=range_name,
             valueInputOption='USER_ENTERED',
             body=body
         ).execute()
-        print(f"  📝 [Sheet Updated] Row {row_num} Column D -> '{status_text}'")
+        print(f"  📝 [Sheet Updated] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
     except Exception as e:
-        print(f"  ⚠️ Failed to update Sheet Column D status at row {row_num}: {e}")
+        print(f"  ⚠️ Failed to update Sheet Row {row_num} (Col D:F): {e}")
 
 def extract_folder_id(val):
     """Extracts folder ID if val is a Google Drive URL, otherwise returns val."""
@@ -177,6 +182,21 @@ def resolve_rclone_remote(folder_val):
     else:
         clean_path = folder_id_or_path.strip('/')
         return f"{REMOTE_BASE}{clean_path}"
+
+def count_remote_files(remote_path):
+    """Counts total files recursively in a remote path via rclone lsf."""
+    try:
+        cmd = [
+            RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "-R", "--files-only", remote_path
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if res.returncode == 0:
+            files = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+            return len(files)
+        return 0
+    except Exception as e:
+        print(f"  ⚠️ File counting warning for {remote_path}: {e}")
+        return 0
 
 def execute_copy(src_val, dst_val):
     src_remote = resolve_rclone_remote(src_val)
@@ -196,13 +216,13 @@ def execute_copy(src_val, dst_val):
         p = subprocess.run(cmd, capture_output=True, text=True)
         if p.returncode == 0:
             print("  ✅ Copy completed successfully.")
-            return True
+            return True, src_remote, dst_remote
         else:
             print(f"  ❌ Copy failed (code {p.returncode}): {p.stderr.strip()}")
-            return False
+            return False, src_remote, dst_remote
     except Exception as e:
         print(f"  ❌ Copy exception: {e}")
-        return False
+        return False, src_remote, dst_remote
 
 def is_already_completed(status_str):
     if not status_str:
@@ -212,7 +232,7 @@ def is_already_completed(status_str):
 
 def run_gdrive_copier():
     print("=" * 60)
-    print("🚀 STEP 5: GDRIVE COPIER (With Column D Status Tracking)")
+    print("🚀 STEP 5: GDRIVE COPIER (With Col D Status, Col E Src #, Col F Dst #)")
     print("=" * 60)
 
     try:
@@ -233,29 +253,57 @@ def run_gdrive_copier():
         row_num = item['row']
         sheet_title = item['sheet_title']
         status = item['status']
+        existing_src_c = item['src_files_count']
+        existing_dst_c = item['dst_files_count']
 
         print(f"\n[{idx}/{len(pairs)}] Checking Row {row_num} (Status: '{status}'):")
 
-        # Skip if already completed
-        if is_already_completed(status):
-            print(f"  ⏭️ Status is already completed ('{status}'). Skipping Row {row_num}.")
-            skipped_count += 1
-            continue
+        src_remote = resolve_rclone_remote(item['src'])
+        dst_remote = resolve_rclone_remote(item['dst'])
 
-        ok = execute_copy(item['src'], item['dst'])
+        # If marked completed, verify if file counts match
+        if is_already_completed(status):
+            if existing_src_c and existing_dst_c and existing_src_c == existing_dst_c:
+                print(f"  ⏭️ Row {row_num} already completed and file counts match ({existing_dst_c}/{existing_src_c}). Skipping.")
+                skipped_count += 1
+                continue
+            else:
+                # Count files to verify
+                src_c = count_remote_files(src_remote)
+                dst_c = count_remote_files(dst_remote)
+                update_sheet_row_details(sheets_service, sheet_title, row_num, status, src_c, dst_c)
+                if src_c > 0 and src_c == dst_c:
+                    print(f"  ⏭️ Row {row_num} verified match ({dst_c}/{src_c}). Skipping.")
+                    skipped_count += 1
+                    continue
+                else:
+                    print(f"  ⚠️ File count mismatch (Src: {src_c}, Dst: {dst_c}). Re-running copy...")
+
+        # Run copy operation
+        ok, src_remote, dst_remote = execute_copy(item['src'], item['dst'])
         
+        # Count files after copy operation
+        print("  📊 Counting files in Source and Destination to verify completion...")
+        src_c = count_remote_files(src_remote)
+        dst_c = count_remote_files(dst_remote)
+
         vn_tz = timezone(timedelta(hours=7))
         now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        if ok:
+        if ok and src_c == dst_c and src_c > 0:
             success_count += 1
             status_msg = f"Hoàn thành ({now_str})"
-            update_sheet_status(sheets_service, sheet_title, row_num, status_msg)
-            log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy từ [{item['src']}] sang [{item['dst']}]")
+            update_sheet_row_details(sheets_service, sheet_title, row_num, status_msg, src_c, dst_c)
+            log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy từ [{item['src']}] sang [{item['dst']}] (Đủ {dst_c}/{src_c} files)")
+        elif ok and src_c != dst_c:
+            fail_count += 1
+            status_msg = f"Lệch file ({dst_c}/{src_c}) ({now_str})"
+            update_sheet_row_details(sheets_service, sheet_title, row_num, status_msg, src_c, dst_c)
+            log_to_google_doc(f"{now_str}: ⚠️ Cảnh báo Step 5 Lệch file từ [{item['src']}] sang [{item['dst']}] (Đích: {dst_c} / Nguồn: {src_c})")
         else:
             fail_count += 1
             status_msg = f"Lỗi copy ({now_str})"
-            update_sheet_status(sheets_service, sheet_title, row_num, status_msg)
+            update_sheet_row_details(sheets_service, sheet_title, row_num, status_msg, src_c, dst_c)
             log_to_google_doc(f"{now_str}: Lỗi Step 5 Copy từ [{item['src']}] sang [{item['dst']}]")
 
     print("\n" + "=" * 60)
