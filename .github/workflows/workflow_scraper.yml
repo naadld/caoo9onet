@@ -1,0 +1,69 @@
+name: Abeka Video Scraper Online (Serverless)
+
+on:
+  schedule:
+    # Run once daily at 01:00 UTC (08:00 AM VN time) or customizable
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      max_days:
+        description: 'Maximum days to process'
+        required: true
+        default: '5'
+
+jobs:
+  scrape_and_sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install beautifulsoup4 gspread oauth2client yt-dlp google-api-python-client google-auth
+
+      - name: Install Rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONF_DATA }}" > ~/.config/rclone/rclone.conf
+
+      - name: Configure Google Credentials
+        run: |
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}" > credentials.json
+
+      - name: Run Scraper (Step 1)
+        env:
+          PYTHONPATH: .
+        run: |
+          # Use manual input or default to 5 days
+          MAX_DAYS="${{ github.event.inputs.max_days || '5' }}"
+          python3 scripts/step1_direct_stream.py --grade2-5-only --max-days "$MAX_DAYS"
+
+      - name: Run Web Player Link Indexer (Step 2)
+        run: |
+          python3 scripts/step2_link_database.py
+
+      - name: Sync HTML Dashboard directly to GDrive
+        run: |
+          python3 scripts/upload_to_gdrive.py
+
+      - name: Commit and Push Progress
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Automated Online Sync: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin main
