@@ -181,17 +181,16 @@ def main():
     try:
         res = subprocess.run(
             [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "--format", "ip", "-R", REMOTE_PATH],
-            capture_output=True,
-            check=True
+            capture_output=True, text=True, timeout=120
         )
-        lines = res.stdout.decode("utf-8").splitlines()
+        lines = res.stdout.splitlines()
         print(f"  Indexed {len(lines)} GDrive files.")
         for line in lines:
             if ";" in line:
                 file_id, rel_path = line.split(";", 1)
                 gdrive_map[normalize_path(rel_path)] = file_id
     except Exception as e:
-        print(f"❌ Failed to scan GDrive remote: {e}")
+        print(f"⚠️ GDrive remote index scan warning: {e}")
     
     # Generate updated HTML player
     generate_index_html(gdrive_map, "Google Drive Synced Dashboard")
