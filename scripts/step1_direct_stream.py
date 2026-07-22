@@ -43,7 +43,7 @@ YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 TARGET_PAIRS = [
-    ["Grade 4", "Grade 4"]
+    ["Grade 4"]
 ]
 
 def log_to_google_doc(entry_text):
