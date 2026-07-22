@@ -9,7 +9,7 @@ on:
       max_days:
         description: 'Maximum days to process'
         required: true
-        default: '5'
+        default: '170'
 
 concurrency:
   group: abeka-scraper-stream-group
@@ -61,7 +61,7 @@ jobs:
 
       - name: Run Scraper & Stream to GDrive (Step 1)
         run: |
-          MAX_DAYS="${{ github.event.inputs.max_days || '5' }}"
+          MAX_DAYS="${{ github.event.inputs.max_days || '170' }}"
           python3 -u scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
 
       - name: Generate AI Subtitles & Interactive JSON (Step 4)
