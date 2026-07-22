@@ -51,13 +51,14 @@ def log_to_google_doc(entry_text):
     try:
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
+        import google.auth.transport.requests
 
         creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
         if not os.path.exists(creds_path):
             return
         creds = service_account.Credentials.from_service_account_file(
             creds_path,
-            scopes=['https://www.googleapis.com/auth/documents']
+            scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
         )
         docs_service = build('docs', 'v1', credentials=creds)
         doc_id = '1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw'
@@ -73,7 +74,7 @@ def log_to_google_doc(entry_text):
         }]
         docs_service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
     except Exception as e:
-        print(f"⚠️ Doc Logger Warning: {e}")
+        pass
 
 GDRIVE_LOCK_PATH = f"{REMOTE_BASE}.scraper_lock"
 
