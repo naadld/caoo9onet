@@ -1,0 +1,72 @@
+name: 2. Web Player Indexer & GDrive Dashboard Sync
+
+on:
+  schedule:
+    # Run 15 mins past every 3 hours
+    - cron: '15 */3 * * *'
+  workflow_run:
+    workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: abeka-web-dashboard-sync-group
+  cancel-in-progress: false
+
+jobs:
+  build_and_sync_dashboard:
+    name: Index GDrive Files & Sync HTML Dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install beautifulsoup4 gspread oauth2client yt-dlp google-api-python-client google-auth
+
+      - name: Install Rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << 'EOF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          EOF
+
+      - name: Configure Google Credentials
+        run: |
+          cat << 'EOF' > credentials.json
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          EOF
+
+      - name: Run Web Player Link Indexer (Step 2)
+        run: |
+          python3 -u scripts/step2_link_database.py
+
+      - name: Sync HTML Dashboard directly to GDrive
+        run: |
+          python3 -u scripts/upload_to_gdrive.py
+
+      - name: Commit and Push Progress
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Automated Online Sync: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin main

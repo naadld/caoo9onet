@@ -1,4 +1,4 @@
-name: Fetch & Cache o9o Playlists
+name: 3. Fetch & Cache o9o Playlists
 
 on:
   schedule:
@@ -13,6 +13,8 @@ permissions:
 jobs:
   fetch-playlists:
     runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +30,7 @@ jobs:
         run: pip install requests
 
       - name: Fetch all playlists from o9o.net
-        run: python3 scripts/fetch_playlists.py
+        run: python3 -u scripts/fetch_playlists.py
 
       - name: Commit & Push playlist cache
         run: |

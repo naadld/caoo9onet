@@ -1,4 +1,4 @@
-name: Abeka Video Scraper Online (Serverless)
+name: 1. Abeka Video Scraper & GDrive Streamer
 
 on:
   schedule:
@@ -12,12 +12,17 @@ on:
         default: '5'
 
 concurrency:
-  group: abeka-scraper-single-run
+  group: abeka-scraper-stream-group
   cancel-in-progress: false
 
 jobs:
-  scrape_and_sync:
+  scrape_and_stream:
+    name: Scrape o9o Videos & Stream to GDrive
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -51,26 +56,7 @@ jobs:
           ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
           EOF
 
-      - name: Run Scraper (Step 1)
-        env:
-          PYTHONPATH: .
+      - name: Run Scraper & Stream to GDrive (Step 1)
         run: |
-          # Use manual input or default to 5 days
           MAX_DAYS="${{ github.event.inputs.max_days || '5' }}"
-          python3 scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
-
-      - name: Run Web Player Link Indexer (Step 2)
-        run: |
-          python3 scripts/step2_link_database.py
-
-      - name: Sync HTML Dashboard directly to GDrive
-        run: |
-          python3 scripts/upload_to_gdrive.py
-
-      - name: Commit and Push Progress
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff-index --quiet HEAD || git commit -m "Automated Online Sync: $(date +'%Y-%m-%d %H:%M:%S')"
-          git push origin main
+          python3 -u scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
