@@ -50,8 +50,19 @@ def upload_dashboard():
 
     creds = get_creds()
     if not creds:
-        print("❌ ERROR: Google Service Account credentials not found!")
-        return False
+        print("ℹ️ Service Account credentials not found. Falling back to rclone upload...")
+        import subprocess, shutil
+        rclone_bin = shutil.which("rclone") or "rclone"
+        rclone_conf = os.getenv("RCLONE_CONFIG") or "/home/vpsg24gb/.config/rclone/rclone.conf"
+        target_remote = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:index_songsong.html"
+        cmd = [rclone_bin, "--config", rclone_conf, "copyto", LOCAL_FILE, target_remote]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode == 0:
+            print("🎉 Dashboard successfully uploaded via rclone!")
+            return True
+        else:
+            print(f"❌ rclone upload failed: {res.stderr}")
+            return False
 
     try:
         service = build("drive", "v3", credentials=creds)
