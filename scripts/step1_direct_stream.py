@@ -112,7 +112,7 @@ def fetch_live_gdrive_index():
     g_files = {}  # path.lower() -> size in bytes
     try:
         res = subprocess.run(
-            [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "-R", "--format", "ps", "--separator", ";", GDrive_REMOTE],
+            [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "-R", "--format", "ps", "--separator", ";", REMOTE_BASE],
             capture_output=True, text=True, timeout=60
         )
         for line in res.stdout.splitlines():
@@ -141,7 +141,7 @@ def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
     
     rclone_cmd = [
         RCLONE_BIN, "--config", RCLONE_CONF, "rcat",
-        f"{GDrive_REMOTE}{gdrive_target_path}"
+        f"{REMOTE_BASE}{gdrive_target_path}"
     ]
     
     try:
