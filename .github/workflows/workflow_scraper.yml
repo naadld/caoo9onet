@@ -37,11 +37,15 @@ jobs:
       - name: Configure Rclone
         run: |
           mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONF_DATA }}" > ~/.config/rclone/rclone.conf
+          cat << 'EOF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          EOF
 
       - name: Configure Google Credentials
         run: |
-          echo "${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}" > credentials.json
+          cat << 'EOF' > credentials.json
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          EOF
 
       - name: Run Scraper (Step 1)
         env:
