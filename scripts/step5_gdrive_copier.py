@@ -4,12 +4,13 @@ Step 5: GDrive Copier with Column D (Status), Column E (Source files #), Column 
 Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8),
 extracts Source Folder (Column B) and Target Folder (Column C).
 Copies files via rclone copy, verifies file counts in Source (Col E) vs Destination (Col F) to prevent missing files,
-and updates status in Column D upon completion.
+and updates status in Column D upon completion. Includes rclone CSV fallback if Google Sheets API auth fails.
 """
 
 import os
 import sys
 import re
+import csv
 import json
 import time
 import shutil
@@ -74,7 +75,7 @@ def log_to_google_doc(entry_text):
         docs_service.documents().batchUpdate(documentId=DOC_ID, body={'requests': requests}).execute()
         print(f"📝 [Doc Log Success] {formatted_entry.strip()}")
     except Exception as e:
-        print(f"⚠️ Doc Logger Error: {e}")
+        print(f"⚠️ Doc Logger Warning: {e}")
 
 def get_google_creds():
     from google.oauth2 import service_account
@@ -85,13 +86,14 @@ def get_google_creds():
     info = None
     if env_creds:
         try:
-            info = json.loads(env_creds)
+            info = json.loads(env_creds, strict=False)
         except Exception:
             pass
 
     if not info and os.path.exists(creds_path):
         with open(creds_path, 'r', encoding='utf-8') as f:
-            info = json.load(f)
+            content = f.read()
+            info = json.loads(content, strict=False)
 
     if not info:
         raise RuntimeError("No Google Service Account credentials found.")
@@ -104,64 +106,122 @@ def get_google_creds():
     ]
     return service_account.Credentials.from_service_account_info(info, scopes=scopes)
 
-def fetch_copy_pairs_from_sheets():
-    from googleapiclient.discovery import build
+def fetch_copy_pairs_via_rclone():
+    print("🔄 Attempting rclone Google Sheet export fallback...")
+    tmp_csv = os.path.join(BASE_DIR, ".tmp_sheet_copy.csv")
+    cmd = [
+        RCLONE_BIN, "--config", RCLONE_CONF, "copyto",
+        "--drive-export-formats", "csv",
+        f"vpsg24gb.aleron,root_folder_id={SPREADSHEET_ID}:",
+        tmp_csv
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0 or not os.path.exists(tmp_csv):
+        print(f"❌ Rclone sheet export fallback failed: {res.stderr.strip()}")
+        return None, []
 
-    creds = get_google_creds()
-    sheets_service = build('sheets', 'v4', credentials=creds)
-
-    print(f"📖 Reading Google Sheet (ID: {SPREADSHEET_ID})...")
-    
-    first_sheet_title = "Sheet1"
-    try:
-        sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
-        sheets = sheet_metadata.get('sheets', [])
-        if sheets:
-            first_sheet_title = sheets[0]['properties']['title']
-    except Exception as e:
-        print(f"⚠️ Could not fetch sheet metadata ({e}). Defaulting to 'Sheet1'...")
-
-    range_name = f"'{first_sheet_title}'!B2:F"
-
-    result = sheets_service.spreadsheets().values().get(
-        spreadsheetId=SPREADSHEET_ID,
-        range=range_name
-    ).execute()
-
-    rows = result.get('values', [])
     pairs = []
+    try:
+        with open(tmp_csv, 'r', encoding='utf-8-sig') as f:
+            reader = csv.reader(f)
+            for idx, row in enumerate(reader, start=1):
+                if not row or len(row) < 3:
+                    continue
+                src = row[1].strip()  # Col B
+                dst = row[2].strip()  # Col C
+                status = row[3].strip() if len(row) >= 4 else ""
+                src_files_count = row[4].strip() if len(row) >= 5 else ""
+                dst_files_count = row[5].strip() if len(row) >= 6 else ""
 
-    for idx, row in enumerate(rows, start=2):
-        if not row or len(row) < 2:
-            continue
-        src = row[0].strip()
-        dst = row[1].strip()
-        status = row[2].strip() if len(row) >= 3 else ""
-        src_files_count = row[3].strip() if len(row) >= 4 else ""
-        dst_files_count = row[4].strip() if len(row) >= 5 else ""
+                if not src or not dst:
+                    continue
+                if src.lower() in ["folder gốc", "source", "folder goc", "nội dung gốc"]:
+                    continue
 
-        if not src or not dst:
-            continue
-            
-        # Ignore header row
-        if src.lower() in ["folder gốc", "source", "folder goc", "nội dung gốc"] or dst.lower() in ["folder đích", "target", "destination", "folder dich"]:
-            continue
+                pairs.append({
+                    "row": idx,
+                    "sheet_title": "Sheet1",
+                    "src": src,
+                    "dst": dst,
+                    "status": status,
+                    "src_files_count": src_files_count,
+                    "dst_files_count": dst_files_count
+                })
+        print(f"📊 [Rclone Fallback] Found {len(pairs)} folder copy pairs in exported CSV.")
+    except Exception as e:
+        print(f"❌ Error parsing exported CSV: {e}")
+    finally:
+        if os.path.exists(tmp_csv):
+            os.remove(tmp_csv)
 
-        pairs.append({
-            "row": idx,
-            "sheet_title": first_sheet_title,
-            "src": src,
-            "dst": dst,
-            "status": status,
-            "src_files_count": src_files_count,
-            "dst_files_count": dst_files_count
-        })
+    return None, pairs
 
-    print(f"📊 Found {len(pairs)} folder copy pairs in Google Sheet.")
-    return sheets_service, pairs
+def fetch_copy_pairs_from_sheets():
+    try:
+        from googleapiclient.discovery import build
+
+        creds = get_google_creds()
+        sheets_service = build('sheets', 'v4', credentials=creds)
+
+        print(f"📖 Reading Google Sheet via API (ID: {SPREADSHEET_ID})...")
+        
+        first_sheet_title = "Sheet1"
+        try:
+            sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+            sheets = sheet_metadata.get('sheets', [])
+            if sheets:
+                first_sheet_title = sheets[0]['properties']['title']
+        except Exception as e:
+            print(f"⚠️ Could not fetch sheet metadata ({e}). Defaulting to 'Sheet1'...")
+
+        range_name = f"'{first_sheet_title}'!B2:F"
+
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=range_name
+        ).execute()
+
+        rows = result.get('values', [])
+        pairs = []
+
+        for idx, row in enumerate(rows, start=2):
+            if not row or len(row) < 2:
+                continue
+            src = row[0].strip()
+            dst = row[1].strip()
+            status = row[2].strip() if len(row) >= 3 else ""
+            src_files_count = row[3].strip() if len(row) >= 4 else ""
+            dst_files_count = row[4].strip() if len(row) >= 5 else ""
+
+            if not src or not dst:
+                continue
+                
+            # Ignore header row
+            if src.lower() in ["folder gốc", "source", "folder goc", "nội dung gốc"] or dst.lower() in ["folder đích", "target", "destination", "folder dich"]:
+                continue
+
+            pairs.append({
+                "row": idx,
+                "sheet_title": first_sheet_title,
+                "src": src,
+                "dst": dst,
+                "status": status,
+                "src_files_count": src_files_count,
+                "dst_files_count": dst_files_count
+            })
+
+        print(f"📊 Found {len(pairs)} folder copy pairs in Google Sheet.")
+        return sheets_service, pairs
+    except Exception as e:
+        print(f"⚠️ Google Sheets API read warning ({e}). Trying rclone fallback...")
+        return fetch_copy_pairs_via_rclone()
 
 def update_sheet_row_details(sheets_service, sheet_title, row_num, status_text, src_count, dst_count):
     """Updates Column D (Status), Column E (Source Files #), and Column F (Destination Files #)."""
+    if not sheets_service:
+        print(f"  📝 [Status Summary] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
+        return
+
     try:
         range_name = f"'{sheet_title}'!D{row_num}:F{row_num}"
         body = {'values': [[status_text, src_count, dst_count]]}
