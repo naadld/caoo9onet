@@ -39,8 +39,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install beautifulsoup4 gspread oauth2client yt-dlp google-api-python-client google-auth
 
-      - name: Install Rclone
+      - name: Install Rclone & FFmpeg
         run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
           curl https://rclone.org/install.sh | sudo bash
 
       - name: Configure Rclone
