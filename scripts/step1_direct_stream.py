@@ -308,7 +308,7 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
     check_and_acquire_gdrive_lock()
     try:
         print("=" * 60)
-        print(f"🚀 O9O.NET DIRECT PIPE STREAMING DOWNLOADER (Grade 2 & Grade 5 Top Priority - 2 Parallel Streams)")
+        print(f"🚀 O9O.NET DIRECT PIPE STREAMING DOWNLOADER (Active Pairs: {pairs_to_run})")
         print(f"Target GDrive Remote: {REMOTE_BASE}")
         print("=" * 60)
 
