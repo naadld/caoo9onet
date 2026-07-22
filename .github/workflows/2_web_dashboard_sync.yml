@@ -71,5 +71,9 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           rm -f credentials.json
           git add index_songsong.html database_*.json progress_*.json .gitignore 2>/dev/null || true
-          git diff-index --quiet HEAD || git commit -m "Automated Online Sync: $(date +'%Y-%m-%d %H:%M:%S')"
-          git push origin main
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Automated Online Sync: $(date +'%Y-%m-%d %H:%M:%S')"
+            git push origin main
+          else
+            echo "ℹ️ No changes to commit."
+          fi
