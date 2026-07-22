@@ -11,6 +11,7 @@ import sys
 import re
 import json
 import time
+import uuid
 import urllib.request
 import subprocess
 import argparse
@@ -199,39 +200,53 @@ def fetch_live_gdrive_index():
     return g_files
 
 def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
+    # Ensure zero empty folders are created on Google Drive if stream fails.
+    # Download to temporary staging file first, verify 100% completion, then copy to Google Drive.
+    temp_dir = os.path.join(BASE_DIR, ".tmp_stream")
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_file = os.path.join(temp_dir, f"tmp_{uuid.uuid4().hex}.mp4")
+
     ytdlp_cmd = [
         YTDLP_BIN,
         "--no-warnings",
         "--referer", "https://www.o9o.net/",
         "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "-o", "-",
+        "-o", temp_file,
         m3u8_url
     ]
-    
-    rclone_cmd = [
-        RCLONE_BIN, "--config", RCLONE_CONF, "rcat",
-        f"{REMOTE_BASE}{gdrive_target_path}"
-    ]
-    
+
     try:
-        p1 = subprocess.Popen(ytdlp_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p2 = subprocess.Popen(rclone_cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p1.stdout.close()
-        
-        out2, err2 = p2.communicate()
-        out1, err1 = p1.communicate()
-        
-        success1 = (p1.returncode == 0)
-        success2 = (p2.returncode == 0)
-        
-        if not success1:
-            print(f"    ❌ yt-dlp failed (code {p1.returncode}). Stderr: {err1.decode('utf-8', errors='ignore').strip()}")
-        if not success2:
-            print(f"    ❌ rclone failed (code {p2.returncode}). Stderr: {err2.decode('utf-8', errors='ignore').strip()}")
-            
-        return success1 and success2
+        p1 = subprocess.run(ytdlp_cmd, capture_output=True, text=True)
+        if p1.returncode != 0 or not os.path.exists(temp_file) or os.path.getsize(temp_file) < 100000:
+            print(f"    ❌ yt-dlp download failed or empty (code {p1.returncode}). Stderr: {p1.stderr.strip()}")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            return False
+
+        # File is 100% complete! Copy directly to Google Drive
+        rclone_cmd = [
+            RCLONE_BIN, "--config", RCLONE_CONF, "copyto",
+            temp_file,
+            f"{REMOTE_BASE}{gdrive_target_path}"
+        ]
+
+        p2 = subprocess.run(rclone_cmd, capture_output=True, text=True)
+        success = (p2.returncode == 0)
+
+        if not success:
+            print(f"    ❌ rclone upload failed (code {p2.returncode}). Stderr: {p2.stderr.strip()}")
+
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+
+        return success
     except Exception as e:
-        print(f"    ❌ Pipe streaming failed: {e}")
+        print(f"    ❌ Staging upload failed: {e}")
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except Exception:
+                pass
         return False
 
 def process_single_video(item_info):
