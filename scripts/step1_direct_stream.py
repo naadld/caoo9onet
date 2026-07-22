@@ -57,14 +57,24 @@ def log_to_google_doc(entry_text):
     try:
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
-        import google.auth.transport.requests
+        from datetime import datetime, timezone, timedelta
+
+        vn_tz = timezone(timedelta(hours=7))
+        now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
 
         creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
         if not os.path.exists(creds_path):
             return
-        creds = service_account.Credentials.from_service_account_file(
-            creds_path,
-            scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
+
+        with open(creds_path, 'r', encoding='utf-8') as f:
+            info = json.load(f)
+
+        if "private_key" in info and "\\n" in info["private_key"]:
+            info["private_key"] = info["private_key"].replace("\\n", "\n")
+
+        creds = service_account.Credentials.from_service_account_info(
+            info,
+            scopes=['https://www.googleapis.com/auth/documents']
         )
         docs_service = build('docs', 'v1', credentials=creds)
         doc_id = '1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw'
@@ -72,15 +82,18 @@ def log_to_google_doc(entry_text):
         doc = docs_service.documents().get(documentId=doc_id).execute()
         end_index = doc.get('body').get('content')[-1].get('endIndex') - 1
 
+        formatted_entry = f"{now_str}: {entry_text}\n"
+
         requests = [{
             'insertText': {
                 'location': {'index': end_index},
-                'text': f'{entry_text}\n'
+                'text': formatted_entry
             }
         }]
         docs_service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+        print(f"📝 [Doc Log Success] {formatted_entry.strip()}")
     except Exception as e:
-        pass
+        print(f"⚠️ Doc Logger Error: {e}")
 
 GDRIVE_LOCK_PATH = f"{REMOTE_BASE}.scraper_lock"
 
