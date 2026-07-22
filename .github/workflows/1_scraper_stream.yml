@@ -2,8 +2,8 @@ name: 1. Abeka Video Scraper & GDrive Streamer
 
 on:
   schedule:
-    # Run every 3 hours automatically
-    - cron: '0 */3 * * *'
+    # Run every hour at minute 15
+    - cron: '15 * * * *'
   workflow_dispatch:
     inputs:
       max_days:
