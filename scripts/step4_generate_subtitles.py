@@ -21,7 +21,9 @@ from datetime import datetime, timezone, timedelta
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 RCLONE_BIN = shutil.which("rclone") or "rclone"
-RCLONE_CONF = os.getenv("RCLONE_CONFIG") or "/home/vpsg24gb/.config/rclone/rclone.conf"
+RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")
+if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rclone/rclone.conf"):
+    RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
 FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
 
 TARGET_PAIRS = [
