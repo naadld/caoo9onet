@@ -21,6 +21,8 @@ def get_creds():
     if env_creds:
         try:
             info = json.loads(env_creds)
+            if "private_key" in info:
+                info["private_key"] = str(info["private_key"]).replace("\\n", "\n").replace("\r", "")
             return Credentials.from_service_account_info(
                 info,
                 scopes=["https://www.googleapis.com/auth/drive"]
