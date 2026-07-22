@@ -207,7 +207,9 @@ def fetch_live_gdrive_index():
 def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
     ytdlp_cmd = [
         YTDLP_BIN,
-        "--add-header", f"Referer:{BASE_URL}/",
+        "--no-warnings",
+        "--referer", "https://www.o9o.net/",
+        "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "-o", "-",
         m3u8_url
     ]
