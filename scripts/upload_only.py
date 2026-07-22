@@ -100,7 +100,7 @@ def main():
         
         # 2. Run Rclone move to sync and delete source files
         cmd_upload = [
-            "/home/vpsg24gb/bin/rclone", "move",
+            "/home/vpsg24gb/bin/rclone", "copy",
             "/media/vpsg24gb/DATA1/o9o/Video Processing/tmt/",
             REMOTE,
             "--verbose"

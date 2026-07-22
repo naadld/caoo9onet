@@ -94,7 +94,7 @@ def download_and_upload(grade, lesson_code, video_title, m3u8_url, remote, downl
     # 2. Upload to Google Drive via rclone
     print(f"  📤 Uploading to Google Drive: {gdrive_path}")
     rclone_cmd = [
-        "/home/vpsg24gb/bin/rclone", "move", local_mp4, gdrive_path,
+        "/home/vpsg24gb/bin/rclone", "copy", local_mp4, gdrive_path,
         "--stats", "1s", "--stats-one-line"
     ]
     
