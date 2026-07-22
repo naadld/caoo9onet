@@ -1,1 +1,8 @@
 step1_scraper.lock
+credentials.json
+.tmp_stream/
+.tmp_subtitles/
+.tmp_fix_mp4/
+__pycache__/
+*.pyc
+.env

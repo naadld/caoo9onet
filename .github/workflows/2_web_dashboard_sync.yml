@@ -69,6 +69,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
+          rm -f credentials.json
+          git add index_songsong.html database_*.json progress_*.json .gitignore 2>/dev/null || true
           git diff-index --quiet HEAD || git commit -m "Automated Online Sync: $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin main
