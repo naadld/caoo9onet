@@ -140,10 +140,19 @@ def execute_copy(src_val, dst_val):
     if src_count == 0:
         print("  ⚠️ Source folder contains no files or could not be listed.")
 
-    print("  🚀 Starting rclone copy operation...")
+    # Fast Check: If target files count matches source count, skip immediately
+    dst_count_pre = count_remote_files(dst_remote)
+    if src_count > 0 and dst_count_pre >= src_count:
+        msg = f"⏭️ [Chống trùng] Thư mục đích đã có đủ {dst_count_pre}/{src_count} files. Bỏ qua không tải lại!"
+        print(f"  {msg}")
+        log_to_google_doc(msg)
+        return True
+
+    print("  🚀 Starting rclone copy operation (Tải tăng cường chống trùng)...")
     cmd = [
         RCLONE_BIN, "--config", RCLONE_CONF, "copy",
         src_remote, dst_remote,
+        "--update",
         "--transfers", "8",
         "--checkers", "16",
         "--fast-list",
