@@ -2,8 +2,8 @@ name: 2. Web Player Indexer & GDrive Dashboard Sync
 
 on:
   schedule:
-    # Run every hour at minute 30
-    - cron: '30 * * * *'
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
   workflow_run:
     workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
     types:

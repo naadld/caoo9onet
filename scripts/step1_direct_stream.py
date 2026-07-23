@@ -13,10 +13,12 @@ import json
 import time
 import uuid
 import urllib.request
+import urllib.parse
 import subprocess
 import argparse
 import threading
 import shutil
+from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
 import fcntl
@@ -24,6 +26,45 @@ import fcntl
 BASE_URL = "https://www.o9o.net"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCK_FILE = os.path.join(BASE_DIR, "step1_scraper.lock")
+
+# Telegram Bot Credentials (matched from Step 5-6)
+PRIMARY_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
+FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg"
+DEFAULT_CHAT_ID = "-1003954353565"
+DEFAULT_THREAD_ID = 3953
+
+def send_telegram_msg(message):
+    token = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN
+    chat_id = os.getenv("TELEGRAM_CHAT_ID") or DEFAULT_CHAT_ID
+    thread_id = os.getenv("TELEGRAM_THREAD_ID") or DEFAULT_THREAD_ID
+
+    tokens_to_try = [token]
+    if token != FALLBACK_BOT_TOKEN:
+        tokens_to_try.append(FALLBACK_BOT_TOKEN)
+
+    sent = False
+    for tok in tokens_to_try:
+        url = f"https://api.telegram.org/bot{tok}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": message
+        }
+        if thread_id:
+            payload["message_thread_id"] = thread_id
+
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        try:
+            req = urllib.request.Request(url, data=data)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status == 200:
+                    print(f"📱 [Telegram Notification Sent Success] Token: {tok[:12]}...")
+                    sent = True
+                    break
+        except Exception as e:
+            print(f"⚠️ Telegram send attempt failed for token {tok[:12]}...: {e}")
+
+    if not sent:
+        print("❌ Could not send Telegram report to specified chat/bot.")
 
 # Enforce strict single-instance execution across system
 try:
@@ -395,82 +436,118 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
 
         print(f"\n[SYSTEM] Resuming from PAIR {start_pair_idx + 1}, DAY {start_day_num:03d}")
 
+        start_pair_str = " & ".join(pairs_to_run[start_pair_idx]) if start_pair_idx < len(pairs_to_run) else "N/A"
+        start_day_str = f"Ngày {start_day_num:03d}"
+
+        vn_tz = timezone(timedelta(hours=7))
+        start_time_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+        start_msg = (
+            f"🚀 [STEP 1: BẮT ĐẦU CÀO VIDEO]\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📚 Grade cào: {start_pair_str}\n"
+            f"📅 Ngày sẽ cào: {start_day_str}\n"
+            f"⏰ Giờ bắt đầu (GMT+7): {start_time_str}"
+        )
+        print("\n" + start_msg + "\n")
+        send_telegram_msg(start_msg)
+        log_to_google_doc(f"Step 1 Bắt đầu cào: Grade [{start_pair_str}], {start_day_str}")
+
+        last_scraped_grade = start_pair_str
+        last_scraped_day = start_day_str
+
         processed_days_count = 0
-        for p_idx in range(start_pair_idx, len(pairs_to_run)):
-            pair = pairs_to_run[p_idx]
-            print(f"\n{'#'*60}\nPROCESSING PAIR: {' & '.join(pair)}\n{'#'*60}")
+        try:
+            for p_idx in range(start_pair_idx, len(pairs_to_run)):
+                pair = pairs_to_run[p_idx]
+                print(f"\n{'#'*60}\nPROCESSING PAIR: {' & '.join(pair)}\n{'#'*60}")
 
-            current_start_day = start_day_num if p_idx == start_pair_idx else 1
+                current_start_day = start_day_num if p_idx == start_pair_idx else 1
 
-            for day_num in range(current_start_day, 171):
-                if max_days and processed_days_count >= max_days:
-                    print(f"\n✋ Reached max_days limit ({max_days}). Stopping Step 1.")
-                    return
+                for day_num in range(current_start_day, 171):
+                    if max_days and processed_days_count >= max_days:
+                        print(f"\n✋ Reached max_days limit ({max_days}). Stopping Step 1.")
+                        break
 
-                day = f"{day_num:03d}"
-                print(f"\n{'='*50}\nPROCESSING DAY: {day}\n{'='*50}")
+                    day = f"{day_num:03d}"
+                    last_scraped_grade = " & ".join(pair)
+                    last_scraped_day = f"Ngày {day}"
 
-                day_tasks = []
+                    print(f"\n{'='*50}\nPROCESSING DAY: {day}\n{'='*50}")
 
-                # 1. Gather all tasks for this day across both grades
-                for g_name_short in pair:
-                    actual_g_name = next((k for k in grade_days_map.keys() if g_name_short.lower() in k.lower()), None)
-                    if not actual_g_name:
-                        continue
+                    day_tasks = []
 
-                    day_url = grade_days_map[actual_g_name].get(day)
-                    if not day_url:
-                        continue
+                    # 1. Gather all tasks for this day across both grades
+                    for g_name_short in pair:
+                        actual_g_name = next((k for k in grade_days_map.keys() if g_name_short.lower() in k.lower()), None)
+                        if not actual_g_name:
+                            continue
 
-                    print(f"---> [{actual_g_name}] Fetching Day {day} playlist...")
-                    l_html = fetch(day_url)
-                    data_match = re.search(r'const playlistData = (\[.*?\]);', l_html, re.DOTALL)
-                    if not data_match:
-                        continue
+                        day_url = grade_days_map[actual_g_name].get(day)
+                        if not day_url:
+                            continue
 
-                    try:
-                        playlist = json.loads(data_match.group(1))
-                    except Exception:
-                        continue
+                        print(f"---> [{actual_g_name}] Fetching Day {day} playlist...")
+                        l_html = fetch(day_url)
+                        data_match = re.search(r'const playlistData = (\[.*?\]);', l_html, re.DOTALL)
+                        if not data_match:
+                            continue
 
-                    for item in playlist:
-                        subject = item.get('title', 'Unknown')
-                        safe_subject = subject.replace('/', '-').replace(':', '').replace('?', '')
-                        link = item.get('file', '')
-                        if link.startswith('/'):
-                            link = BASE_URL + link
+                        try:
+                            playlist = json.loads(data_match.group(1))
+                        except Exception:
+                            continue
 
-                        file_name = f"{actual_g_name} - {day} - {safe_subject}.mp4"
-                        gdrive_rel_path = f"{actual_g_name}/Ngày {day}/{safe_subject}/{file_name}"
-                        
-                        day_tasks.append({
-                            "actual_g_name": actual_g_name,
-                            "day": day,
-                            "subject": subject,
-                            "link": link,
-                            "gdrive_rel_path": gdrive_rel_path
-                        })
+                        for item in playlist:
+                            subject = item.get('title', 'Unknown')
+                            safe_subject = subject.replace('/', '-').replace(':', '').replace('?', '')
+                            link = item.get('file', '')
+                            if link.startswith('/'):
+                                link = BASE_URL + link
 
-                # 2. Process tasks concurrently with ThreadPoolExecutor (max_workers=5)
-                day_success = True
-                if day_tasks:
-                    print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 5 parallel streams)...")
-                    with ThreadPoolExecutor(max_workers=5) as executor:
-                        futures = {executor.submit(process_single_video, t): t for t in day_tasks}
-                        for future in as_completed(futures):
-                            res = future.result()
-                            if not res:
-                                day_success = False
-                else:
-                    print(f"ℹ️ No tasks to process for Day {day}.")
+                            file_name = f"{actual_g_name} - {day} - {safe_subject}.mp4"
+                            gdrive_rel_path = f"{actual_g_name}/Ngày {day}/{safe_subject}/{file_name}"
+                            
+                            day_tasks.append({
+                                "actual_g_name": actual_g_name,
+                                "day": day,
+                                "subject": subject,
+                                "link": link,
+                                "gdrive_rel_path": gdrive_rel_path
+                            })
 
-                if day_success:
-                    save_progress(script_id, p_idx, day_num + 1)
-                    processed_days_count += 1
-                else:
-                    print(f"\n⚠️ Day {day} had stream errors. Will retry next run.")
+                    # 2. Process tasks concurrently with ThreadPoolExecutor (max_workers=5)
+                    day_success = True
+                    if day_tasks:
+                        print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 5 parallel streams)...")
+                        with ThreadPoolExecutor(max_workers=5) as executor:
+                            futures = {executor.submit(process_single_video, t): t for t in day_tasks}
+                            for future in as_completed(futures):
+                                res = future.result()
+                                if not res:
+                                    day_success = False
+                    else:
+                        print(f"ℹ️ No tasks to process for Day {day}.")
 
-        print("\n🎉 Completed processing all grade pairs!")
+                    if day_success:
+                        save_progress(script_id, p_idx, day_num + 1)
+                        processed_days_count += 1
+                    else:
+                        print(f"\n⚠️ Day {day} had stream errors. Will retry next run.")
+
+            print("\n🎉 Completed processing all grade pairs!")
+        finally:
+            stop_time_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+            stop_msg = (
+                f"🛑 [STEP 1: THÔNG BÁO DỪNG CÀO]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📚 Grade cuối cùng: {last_scraped_grade}\n"
+                f"📅 Ngày cuối cùng đã cào được: {last_scraped_day}\n"
+                f"⏰ Giờ dừng (GMT+7): {stop_time_str}"
+            )
+            print("\n" + stop_msg + "\n")
+            send_telegram_msg(stop_msg)
+            log_to_google_doc(f"Step 1 Thông báo dừng: Grade cuối [{last_scraped_grade}], Ngày cuối [{last_scraped_day}]")
     finally:
         release_gdrive_lock()
 
