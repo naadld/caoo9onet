@@ -14,6 +14,8 @@ import time
 import shutil
 import argparse
 import subprocess
+import urllib.request
+import urllib.parse
 import fcntl
 from datetime import datetime, timezone, timedelta
 
@@ -32,6 +34,44 @@ DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
 DEFAULT_SRC_FOLDER = "1ZY-penoxRJgLHZ5i41hb7e0UqfFwt3YR"
 DEFAULT_DST_FOLDER = "1kti0VyCp93sL49pn3JkyU2gBa-tr33Iz"
+
+PRIMARY_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
+FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg"
+DEFAULT_CHAT_ID = "-1003954353565"
+DEFAULT_THREAD_ID = 3953
+
+def send_telegram_msg(message):
+    token = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN
+    chat_id = os.getenv("TELEGRAM_CHAT_ID") or DEFAULT_CHAT_ID
+    thread_id = os.getenv("TELEGRAM_THREAD_ID") or DEFAULT_THREAD_ID
+
+    tokens_to_try = [token]
+    if token != FALLBACK_BOT_TOKEN:
+        tokens_to_try.append(FALLBACK_BOT_TOKEN)
+
+    sent = False
+    for tok in tokens_to_try:
+        url = f"https://api.telegram.org/bot{tok}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": message
+        }
+        if thread_id:
+            payload["message_thread_id"] = thread_id
+
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        try:
+            req = urllib.request.Request(url, data=data)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status == 200:
+                    print(f"📱 [Telegram Report Sent Success] Token: {tok[:12]}...")
+                    sent = True
+                    break
+        except Exception as e:
+            print(f"⚠️ Telegram send attempt failed for token {tok[:12]}...: {e}")
+
+    if not sent:
+        print("❌ Could not send Telegram report to specified chat/bot.")
 
 RCLONE_BIN = shutil.which("rclone") or "rclone"
 RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")
@@ -196,32 +236,50 @@ def execute_copy(src_val, dst_val):
                 sys.stdout.flush()
         p.wait()
 
+        vn_tz = timezone(timedelta(hours=7))
+        now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+
         if p.returncode == 0:
             print("  📊 Counting target files post-copy...")
             dst_count = count_remote_files(dst_remote)
             print(f"  📄 Target Files: {dst_count} / {src_count}")
 
-            vn_tz = timezone(timedelta(hours=7))
-            now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+            msg = f"Hoàn thành Step 5 Copy từ [{src_id}] sang [{dst_id}] ({dst_count}/{src_count} files)"
+            print(f"  🎉 {msg}")
+            log_to_google_doc(msg)
 
-            if src_count > 0 and dst_count >= src_count:
-                msg = f"Hoàn thành Step 5 Copy từ [{src_id}] sang [{dst_id}] (Đủ {dst_count}/{src_count} files)"
-                print(f"  🎉 {msg}")
-                log_to_google_doc(msg)
-                return True
-            else:
-                msg = f"Step 5 Copy từ [{src_id}] sang [{dst_id}] (Nguồn: {src_count}, Đích: {dst_count})"
-                print(f"  ℹ️ {msg}")
-                log_to_google_doc(msg)
-                return True
+            tg_msg = (
+                f"🎉 [STEP 5: HOÀN THÀNH COPY FOLDER]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📁 Nguồn: https://drive.google.com/drive/folders/{src_id}\n"
+                f"📂 Đích:  https://drive.google.com/drive/folders/{dst_id}\n"
+                f"📄 Số tệp: {dst_count} / {src_count} files\n"
+                f"⏰ Giờ (GMT+7): {now_str}"
+            )
+            send_telegram_msg(tg_msg)
+            return True
         else:
-            msg = f"Lỗi Step 5 Copy từ [{src_id}] sang [{dst_id}] (Exit code {p.returncode})"
+            err_detail = "Chạm giới hạn Upload 750GB/ngày của Google Drive (User Rate Limit Exceeded)" if p.returncode == 7 else f"Exit Code {p.returncode}"
+            msg = f"Lỗi Step 5 Copy từ [{src_id}] sang [{dst_id}] ({err_detail})"
             print(f"  ❌ {msg}")
             log_to_google_doc(msg)
+
+            tg_msg = (
+                f"⚠️ [STEP 5: THÔNG BÁO LỖI COPY FOLDER]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📁 Nguồn: https://drive.google.com/drive/folders/{src_id}\n"
+                f"📂 Đích:  https://drive.google.com/drive/folders/{dst_id}\n"
+                f"❌ Lỗi: {err_detail}\n"
+                f"⏰ Giờ (GMT+7): {now_str}"
+            )
+            send_telegram_msg(tg_msg)
             return False
     except Exception as e:
+        vn_tz = timezone(timedelta(hours=7))
+        now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
         print(f"  ❌ Copy exception: {e}")
         log_to_google_doc(f"Lỗi Step 5 Copy exception: {e}")
+        send_telegram_msg(f"⚠️ [STEP 5: LỖI EXCEPTION]\n❌ {e}\n⏰ Giờ (GMT+7): {now_str}")
         return False
 
 def main():

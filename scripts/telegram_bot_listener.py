@@ -199,41 +199,49 @@ def process_help(chat_id, thread_id):
 
 def poll_updates():
     offset = load_offset()
-    token = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN
+    token_primary = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN
+    tokens_to_poll = [token_primary]
+    if token_primary != FALLBACK_BOT_TOKEN:
+        tokens_to_poll.append(FALLBACK_BOT_TOKEN)
 
-    url = f"https://api.telegram.org/bot{token}/getUpdates?timeout=10"
-    if offset:
-        url += f"&offset={offset}"
+    for token in tokens_to_poll:
+        url = f"https://api.telegram.org/bot{token}/getUpdates?timeout=5"
+        if offset:
+            url += f"&offset={offset}"
 
-    try:
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            if not data.get("ok"):
-                return
-
-            for update in data.get("result", []):
-                new_offset = update["update_id"] + 1
-                save_offset(new_offset)
-
-                message = update.get("message") or update.get("channel_post")
-                if not message:
+        try:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if not data.get("ok"):
                     continue
 
-                text = message.get("text", "").strip()
-                chat = message.get("chat", {})
-                chat_id = str(chat.get("id", ""))
-                thread_id = message.get("message_thread_id")
+                for update in data.get("result", []):
+                    new_offset = update["update_id"] + 1
+                    save_offset(new_offset)
+                    offset = new_offset
 
-                # Verify target chat and topic thread 3953
-                if chat_id == DEFAULT_CHAT_ID and (thread_id == DEFAULT_THREAD_ID or thread_id == str(DEFAULT_THREAD_ID) or thread_id is None):
-                    if text.startswith("/step"):
-                        process_command(text, chat_id, DEFAULT_THREAD_ID)
-                    elif text.startswith("/help") or text.startswith("/start"):
-                        process_help(chat_id, DEFAULT_THREAD_ID)
+                    message = update.get("message") or update.get("channel_post") or update.get("edited_message")
+                    if not message:
+                        continue
 
-    except Exception as e:
-        pass
+                    text = message.get("text", "").strip()
+                    chat = message.get("chat", {})
+                    chat_id = str(chat.get("id", ""))
+                    thread_id = message.get("message_thread_id")
+
+                    # Verify target chat (chat_id -1003954353565)
+                    if chat_id == DEFAULT_CHAT_ID or chat_id == str(DEFAULT_CHAT_ID):
+                        clean_text = text.lower()
+                        if "/step" in clean_text or "step 1" in clean_text:
+                            process_command(text, chat_id, DEFAULT_THREAD_ID)
+                        elif "/help" in clean_text or "/start" in clean_text or clean_text == "help":
+                            process_help(chat_id, DEFAULT_THREAD_ID)
+
+        except urllib.error.HTTPError as e:
+            pass
+        except Exception as e:
+            pass
 
 def main():
     print("🤖 O9O.NET Telegram Bot Listener Daemon Started...")
