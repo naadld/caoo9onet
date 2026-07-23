@@ -3,8 +3,9 @@
 Step 5: GDrive Copier with Column D (Status), Column E (Source files #), Column F (Destination files #)
 Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8) via Rclone CSV Export,
 extracts Source Folder (Column B) and Target Folder (Column C).
+Cleans URL parameters (e.g. ?fbclid=..., ?usp=drive_link) for 100% accurate Folder ID resolution.
 Copies files via rclone copy, verifies file counts in Source (Col E) vs Destination (Col F) to prevent missing files,
-and logs progress to Google Doc. 100% reliable across all Cloud environments.
+and logs progress to Google Doc.
 """
 
 import os
@@ -118,7 +119,6 @@ def fetch_copy_pairs_from_gdrive_export():
             break
 
     if not csv_file:
-        # Fallback to any .csv in tmp_dir
         for root, dirs, files in os.walk(tmp_dir):
             for f in files:
                 if f.endswith('.csv'):
@@ -172,10 +172,16 @@ def fetch_copy_pairs_from_gdrive_export():
     return pairs
 
 def extract_folder_id(val):
+    if not val:
+        return ""
+    val = str(val).strip()
+    # Strip URL parameters starting with ? (e.g., ?fbclid=..., ?usp=drive_link)
+    if '?' in val:
+        val = val.split('?')[0]
     m = re.search(r'folders/([a-zA-Z0-9_-]+)', val)
     if m:
         return m.group(1)
-    return val
+    return val.strip()
 
 def resolve_rclone_remote(folder_val):
     folder_id_or_path = extract_folder_id(folder_val)
