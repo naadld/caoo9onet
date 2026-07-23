@@ -66,13 +66,17 @@ def send_telegram_msg(message):
     if not sent:
         print("❌ Could not send Telegram report to specified chat/bot.")
 
-# Enforce strict single-instance execution across system
-try:
-    lock_file_fd = open(LOCK_FILE, "w")
-    fcntl.flock(lock_file_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-except (IOError, OSError):
-    print("⚠️ Another instance of step1_direct_stream.py is currently actively streaming a video in the background.")
-    sys.exit(0)
+def acquire_grade_lock(target_grade):
+    clean_name = re.sub(r'[^a-zA-Z0-9]', '_', str(target_grade or 'all')).lower()
+    lock_file_path = os.path.join(BASE_DIR, f"step1_scraper_{clean_name}.lock")
+    try:
+        fd = open(lock_file_path, "w")
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        print(f"🔒 [LOCK ACQUIRED] Single-instance lock acquired for Grade [{target_grade or 'ALL'}] -> {os.path.basename(lock_file_path)}")
+        return fd
+    except (IOError, OSError):
+        print(f"⚠️ Another instance of step1_direct_stream.py for Grade [{target_grade or 'ALL'}] is currently actively streaming. Skipping duplicate run.")
+        sys.exit(0)
 
 # Resolve executables dynamically
 RCLONE_BIN = shutil.which("rclone") or "rclone"
@@ -603,11 +607,17 @@ def main():
         sys.exit(0)
 
     pairs = TARGET_PAIRS
+    target_lock_name = None
     if args.grade:
         norm_g = normalize_grade(args.grade)
         pairs = [[norm_g]]
+        target_lock_name = norm_g
     elif args.grade2_5_only:
         pairs = [["Grade 2", "Grade 5"]]
+        target_lock_name = "Grade_2_5"
+
+    # Acquire per-Grade lock to allow parallel runs for DIFFERENT Grades while preventing duplicate runs for SAME Grade
+    grade_lock_fd = acquire_grade_lock(target_lock_name)
 
     run_direct_streaming(
         pairs_to_run=pairs,

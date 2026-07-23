@@ -24,7 +24,7 @@ on:
         default: 'false'
 
 concurrency:
-  group: abeka-scraper-stream-group
+  group: abeka-scraper-stream-${{ github.event.inputs.grade || 'all' }}
   cancel-in-progress: false
 
 jobs:
