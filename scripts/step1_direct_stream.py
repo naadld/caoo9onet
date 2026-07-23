@@ -320,7 +320,30 @@ def direct_stream_to_gdrive(m3u8_url, gdrive_target_path):
         shutil.rmtree(task_tmp_dir, ignore_errors=True)
         return False
 
-def process_single_video(item_info):
+def normalize_grade(val):
+    if not val:
+        return None
+    val = str(val).strip()
+    val_upper = val.upper()
+    mapping = {
+        "01": "Grade 1", "1": "Grade 1", "G1": "Grade 1", "GRADE 1": "Grade 1", "GRADE1": "Grade 1",
+        "02": "Grade 2", "2": "Grade 2", "G2": "Grade 2", "GRADE 2": "Grade 2", "GRADE2": "Grade 2",
+        "03": "Grade 3", "3": "Grade 3", "G3": "Grade 3", "GRADE 3": "Grade 3", "GRADE3": "Grade 3",
+        "04": "Grade 4", "4": "Grade 4", "G4": "Grade 4", "GRADE 4": "Grade 4", "GRADE4": "Grade 4",
+        "05": "Grade 5", "5": "Grade 5", "G5": "Grade 5", "GRADE 5": "Grade 5", "GRADE5": "Grade 5",
+        "06": "Grade 6", "6": "Grade 6", "G6": "Grade 6", "GRADE 6": "Grade 6", "GRADE6": "Grade 6",
+        "07": "Grade 7", "7": "Grade 7", "G7": "Grade 7", "GRADE 7": "Grade 7", "GRADE7": "Grade 7",
+        "08": "Grade 8", "8": "Grade 8", "G8": "Grade 8", "GRADE 8": "Grade 8", "GRADE8": "Grade 8",
+        "09": "Grade 9", "9": "Grade 9", "G9": "Grade 9", "GRADE 9": "Grade 9", "GRADE9": "Grade 9",
+        "10": "Grade 10", "G10": "Grade 10", "GRADE 10": "Grade 10", "GRADE10": "Grade 10",
+        "11": "Grade 11", "G11": "Grade 11", "GRADE 11": "Grade 11", "GRADE11": "Grade 11",
+        "12": "Grade 12", "G12": "Grade 12", "GRADE 12": "Grade 12", "GRADE12": "Grade 12",
+        "K4": "K4", "K4.": "K4",
+        "K5": "K5", "K5.": "K5"
+    }
+    return mapping.get(val_upper, val)
+
+def process_single_video(item_info, force_overwrite=False):
     actual_g_name = item_info["actual_g_name"]
     day = item_info["day"]
     subject = item_info["subject"]
@@ -341,7 +364,7 @@ def process_single_video(item_info):
     is_valid_on_gdrive = file_on_gdrive and gdrive_size > 100000
     
     success = False
-    if is_valid_on_gdrive:
+    if is_valid_on_gdrive and not force_overwrite:
         print(f"    -> ⏭️ File already uploaded & valid ({gdrive_size / 1024 / 1024:.2f} MB). Skipping.")
         success = True
         if not record_exists:
@@ -355,12 +378,14 @@ def process_single_video(item_info):
             save_database(actual_g_name, db)
             print(f"    -> Restored missing database record for {subject}.")
     else:
-        if file_on_gdrive:
+        if force_overwrite and file_on_gdrive:
+            print(f"    -> ⚡ [FORCE OVERWRITE] Re-downloading & overwriting existing file on GDrive: {subject}")
+        elif file_on_gdrive:
             print(f"    -> ⚠️ File is invalid/empty on Google Drive ({gdrive_size} bytes). Re-streaming...")
         else:
             print(f"    -> ⚡ Direct pipe streaming from o9o.net to Google Drive for: {subject}")
             
-        if record_exists:
+        if record_exists and force_overwrite:
             db = load_database(actual_g_name)
             db = [r for r in db if not (r['day'] == day and r['subject'] == subject)]
             save_database(actual_g_name, db)
@@ -391,7 +416,7 @@ def process_single_video(item_info):
     else:
         return False
 
-def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="SongSong"):
+def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, target_day=None, force_overwrite=False, script_id="SongSong"):
     global gdrive_index
     check_and_acquire_gdrive_lock()
     try:
@@ -431,8 +456,8 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
                         grade_days_map[actual_g_name][lesson.text.strip()] = lesson['href']
 
         progress = load_progress(script_id)
-        start_pair_idx = progress.get("pair_idx", 0)
-        start_day_num = progress.get("day_num", 1)
+        start_pair_idx = progress.get("pair_idx", 0) if not target_day and len(pairs_to_run) == len(TARGET_PAIRS) else 0
+        start_day_num = target_day if target_day else progress.get("day_num", 1)
 
         print(f"\n[SYSTEM] Resuming from PAIR {start_pair_idx + 1}, DAY {start_day_num:03d}")
 
@@ -442,16 +467,18 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
         vn_tz = timezone(timedelta(hours=7))
         start_time_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
 
+        mode_str = "FORCE (Ghi đè file cũ)" if force_overwrite else "THƯỜNG (Bỏ qua bài đã có)"
         start_msg = (
             f"🚀 [STEP 1: BẮT ĐẦU CÀO VIDEO]\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
             f"📚 Grade cào: {start_pair_str}\n"
             f"📅 Ngày sẽ cào: {start_day_str}\n"
+            f"⚡ Chế độ: {mode_str}\n"
             f"⏰ Giờ bắt đầu (GMT+7): {start_time_str}"
         )
         print("\n" + start_msg + "\n")
         send_telegram_msg(start_msg)
-        log_to_google_doc(f"Step 1 Bắt đầu cào: Grade [{start_pair_str}], {start_day_str}")
+        log_to_google_doc(f"Step 1 Bắt đầu cào ({mode_str}): Grade [{start_pair_str}], {start_day_str}")
 
         last_scraped_grade = start_pair_str
         last_scraped_day = start_day_str
@@ -463,8 +490,9 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
                 print(f"\n{'#'*60}\nPROCESSING PAIR: {' & '.join(pair)}\n{'#'*60}")
 
                 current_start_day = start_day_num if p_idx == start_pair_idx else 1
+                day_range = range(target_day, target_day + 1) if target_day else range(current_start_day, 171)
 
-                for day_num in range(current_start_day, 171):
+                for day_num in day_range:
                     if max_days and processed_days_count >= max_days:
                         print(f"\n✋ Reached max_days limit ({max_days}). Stopping Step 1.")
                         break
@@ -521,7 +549,7 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
                     if day_tasks:
                         print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 5 parallel streams)...")
                         with ThreadPoolExecutor(max_workers=5) as executor:
-                            futures = {executor.submit(process_single_video, t): t for t in day_tasks}
+                            futures = {executor.submit(process_single_video, t, force_overwrite): t for t in day_tasks}
                             for future in as_completed(futures):
                                 res = future.result()
                                 if not res:
@@ -530,7 +558,8 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
                         print(f"ℹ️ No tasks to process for Day {day}.")
 
                     if day_success:
-                        save_progress(script_id, p_idx, day_num + 1)
+                        if not target_day:
+                            save_progress(script_id, p_idx, day_num + 1)
                         processed_days_count += 1
                     else:
                         print(f"\n⚠️ Day {day} had stream errors. Will retry next run.")
@@ -538,16 +567,18 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, script_id="So
             print("\n🎉 Completed processing all grade pairs!")
         finally:
             stop_time_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+            mode_stop_str = "FORCE (Ghi đè)" if force_overwrite else "THƯỜNG"
             stop_msg = (
                 f"🛑 [STEP 1: THÔNG BÁO DỪNG CÀO]\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"📚 Grade cuối cùng: {last_scraped_grade}\n"
                 f"📅 Ngày cuối cùng đã cào được: {last_scraped_day}\n"
+                f"⚡ Chế độ: {mode_stop_str}\n"
                 f"⏰ Giờ dừng (GMT+7): {stop_time_str}"
             )
             print("\n" + stop_msg + "\n")
             send_telegram_msg(stop_msg)
-            log_to_google_doc(f"Step 1 Thông báo dừng: Grade cuối [{last_scraped_grade}], Ngày cuối [{last_scraped_day}]")
+            log_to_google_doc(f"Step 1 Thông báo dừng ({mode_stop_str}): Grade cuối [{last_scraped_grade}], Ngày cuối [{last_scraped_day}]")
     finally:
         release_gdrive_lock()
 
@@ -555,6 +586,9 @@ def main():
     parser = argparse.ArgumentParser(description="Direct Pipe Streaming Downloader for Abeka Videos.")
     parser.add_argument("--max-days", type=int, default=None, help="Maximum number of days to process in this run")
     parser.add_argument("--grade2-5-only", action="store_true", help="Process only Grade 2 and Grade 5 pair")
+    parser.add_argument("--grade", type=str, default=None, help="Specific Grade to process (e.g. Grade 1, K4, 05)")
+    parser.add_argument("--day", type=int, default=None, help="Specific Day to process (e.g. 10, 150)")
+    parser.add_argument("--force", action="store_true", help="Force re-download and overwrite existing files")
     parser.add_argument("--force-local", action="store_true", help="Force running on local machine/VPS")
     args = parser.parse_args()
     
@@ -568,8 +602,19 @@ def main():
         print("=" * 60)
         sys.exit(0)
 
-    pairs = [["Grade 2", "Grade 5"]] if args.grade2_5_only else TARGET_PAIRS
-    run_direct_streaming(pairs_to_run=pairs, max_days=args.max_days)
+    pairs = TARGET_PAIRS
+    if args.grade:
+        norm_g = normalize_grade(args.grade)
+        pairs = [[norm_g]]
+    elif args.grade2_5_only:
+        pairs = [["Grade 2", "Grade 5"]]
+
+    run_direct_streaming(
+        pairs_to_run=pairs,
+        max_days=args.max_days,
+        target_day=args.day,
+        force_overwrite=args.force
+    )
 
 if __name__ == "__main__":
     main()

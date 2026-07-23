@@ -8,8 +8,20 @@ on:
     inputs:
       max_days:
         description: 'Maximum days to process'
-        required: true
+        required: false
         default: '170'
+      grade:
+        description: 'Specific Grade (e.g. Grade 1, K4, 05)'
+        required: false
+        default: ''
+      day:
+        description: 'Specific Day (e.g. 10, 150)'
+        required: false
+        default: ''
+      force:
+        description: 'Force re-download and overwrite'
+        required: false
+        default: 'false'
 
 concurrency:
   group: abeka-scraper-stream-group
@@ -63,8 +75,27 @@ jobs:
         env:
           GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
-          MAX_DAYS="${{ github.event.inputs.max_days || '170' }}"
-          python3 -u scripts/step1_direct_stream.py --max-days "$MAX_DAYS"
+          MAX_DAYS="${{ github.event.inputs.max_days }}"
+          GRADE="${{ github.event.inputs.grade }}"
+          DAY="${{ github.event.inputs.day }}"
+          FORCE="${{ github.event.inputs.force }}"
+
+          CMD="python3 -u scripts/step1_direct_stream.py"
+          if [ -n "$MAX_DAYS" ]; then
+            CMD="$CMD --max-days $MAX_DAYS"
+          fi
+          if [ -n "$GRADE" ]; then
+            CMD="$CMD --grade \"$GRADE\""
+          fi
+          if [ -n "$DAY" ]; then
+            CMD="$CMD --day \"$DAY\""
+          fi
+          if [ "$FORCE" = "true" ]; then
+            CMD="$CMD --force"
+          fi
+
+          echo "Running command: $CMD"
+          eval $CMD
 
       - name: Generate AI Subtitles & Interactive JSON (Step 4)
         env:

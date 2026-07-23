@@ -68,10 +68,38 @@ def check_and_revive_streamer():
     except Exception as e:
         print(f"⚠️ Paperclip sync warning: {e}")
 
+SCRIPT_TG_LISTENER = os.path.join(BASE_DIR, "scripts/telegram_bot_listener.py")
+TG_PID_FILE = os.path.join(BASE_DIR, "telegram_listener.pid")
+
+def check_and_revive_telegram_listener():
+    pid = None
+    if os.path.exists(TG_PID_FILE):
+        try:
+            with open(TG_PID_FILE, "r") as f:
+                pid = int(f.read().strip())
+        except Exception:
+            pid = None
+
+    if pid and is_process_running(pid):
+        return
+
+    print("🤖 Telegram Bot listener is not running. Launching listener daemon...")
+    if os.path.exists(TG_PID_FILE):
+        os.remove(TG_PID_FILE)
+
+    cmd = f"PYTHONUNBUFFERED=1 python3 {SCRIPT_TG_LISTENER} >> {os.path.join(BASE_DIR, 'telegram_listener.log')} 2>&1 & echo $!"
+    res = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=BASE_DIR)
+    new_pid = res.stdout.strip()
+    if new_pid.isdigit():
+        with open(TG_PID_FILE, "w") as f:
+            f.write(new_pid)
+        print(f"🚀 Started Telegram Bot Listener daemon with PID: {new_pid}")
+
 def main():
     print("=" * 60)
     print("🔄 O9O.NET 2-3 MINUTE WATCHDOG & CONTINUOUS SCRAPER RUNNER")
     print("=" * 60)
+    check_and_revive_telegram_listener()
     check_and_revive_streamer()
 
 if __name__ == "__main__":
