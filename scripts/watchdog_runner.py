@@ -68,14 +68,17 @@ def check_and_revive_streamer():
     except Exception as e:
         print(f"⚠️ Paperclip sync warning: {e}")
 
-SCRIPT_TG_LISTENER = os.path.join(BASE_DIR, "scripts/telegram_bot_listener.py")
-TG_PID_FILE = os.path.join(BASE_DIR, "telegram_listener.pid")
+SCRIPT_RELAY = os.path.join(BASE_DIR, "scripts/appscript_telegram_relay.py")
+RELAY_PID_FILE = os.path.join(BASE_DIR, "relay.pid")
+NGROK_BIN = "/home/vpsg24gb/bin/ngrok"
+NGROK_PID_FILE = os.path.join(BASE_DIR, "ngrok.pid")
+NGROK_DOMAIN = "compare-phosphate-hug.ngrok-free.dev"
 
-def check_and_revive_telegram_listener():
+def check_and_revive_relay():
     pid = None
-    if os.path.exists(TG_PID_FILE):
+    if os.path.exists(RELAY_PID_FILE):
         try:
-            with open(TG_PID_FILE, "r") as f:
+            with open(RELAY_PID_FILE, "r") as f:
                 pid = int(f.read().strip())
         except Exception:
             pid = None
@@ -83,23 +86,48 @@ def check_and_revive_telegram_listener():
     if pid and is_process_running(pid):
         return
 
-    print("🤖 Telegram Bot listener is not running. Launching listener daemon...")
-    if os.path.exists(TG_PID_FILE):
-        os.remove(TG_PID_FILE)
+    print("🔌 Apps Script Webhook Relay (Port 8088) is not running. Launching daemon...")
+    if os.path.exists(RELAY_PID_FILE):
+        os.remove(RELAY_PID_FILE)
 
-    cmd = f"PYTHONUNBUFFERED=1 python3 {SCRIPT_TG_LISTENER} >> {os.path.join(BASE_DIR, 'telegram_listener.log')} 2>&1 & echo $!"
+    cmd = f"PYTHONUNBUFFERED=1 python3 {SCRIPT_RELAY} 8088 >> {os.path.join(BASE_DIR, 'relay.log')} 2>&1 & echo $!"
     res = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=BASE_DIR)
     new_pid = res.stdout.strip()
     if new_pid.isdigit():
-        with open(TG_PID_FILE, "w") as f:
+        with open(RELAY_PID_FILE, "w") as f:
             f.write(new_pid)
-        print(f"🚀 Started Telegram Bot Listener daemon with PID: {new_pid}")
+        print(f"🚀 Started Apps Script Relay with PID: {new_pid}")
+
+def check_and_revive_ngrok():
+    pid = None
+    if os.path.exists(NGROK_PID_FILE):
+        try:
+            with open(NGROK_PID_FILE, "r") as f:
+                pid = int(f.read().strip())
+        except Exception:
+            pid = None
+
+    if pid and is_process_running(pid):
+        return
+
+    print(f"🌐 Ngrok Tunnel ({NGROK_DOMAIN}) is not running. Launching daemon...")
+    if os.path.exists(NGROK_PID_FILE):
+        os.remove(NGROK_PID_FILE)
+
+    cmd = f"{NGROK_BIN} http 8088 --url {NGROK_DOMAIN} >> {os.path.join(BASE_DIR, 'ngrok.log')} 2>&1 & echo $!"
+    res = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=BASE_DIR)
+    new_pid = res.stdout.strip()
+    if new_pid.isdigit():
+        with open(NGROK_PID_FILE, "w") as f:
+            f.write(new_pid)
+        print(f"🚀 Started Ngrok Tunnel daemon with PID: {new_pid}")
 
 def main():
     print("=" * 60)
-    print("🔄 O9O.NET 2-3 MINUTE WATCHDOG & CONTINUOUS SCRAPER RUNNER")
+    print("🔄 O9O.NET 2-3 MINUTE WATCHDOG & 24/7 DAEMON RUNNER")
     print("=" * 60)
-    check_and_revive_telegram_listener()
+    check_and_revive_relay()
+    check_and_revive_ngrok()
     check_and_revive_streamer()
 
 if __name__ == "__main__":
