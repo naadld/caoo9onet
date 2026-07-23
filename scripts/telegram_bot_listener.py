@@ -178,6 +178,25 @@ def process_command(text, chat_id, thread_id):
         cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step1_direct_stream.py')} --grade \"{grade}\" --day {day} {'--force' if is_force else ''} --force-local --max-days 1 >> {os.path.join(BASE_DIR, 'stream.log')} 2>&1 &"
         subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
 
+def process_help(chat_id, thread_id):
+    help_msg = (
+        f"📖 [HƯỚNG DẪN SỬ DỤNG LỆNH CÀO VIDEO]\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔹 1. CÀO THƯỜNG (Bỏ qua bài đã có):\n"
+        f"   👉 Cú pháp: /step 1 XX.yyy\n"
+        f"   👉 Ví dụ: /step 1 01.010\n"
+        f"      (Cào bài Grade 1, Ngày 10 - chỉ tải bài chưa có)\n\n"
+        f"🔹 2. CÀO ÉP BUỘC (Ghi đè bài cũ):\n"
+        f"   👉 Cú pháp: /step 1 force XX.yyy\n"
+        f"   👉 Ví dụ: /step 1 force K4.150\n"
+        f"      (Tải lại & ghi đè Level K4, Ngày 150)\n\n"
+        f"📌 MÃ GRADE (XX):\n"
+        f"▪️ 01..12 tương ứng Grade 1..12\n"
+        f"▪️ K4, K5 tương ứng Level K4, Level K5\n\n"
+        f"ℹ️ Gõ /help bất kỳ lúc nào để hiển thị bảng hướng dẫn này."
+    )
+    send_telegram_reply(help_msg, chat_id, thread_id)
+
 def poll_updates():
     offset = load_offset()
     token = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN
@@ -210,6 +229,8 @@ def poll_updates():
                 if chat_id == DEFAULT_CHAT_ID and (thread_id == DEFAULT_THREAD_ID or thread_id == str(DEFAULT_THREAD_ID) or thread_id is None):
                     if text.startswith("/step"):
                         process_command(text, chat_id, DEFAULT_THREAD_ID)
+                    elif text.startswith("/help") or text.startswith("/start"):
+                        process_help(chat_id, DEFAULT_THREAD_ID)
 
     except Exception as e:
         pass
