@@ -1,22 +1,55 @@
 #!/usr/bin/env python3
 """
-Sync live scraping & system progress to Paperclip AI Dashboard (PostgreSQL DB).
-Works seamlessly whether executed directly on Host or inside Docker Container.
+Sync live scraping & system progress for Step 1 to Step 6 to Paperclip AI Dashboard (PostgreSQL DB).
+Maps each Step to its corresponding Department under NAADLD CEO.
 """
 
 import os
+import sys
 import glob
 import json
 import shutil
+import argparse
 import subprocess
 import time
 
 COMPANY_ID = "d244b5e9-4326-45c5-aea7-5f802940d68a"
-BASE_DIR = "/media/vpsg24gb/DATA1/o9o"
-STREAM_LOG = os.path.join(BASE_DIR, "stream.log")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+STEP_DEPT_MAP = {
+    "step1": {
+        "key": "STEP-1",
+        "role": "dept_media_scrapping",
+        "name": "Step 1 - Media Scrapping Dept"
+    },
+    "step2": {
+        "key": "STEP-2",
+        "role": "dept_website_indexing",
+        "name": "Step 2 - Website Indexing Dept"
+    },
+    "step3": {
+        "key": "STEP-3",
+        "role": "dept_playlist_fetching",
+        "name": "Step 3 - Playlist Fetching Dept"
+    },
+    "step4": {
+        "key": "STEP-4",
+        "role": "dept_subtitle_building",
+        "name": "Step 4 - Subtitle Building Dept"
+    },
+    "step5": {
+        "key": "STEP-5",
+        "role": "dept_storage_copying",
+        "name": "Step 5 - Storage Copying Dept"
+    },
+    "step6": {
+        "key": "STEP-6",
+        "role": "dept_gdrive_comparision",
+        "name": "Step 6 - Gdrive Comparision Dept"
+    }
+}
 
 def run_sql(sql):
-    # Try docker exec if running on host
     if shutil.which("docker"):
         cmd = [
             "docker", "exec", "-i", "docker-db-1",
@@ -29,7 +62,6 @@ def run_sql(sql):
         except Exception:
             pass
 
-    # Try psql directly if running inside container
     if shutil.which("psql"):
         cmd = ["psql", "-h", "docker-db-1", "-U", "paperclip", "-d", "paperclip", "-c", sql]
         try:
@@ -70,53 +102,42 @@ def post_comment(issue_id, agent_id, comment_body):
     """
     run_sql(sql)
 
-def main():
-    # 1. Count completed videos
-    total_videos = 0
-    grade_counts = {}
-    for f in glob.glob(os.path.join(BASE_DIR, "database_*.json")):
-        try:
-            name = os.path.basename(f).replace("database_", "").replace(".json", "")
-            data = json.load(open(f, "r", encoding="utf-8"))
-            count = len(data)
-            grade_counts[name] = count
-            total_videos += count
-        except Exception:
-            pass
+def update_paperclip_dept(step_name, status_str, detail_msg):
+    step_key = str(step_name).lower().strip()
+    if step_key not in STEP_DEPT_MAP:
+        step_key = "step1"
 
-    # 2. Get last 5 lines from stream log
-    last_log_lines = []
-    if os.path.exists(STREAM_LOG):
-        try:
-            with open(STREAM_LOG, "r", encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                last_log_lines = [l.strip() for l in lines[-5:] if l.strip()]
-        except Exception:
-            pass
+    dept_info = STEP_DEPT_MAP[step_key]
+    role = dept_info["role"]
+    issue_key = dept_info["key"]
+    dept_name = dept_info["name"]
 
-    log_summary = "\n".join(last_log_lines) if last_log_lines else "Stream log active."
+    agent_id = get_agent_id(role)
+    issue_id = get_issue_id(issue_key)
 
-    # 3. Format progress message
-    grade_details = ", ".join([f"{k}: {v} video" for k, v in grade_counts.items()])
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
-
-    comment_msg = f"""⚡ [Paperclip Live Activity Log - {now_str}]
-🎬 Tổng số video đã hoàn tất & Upload GDrive: {total_videos} video
-📊 Chi tiết: {grade_details}
-⚙️ Quy tắc cào: ĐƠN LUỒNG 1 VIDEO / LẦN (Chế độ Lock Single-Instance Active)
-📌 Nhật ký cào mới nhất:
-{log_summary}
+    formatted_msg = f"""🏢 [{dept_name.upper()} - {status_str}]
+━━━━━━━━━━━━━━━━━━━━━━
+⏰ Thời gian: {now_str}
+📌 Trạng thái: {status_str}
+📝 Chi tiết:
+{detail_msg}
 """
 
-    try:
-        pipe_agent_id = get_agent_id("pipe_streamer")
-        pri1_issue_id = get_issue_id("PRI-1")
+    if issue_id and agent_id:
+        post_comment(issue_id, agent_id, formatted_msg)
+        print(f"✅ Posted real-time activity update to Paperclip UI for [{dept_name}].")
+    else:
+        print(f"⚠️ Could not resolve agent ({agent_id}) or issue ({issue_id}) for [{dept_name}].")
 
-        if pri1_issue_id and pipe_agent_id:
-            post_comment(pri1_issue_id, pipe_agent_id, comment_msg)
-            print(f"✅ Posted live activity update to Paperclip UI (Total: {total_videos} videos).")
-    except Exception as e:
-        print(f"⚠️ Live sync info: {e}")
+def main():
+    parser = argparse.ArgumentParser(description="Sync GitHub Actions & System Activity to Paperclip AI Dashboard")
+    parser.add_argument("--step", choices=["step1", "step2", "step3", "step4", "step5", "step6"], default="step1", help="Step/Dept to update")
+    parser.add_argument("--status", default="RUNNING", help="Status string (e.g. START, RUNNING, SUCCESS, ERROR)")
+    parser.add_argument("--msg", default="Processing step...", help="Detailed message for Paperclip live feed")
+
+    args = parser.parse_args()
+    update_paperclip_dept(args.step, args.status, args.msg)
 
 if __name__ == "__main__":
     main()

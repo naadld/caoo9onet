@@ -70,6 +70,14 @@ def send_telegram_msg(message):
         except Exception as e:
             print(f"⚠️ Telegram send attempt failed for token {tok[:12]}...: {e}")
 
+    def sync_paperclip(step_name, status, detail):
+        try:
+            script_path = os.path.join(BASE_DIR, "scripts/sync_paperclip_live.py")
+            if os.path.exists(script_path):
+                subprocess.run(["python3", script_path, "--step", step_name, "--status", status, "--msg", detail], cwd=BASE_DIR, capture_output=True, timeout=10)
+        except Exception:
+            pass
+
     if not sent:
         print("❌ Could not send Telegram report to specified chat/bot.")
 
