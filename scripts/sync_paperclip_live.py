@@ -12,6 +12,7 @@ import shutil
 import argparse
 import subprocess
 import time
+import urllib.request
 
 COMPANY_ID = "d244b5e9-4326-45c5-aea7-5f802940d68a"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,6 +49,24 @@ STEP_DEPT_MAP = {
         "name": "Step 6 - Gdrive Comparision Dept"
     }
 }
+
+def send_to_cloudflare(step_name, status_str, detail_msg):
+    url = "https://gentle-darkness-4028.hothihuong113.workers.dev/api/progress"
+    payload = {
+        "step": step_name,
+        "status": status_str,
+        "msg": detail_msg
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                print(f"✅ Synced progress back to Cloudflare Worker -> VPS: {step_name} ({status_str})")
+                return True
+    except Exception as e:
+        print(f"❌ Failed to sync progress to Cloudflare Worker: {e}")
+    return False
 
 def run_sql(sql):
     if shutil.which("docker"):
@@ -103,6 +122,10 @@ def post_comment(issue_id, agent_id, comment_body):
     run_sql(sql)
 
 def update_paperclip_dept(step_name, status_str, detail_msg):
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        send_to_cloudflare(step_name, status_str, detail_msg)
+        return
+
     step_key = str(step_name).lower().strip()
     if step_key not in STEP_DEPT_MAP:
         step_key = "step1"

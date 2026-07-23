@@ -5,12 +5,12 @@
  * NO VPS REQUIRED! 24/7 FREE CLOUD HOSTING.
  */
 
-const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE";
-const FALLBACK_BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN_HERE";
+const TELEGRAM_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A";
+const FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg";
 const TARGET_CHAT_ID     = "-1003954353565";
 const TARGET_THREAD_ID   = 3953;
 
-// Fill in your GitHub Personal Access Token (PAT) here
+// Fill in your GitHub Personal Access Token (PAT) here (e.g. ghp_xxxxxxxxxxxx)
 const GITHUB_PAT         = "YOUR_GITHUB_PAT_HERE";
 const GITHUB_REPO        = "naadld/caoo9onet";
 
@@ -54,19 +54,20 @@ async function handleCallbackQuery(cb, env) {
   const messageId = cb.message.message_id;
   const threadId = cb.message.message_thread_id || TARGET_THREAD_ID;
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
+  const botTok = (env && env.TELEGRAM_BOT_TOKEN) || TELEGRAM_BOT_TOKEN;
 
-  await answerCallback(cb.id);
+  await answerCallback(cb.id, botTok);
 
   if (data.startsWith("run_detail:")) {
     const runId = data.replace("run_detail:", "");
-    await sendRunDetail(chatId, messageId, threadId, runId, pat);
+    await sendRunDetail(chatId, messageId, threadId, runId, pat, botTok);
   } else if (data === "back_to_status" || data === "refresh_status") {
-    await sendStatus(chatId, threadId, pat, messageId);
+    await sendStatus(chatId, threadId, pat, botTok, messageId);
   }
 }
 
-async function answerCallback(callbackQueryId) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
+async function answerCallback(callbackQueryId, botTok) {
+  const url = `https://api.telegram.org/bot${botTok}/answerCallbackQuery`;
   try {
     await fetch(url, {
       method: "POST",
@@ -81,16 +82,17 @@ async function routeCommand(rawText, chatId, threadId, env) {
   const clean = text.toLowerCase();
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
+  const botTok = (env && env.TELEGRAM_BOT_TOKEN) || TELEGRAM_BOT_TOKEN;
 
   // /help
   if (clean === "/help" || clean === "help" || clean.startsWith("/help@") || clean === "/start") {
-    await sendHelp(chatId, threadId);
+    await sendHelp(chatId, threadId, botTok);
     return;
   }
 
   // /status
   if (clean === "/status" || clean === "status" || clean.startsWith("/status@")) {
-    await sendStatus(chatId, threadId, pat);
+    await sendStatus(chatId, threadId, pat, botTok);
     return;
   }
 
@@ -104,7 +106,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
       const grade = normalizeGrade(rawGrade);
       const modeText = isForce ? "FORCE (Ghi đè file cũ)" : "THƯỜNG (Bỏ qua bài đã có)";
 
-      await sendTelegramReply(`📥 [ĐÃ NHẬN LỆNH /step 1 ${rawGrade}.${dayNum}]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Grade: ${grade}\n📅 Ngày: Ngày ${dayNum}\n⚡ Chế độ: ${modeText}\n⏰ Thời gian: ${nowStr}\n🚀 Đang kích hoạt GitHub Actions Cloud...`, chatId, threadId);
+      await sendTelegramReply(`📥 [ĐÃ NHẬN LỆNH /step 1 ${rawGrade}.${dayNum}]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Grade: ${grade}\n📅 Ngày: Ngày ${dayNum}\n⚡ Chế độ: ${modeText}\n⏰ Thời gian: ${nowStr}\n🚀 Đang kích hoạt GitHub Actions Cloud...`, chatId, threadId, null, botTok);
 
       const res = await triggerGitHubWorkflow("1_scraper_stream.yml", {
         "max_days": "1",
@@ -112,14 +114,14 @@ async function routeCommand(rawText, chatId, threadId, env) {
         "day": String(parseInt(dayNum, 10)),
         "force": isForce ? "true" : "false"
       }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
       return;
     }
 
     if (clean.includes("start")) {
-      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 1 start]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Tiến trình cào mặc định toàn bộ các Grade\n📅 Quét từ ngày nhỏ đến ngày lớn (Day 001 -> Day 170)\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId);
+      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 1 start]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Tiến trình cào mặc định toàn bộ các Grade\n📅 Quét từ ngày nhỏ đến ngày lớn (Day 001 -> Day 170)\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId, null, botTok);
       const res = await triggerGitHubWorkflow("1_scraper_stream.yml", { "max_days": "170" }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
       return;
     }
 
@@ -127,25 +129,25 @@ async function routeCommand(rawText, chatId, threadId, env) {
     if (mGrade && mGrade[1].toLowerCase() !== "start") {
       const rawGrade = mGrade[1];
       const grade = normalizeGrade(rawGrade);
-      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 1 ${rawGrade}]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Cào toàn bộ bài học chưa có của ${grade}\n📅 Quét từ Day 001 đến Day 170 (Bỏ qua bài đã có)\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId);
+      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 1 ${rawGrade}]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Cào toàn bộ bài học chưa có của ${grade}\n📅 Quét từ Day 001 đến Day 170 (Bỏ qua bài đã có)\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId, null, botTok);
       const res = await triggerGitHubWorkflow("1_scraper_stream.yml", { "grade": String(grade), "max_days": "170" }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
       return;
     }
   }
 
   // /step 3
   if (clean.startsWith("/step 3") || clean.startsWith("/step3") || clean === "step 3") {
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 3]\n━━━━━━━━━━━━━━━━━━━━━━\n📝 Khởi chạy Step 3 Git Publish & Google Doc logger...\n⏰ Thời gian: ${nowStr}`, chatId, threadId);
-    await sendTelegramReply(`✅ [STEP 3] Tiến trình đã được ghi nhận!`, chatId, threadId);
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 3]\n━━━━━━━━━━━━━━━━━━━━━━\n📝 Khởi chạy Step 3 Git Publish & Google Doc logger...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    await sendTelegramReply(`✅ [STEP 3] Tiến trình đã được ghi nhận!`, chatId, threadId, null, botTok);
     return;
   }
 
   // /step 4
   if (clean.startsWith("/step 4") || clean.startsWith("/step4") || clean === "step 4") {
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI Whisper & Interactive JSON...\n⏰ Thời gian: ${nowStr}`, chatId, threadId);
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI Whisper & Interactive JSON...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
     const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 5" }, pat);
-    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
     return;
   }
 
@@ -155,15 +157,15 @@ async function routeCommand(rawText, chatId, threadId, env) {
     if (mLinks && mLinks[1].toLowerCase() !== "start") {
       const src = mLinks[1].trim();
       const dst = mLinks[2].trim();
-      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 5 CUSTOM COPY]\n━━━━━━━━━━━━━━━━━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId);
+      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 5 CUSTOM COPY]\n━━━━━━━━━━━━━━━━━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId, null, botTok);
       const res = await triggerGitHubWorkflow("5_gdrive_copier.yml", { "src_folder": src, "dst_folder": dst }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
       return;
     }
 
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 5 start]\n━━━━━━━━━━━━━━━━━━━━━━\n📂 Tiếp tục Copy thư mục GDrive dở dang (Nguồn -> Đích)\n⚡ Chế độ: Bỏ qua các file đã có\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId);
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 5 start]\n━━━━━━━━━━━━━━━━━━━━━━\n📂 Tiếp tục Copy thư mục GDrive dở dang (Nguồn -> Đích)\n⚡ Chế độ: Bỏ qua các file đã có\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId, null, botTok);
     const res = await triggerGitHubWorkflow("5_gdrive_copier.yml", {}, pat);
-    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
     return;
   }
 
@@ -173,22 +175,22 @@ async function routeCommand(rawText, chatId, threadId, env) {
     if (mLinks && mLinks[1].toLowerCase() !== "start") {
       const src = mLinks[1].trim();
       const dst = mLinks[2].trim();
-      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 6 CUSTOM COMPARE]\n━━━━━━━━━━━━━━━━━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n📊 Đang khởi chạy tiến trình đối chiếu & so sánh...`, chatId, threadId);
+      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 6 CUSTOM COMPARE]\n━━━━━━━━━━━━━━━━━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n📊 Đang khởi chạy tiến trình đối chiếu & so sánh...`, chatId, threadId, null, botTok);
       const res = await triggerGitHubWorkflow("6_folder_comparator.yml", { "src_folder": src, "dst_folder": dst }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
       return;
     }
 
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 6]\n━━━━━━━━━━━━━━━━━━━━━━\n📊 Khởi chạy Step 6: Báo cáo đối chiếu & so sánh thư mục GDrive...\n⏰ Thời gian: ${nowStr}`, chatId, threadId);
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 6]\n━━━━━━━━━━━━━━━━━━━━━━\n📊 Khởi chạy Step 6: Báo cáo đối chiếu & so sánh thư mục GDrive...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
     const res = await triggerGitHubWorkflow("6_folder_comparator.yml", {}, pat);
-    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
+    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
     return;
   }
 }
 
 async function triggerGitHubWorkflow(workflowFile, inputsObj, pat) {
   if (!pat || pat === "YOUR_GITHUB_PAT_HERE") {
-    return { success: false, info: "Chưa cấu hình GITHUB_PAT." };
+    return { success: false, info: "Chưa cấu hình GITHUB_PAT trong Cloudflare Worker." };
   }
 
   const url = `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${workflowFile}/dispatches`;
@@ -213,7 +215,7 @@ async function triggerGitHubWorkflow(workflowFile, inputsObj, pat) {
   }
 }
 
-async function sendStatus(chatId, threadId, pat, editMessageId = null) {
+async function sendStatus(chatId, threadId, pat, botTok, editMessageId = null) {
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
   let ghStatusList = [];
   let keyboardButtons = [];
@@ -256,13 +258,13 @@ async function sendStatus(chatId, threadId, pat, editMessageId = null) {
   const msg = `📊 [BÁO CÁO TRẠNG THÁI HỆ THỐNG /status]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 SERVERLESS BOT: Hoạt động 24/7 trên Cloud (Không dùng VPS)\n\n☁️ GITHUB ACTIONS CLOUD:\n  ${ghStatusList.join("\n  ")}\n\n⏰ Giờ kiểm tra (GMT+7): ${nowStr}`;
 
   if (editMessageId) {
-    await editTelegramMessage(msg, chatId, editMessageId, keyboardButtons);
+    await editTelegramMessage(msg, chatId, editMessageId, keyboardButtons, botTok);
   } else {
-    await sendTelegramReply(msg, chatId, threadId, keyboardButtons);
+    await sendTelegramReply(msg, chatId, threadId, keyboardButtons, botTok);
   }
 }
 
-async function sendRunDetail(chatId, messageId, threadId, runId, pat) {
+async function sendRunDetail(chatId, messageId, threadId, runId, pat, botTok) {
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
   let detailText = `🔍 [CHI TIẾT TIẾN TRÌNH CLOUD - RUN #${runId}]\n━━━━━━━━━━━━━━━━━━━━━━\n`;
 
@@ -318,11 +320,16 @@ async function sendRunDetail(chatId, messageId, threadId, runId, pat) {
     [{ text: "🔙 Quay lại Báo cáo Status", callback_data: "back_to_status" }]
   ];
 
-  await editTelegramMessage(detailText, chatId, messageId, keyboardButtons);
+  await editTelegramMessage(detailText, chatId, messageId, keyboardButtons, botTok);
 }
 
-async function sendTelegramReply(text, chatId, threadId, inlineKeyboard = null) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+async function sendHelp(chatId, threadId, botTok) {
+  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
+  await sendTelegramReply(helpMsg, chatId, threadId, null, botTok);
+}
+
+async function sendTelegramReply(text, chatId, threadId, inlineKeyboard = null, botTok = TELEGRAM_BOT_TOKEN) {
+  const url = `https://api.telegram.org/bot${botTok}/sendMessage`;
   const params = {
     chat_id: chatId || TARGET_CHAT_ID,
     text: text,
@@ -343,8 +350,8 @@ async function sendTelegramReply(text, chatId, threadId, inlineKeyboard = null) 
   }
 }
 
-async function editTelegramMessage(text, chatId, messageId, inlineKeyboard = null) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`;
+async function editTelegramMessage(text, chatId, messageId, inlineKeyboard = null, botTok = TELEGRAM_BOT_TOKEN) {
+  const url = `https://api.telegram.org/bot${botTok}/editMessageText`;
   const params = {
     chat_id: chatId || TARGET_CHAT_ID,
     message_id: messageId,
