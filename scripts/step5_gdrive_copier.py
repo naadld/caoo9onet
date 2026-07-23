@@ -28,31 +28,44 @@ if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rc
     RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
 
 def clean_private_key(info):
-    if "private_key" in info:
+    if isinstance(info, dict) and "private_key" in info:
         pk = str(info["private_key"]).strip()
-        pk = pk.replace("\\n", "\n").replace("\r", "")
         while "\\n" in pk:
             pk = pk.replace("\\n", "\n")
+        pk = pk.replace("\r", "")
+        if "-----BEGIN PRIVATE KEY-----" in pk and "-----END PRIVATE KEY-----" in pk:
+            header = "-----BEGIN PRIVATE KEY-----"
+            footer = "-----END PRIVATE KEY-----"
+            body = pk.split(header)[1].split(footer)[0].strip()
+            body_clean = "".join(body.split())
+            lines = [body_clean[i:i+64] for i in range(0, len(body_clean), 64)]
+            pk = f"{header}\n" + "\n".join(lines) + f"\n{footer}\n"
         info["private_key"] = pk
     return info
 
 def get_service_account_info():
-    creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
     env_creds = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+    creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
 
     info = None
     if env_creds:
         try:
-            info = json.loads(env_creds, strict=False)
-        except Exception:
-            pass
+            cleaned_env = env_creds.strip()
+            if cleaned_env.startswith("'") and cleaned_env.endswith("'"):
+                cleaned_env = cleaned_env[1:-1]
+            info = json.loads(cleaned_env, strict=False)
+        except Exception as e:
+            print(f"⚠️ Notice: GCP_SERVICE_ACCOUNT_JSON parse notice: {e}")
 
     if not info and os.path.exists(creds_path):
-        with open(creds_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-            info = json.loads(content, strict=False)
+        try:
+            with open(creds_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                info = json.loads(content, strict=False)
+        except Exception as e:
+            print(f"⚠️ Notice: credentials.json read notice: {e}")
 
-    if info and "private_key" in info:
+    if info and isinstance(info, dict) and "private_key" in info:
         info = clean_private_key(info)
 
     return info
