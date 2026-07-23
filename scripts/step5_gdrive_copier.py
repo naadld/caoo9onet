@@ -4,7 +4,8 @@ Step 5: GDrive Copier with Column D (Status), Column E (Source files #), Column 
 Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8),
 extracts Source Folder (Column B) and Target Folder (Column C).
 Copies files via rclone copy, verifies file counts in Source (Col E) vs Destination (Col F) to prevent missing files,
-and updates status in Column D upon completion. Uses Drive API v3 direct CSV export for 100% reliability.
+and updates status in Column D upon completion.
+Uses rclone OAuth token to read Google Sheet CSV directly for 100% reliability.
 """
 
 import os
@@ -16,6 +17,8 @@ import time
 import shutil
 import argparse
 import subprocess
+import configparser
+import urllib.request
 from datetime import datetime, timezone, timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,16 +32,25 @@ if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rc
 SPREADSHEET_ID = "1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8"
 DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
-def clean_private_key(info):
-    if "private_key" in info:
-        pk = str(info["private_key"]).strip()
-        pk = pk.replace("\\n", "\n").replace("\r", "")
-        while "\\n" in pk:
-            pk = pk.replace("\\n", "\n")
-        info["private_key"] = pk
-    return info
+def fix_pem_private_key(private_key_str):
+    if not private_key_str:
+        return ""
+    key = str(private_key_str).strip().strip('"').strip("'").strip()
+    key = key.replace("\\n", "\n").replace("\r", "")
+    while "\\n" in key:
+        key = key.replace("\\n", "\n")
+    if "-----BEGIN PRIVATE KEY-----" in key:
+        header = "-----BEGIN PRIVATE KEY-----"
+        footer = "-----END PRIVATE KEY-----"
+        parts = key.split(header)
+        if len(parts) > 1:
+            body_and_footer = parts[-1].split(footer)
+            body = body_and_footer[0].strip().replace(" ", "\n")
+            lines = [l.strip() for l in body.split("\n") if l.strip()]
+            key = f"{header}\n" + "\n".join(lines) + f"\n{footer}\n"
+    return key
 
-def get_google_service_account_info():
+def get_service_account_info():
     creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
     env_creds = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
 
@@ -54,22 +66,37 @@ def get_google_service_account_info():
             content = f.read()
             info = json.loads(content, strict=False)
 
-    if not info:
-        return None
+    if info and "private_key" in info:
+        info["private_key"] = fix_pem_private_key(info["private_key"])
 
-    return clean_private_key(info)
+    return info
+
+def get_rclone_oauth_access_token():
+    if not os.path.exists(RCLONE_CONF):
+        return None
+    try:
+        config = configparser.ConfigParser()
+        config.read(RCLONE_CONF)
+        for s in config.sections():
+            if "token" in config[s]:
+                tdata = json.loads(config[s]["token"])
+                token = tdata.get("access_token")
+                if token:
+                    return token
+    except Exception as e:
+        print(f"⚠️ Error reading rclone OAuth token: {e}")
+    return None
 
 def log_to_google_doc(entry_text):
     try:
+        info = get_service_account_info()
+        if not info:
+            return
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
 
         vn_tz = timezone(timedelta(hours=7))
         now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
-
-        info = get_google_service_account_info()
-        if not info:
-            return
 
         creds = service_account.Credentials.from_service_account_info(
             info,
@@ -91,67 +118,53 @@ def log_to_google_doc(entry_text):
         docs_service.documents().batchUpdate(documentId=DOC_ID, body={'requests': requests}).execute()
         print(f"📝 [Doc Log Success] {formatted_entry.strip()}")
     except Exception as e:
-        print(f"⚠️ Doc Logger Warning: {e}")
-
-def fetch_copy_pairs_via_drive_api(info):
-    try:
-        from google.oauth2 import service_account
-        import google.auth.transport.requests
-        import urllib.request
-
-        creds = service_account.Credentials.from_service_account_info(
-            info,
-            scopes=['https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/drive']
-        )
-        req = google.auth.transport.requests.Request()
-        creds.refresh(req)
-        token = creds.token
-
-        url = f"https://www.googleapis.com/drive/v3/files/{SPREADSHEET_ID}/export?mimeType=text/csv"
-        request = urllib.request.Request(url, headers={'Authorization': f'Bearer {token}'})
-        
-        print(f"📖 Downloading Google Sheet via Drive API v3 (ID: {SPREADSHEET_ID})...")
-        with urllib.request.urlopen(request) as resp:
-            csv_text = resp.read().decode('utf-8-sig')
-
-        pairs = []
-        reader = csv.reader(csv_text.splitlines())
-        for idx, row in enumerate(reader, start=1):
-            if not row or len(row) < 3:
-                continue
-            src = row[1].strip()  # Col B
-            dst = row[2].strip()  # Col C
-            status = row[3].strip() if len(row) >= 4 else ""
-            src_files_count = row[4].strip() if len(row) >= 5 else ""
-            dst_files_count = row[5].strip() if len(row) >= 6 else ""
-
-            if not src or not dst:
-                continue
-            if src.lower() in ["folder gốc", "source", "folder goc", "nội dung gốc"]:
-                continue
-
-            pairs.append({
-                "row": idx,
-                "sheet_title": "Sheet1",
-                "src": src,
-                "dst": dst,
-                "status": status,
-                "src_files_count": src_files_count,
-                "dst_files_count": dst_files_count
-            })
-        print(f"📊 [Drive API v3] Found {len(pairs)} folder copy pairs in Google Sheet.")
-        return pairs
-    except Exception as e:
-        print(f"⚠️ Drive API v3 CSV export warning: {e}")
-        return None
+        print(f"⚠️ Doc Logger Notice: {e}")
 
 def fetch_copy_pairs_from_sheets():
-    info = get_google_service_account_info()
-    if info:
-        pairs = fetch_copy_pairs_via_drive_api(info)
-        if pairs is not None:
-            return None, pairs
+    print(f"📖 Reading Google Sheet (ID: {SPREADSHEET_ID})...")
+    pairs = []
 
+    # 1. Try reading via Rclone OAuth access_token via Drive API v3 CSV export
+    access_token = get_rclone_oauth_access_token()
+    if access_token:
+        try:
+            url = f"https://www.googleapis.com/drive/v3/files/{SPREADSHEET_ID}/export?mimeType=text/csv"
+            req = urllib.request.Request(url, headers={'Authorization': f'Bearer {access_token}'})
+            with urllib.request.urlopen(req) as resp:
+                csv_text = resp.read().decode('utf-8-sig')
+
+            reader = csv.reader(csv_text.splitlines())
+            for idx, row in enumerate(reader, start=1):
+                if not row or len(row) < 3:
+                    continue
+                src = row[1].strip()  # Col B
+                dst = row[2].strip()  # Col C
+                status = row[3].strip() if len(row) >= 4 else ""
+                src_files_count = row[4].strip() if len(row) >= 5 else ""
+                dst_files_count = row[5].strip() if len(row) >= 6 else ""
+
+                if not src or not dst:
+                    continue
+                if src.lower() in ["folder gốc", "source", "folder goc", "nội dung gốc", "sources"]:
+                    continue
+
+                pairs.append({
+                    "row": idx,
+                    "sheet_title": "Sheet1",
+                    "src": src,
+                    "dst": dst,
+                    "status": status,
+                    "src_files_count": src_files_count,
+                    "dst_files_count": dst_files_count
+                })
+            print(f"📊 [Rclone OAuth Export] Successfully read {len(pairs)} folder copy pairs!")
+            return None, pairs
+        except Exception as e:
+            print(f"⚠️ Rclone OAuth CSV export warning: {e}")
+
+    # 2. Fallback to Service Account Sheets API v4
+    info = get_service_account_info()
+    if info:
         try:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
@@ -161,7 +174,7 @@ def fetch_copy_pairs_from_sheets():
                 scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
             )
             sheets_service = build('sheets', 'v4', credentials=creds)
-            
+
             first_sheet_title = "Sheet1"
             try:
                 sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
@@ -174,7 +187,6 @@ def fetch_copy_pairs_from_sheets():
             range_name = f"'{first_sheet_title}'!B2:F"
             result = sheets_service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=range_name).execute()
             rows = result.get('values', [])
-            pairs = []
 
             for idx, row in enumerate(rows, start=2):
                 if not row or len(row) < 2:
@@ -185,7 +197,7 @@ def fetch_copy_pairs_from_sheets():
                 src_files_count = row[3].strip() if len(row) >= 4 else ""
                 dst_files_count = row[4].strip() if len(row) >= 5 else ""
 
-                if not src or not dst or src.lower() in ["folder gốc", "source", "folder goc"]:
+                if not src or not dst or src.lower() in ["folder gốc", "source", "sources"]:
                     continue
 
                 pairs.append({
@@ -197,29 +209,17 @@ def fetch_copy_pairs_from_sheets():
                     "src_files_count": src_files_count,
                     "dst_files_count": dst_files_count
                 })
+            print(f"📊 [Sheets API v4] Successfully read {len(pairs)} folder copy pairs!")
             return sheets_service, pairs
         except Exception as e:
             print(f"⚠️ Sheets API v4 warning: {e}")
 
-    print("❌ Could not read Google Sheet pairs via API.")
+    print("❌ Could not read Google Sheet copy pairs.")
     return None, []
 
 def update_sheet_row_details(sheets_service, sheet_title, row_num, status_text, src_count, dst_count):
     """Updates Column D (Status), Column E (Source Files #), and Column F (Destination Files #)."""
-    if not sheets_service:
-        # Try direct update via Sheets API if info available
-        info = get_google_service_account_info()
-        if info:
-            try:
-                from google.oauth2 import service_account
-                from googleapiclient.discovery import build
-                creds = service_account.Credentials.from_service_account_info(
-                    info, scopes=['https://www.googleapis.com/auth/spreadsheets']
-                )
-                sheets_service = build('sheets', 'v4', credentials=creds)
-            except Exception:
-                pass
-
+    updated = False
     if sheets_service:
         try:
             range_name = f"'{sheet_title}'!D{row_num}:F{row_num}"
@@ -230,12 +230,13 @@ def update_sheet_row_details(sheets_service, sheet_title, row_num, status_text, 
                 valueInputOption='USER_ENTERED',
                 body=body
             ).execute()
-            print(f"  📝 [Sheet Updated] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
-            return
+            print(f"  📝 [Sheet Updated via API] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
+            updated = True
         except Exception as e:
             print(f"  ⚠️ Sheet update warning: {e}")
 
-    print(f"  📝 [Summary Log] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
+    if not updated:
+        print(f"  📝 [Summary Log] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
 
 def extract_folder_id(val):
     m = re.search(r'folders/([a-zA-Z0-9_-]+)', val)
