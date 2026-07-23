@@ -1,6 +1,9 @@
 name: 5. GDrive Folder Copier
 
 on:
+  schedule:
+    # Run every 1 hour 15 mins (at minute 15 of every hour)
+    - cron: '15 * * * *'
   workflow_dispatch:
 
 jobs:
