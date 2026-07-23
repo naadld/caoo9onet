@@ -1,6 +1,7 @@
 /**
- * O9O.NET 100% Serverless Telegram Bot Worker (Cloudflare Worker / Vercel / Netlify)
+ * O9O.NET 100% Serverless Telegram Bot (Cloudflare Worker)
  * Listens to Telegram Webhooks -> Triggers GitHub Actions Cloud Workflows
+ * Supports Interactive Telegram Inline Keyboards & Real-time Substep Detail Views!
  * NO VPS REQUIRED! 24/7 FREE CLOUD HOSTING.
  */
 
@@ -9,7 +10,7 @@ const FALLBACK_BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN_HERE";
 const TARGET_CHAT_ID     = "-1003954353565";
 const TARGET_THREAD_ID   = 3953;
 
-// Set your GitHub Personal Access Token (PAT) here or in Cloudflare Environment Variable
+// Fill in your GitHub Personal Access Token (PAT) here
 const GITHUB_PAT         = "YOUR_GITHUB_PAT_HERE";
 const GITHUB_REPO        = "naadld/caoo9onet";
 
@@ -30,6 +31,12 @@ export default {
 };
 
 async function handleUpdate(update, env) {
+  // Handle Inline Button Taps (Callback Query)
+  if (update.callback_query) {
+    await handleCallbackQuery(update.callback_query, env);
+    return;
+  }
+
   const message = update.message || update.channel_post || update.edited_message;
   if (!message) return;
 
@@ -41,6 +48,34 @@ async function handleUpdate(update, env) {
   }
 }
 
+async function handleCallbackQuery(cb, env) {
+  const data = cb.data || "";
+  const chatId = String(cb.message.chat.id);
+  const messageId = cb.message.message_id;
+  const threadId = cb.message.message_thread_id || TARGET_THREAD_ID;
+  const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
+
+  await answerCallback(cb.id);
+
+  if (data.startsWith("run_detail:")) {
+    const runId = data.replace("run_detail:", "");
+    await sendRunDetail(chatId, messageId, threadId, runId, pat);
+  } else if (data === "back_to_status" || data === "refresh_status") {
+    await sendStatus(chatId, threadId, pat, messageId);
+  }
+}
+
+async function answerCallback(callbackQueryId) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ callback_query_id: callbackQueryId })
+    });
+  } catch (e) {}
+}
+
 async function routeCommand(rawText, chatId, threadId, env) {
   const text = rawText.trim();
   const clean = text.toLowerCase();
@@ -48,7 +83,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
 
   // /help
-  if (clean === "/help" || clean === "help" || clean.startsWith("/help@") || clean.startswith("/start")) {
+  if (clean === "/help" || clean === "help" || clean.startsWith("/help@") || clean === "/start") {
     await sendHelp(chatId, threadId);
     return;
   }
@@ -60,8 +95,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
   }
 
   // /step 1
-  if (clean.startsWith("/step 1") || clean.startswith("/step1") || clean.startswith("step 1")) {
-    // 1. /step 1 force XX.yyy or /step 1 XX.yyy
+  if (clean.startsWith("/step 1") || clean.startsWith("/step1") || clean.startsWith("step 1")) {
     const mDay = text.match(/step\s*1\s+(?:(force)\s+)?([a-zA-Z0-9]+)[\._](\d+)/i);
     if (mDay) {
       const isForce = !!mDay[1];
@@ -82,7 +116,6 @@ async function routeCommand(rawText, chatId, threadId, env) {
       return;
     }
 
-    // 2. /step 1 start
     if (clean.includes("start")) {
       await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 1 start]\n━━━━━━━━━━━━━━━━━━━━━━\n📚 Tiến trình cào mặc định toàn bộ các Grade\n📅 Quét từ ngày nhỏ đến ngày lớn (Day 001 -> Day 170)\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId);
       const res = await triggerGitHubWorkflow("1_scraper_stream.yml", { "max_days": "170" }, pat);
@@ -90,7 +123,6 @@ async function routeCommand(rawText, chatId, threadId, env) {
       return;
     }
 
-    // 3. /step 1 XX
     const mGrade = text.match(/step\s*1\s+([a-zA-Z0-9]+)/i);
     if (mGrade && mGrade[1].toLowerCase() !== "start") {
       const rawGrade = mGrade[1];
@@ -103,22 +135,22 @@ async function routeCommand(rawText, chatId, threadId, env) {
   }
 
   // /step 3
-  if (clean.startsWith("/step 3") || clean.startswith("/step3") || clean === "step 3") {
+  if (clean.startsWith("/step 3") || clean.startsWith("/step3") || clean === "step 3") {
     await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 3]\n━━━━━━━━━━━━━━━━━━━━━━\n📝 Khởi chạy Step 3 Git Publish & Google Doc logger...\n⏰ Thời gian: ${nowStr}`, chatId, threadId);
     await sendTelegramReply(`✅ [STEP 3] Tiến trình đã được ghi nhận!`, chatId, threadId);
     return;
   }
 
   // /step 4
-  if (clean.startsWith("/step 4") || clean.startswith("/step4") || clean === "step 4") {
+  if (clean.startsWith("/step 4") || clean.startsWith("/step4") || clean === "step 4") {
     await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI Whisper & Interactive JSON...\n⏰ Thời gian: ${nowStr}`, chatId, threadId);
-    const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 4" }, pat);
+    const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 5" }, pat);
     await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId);
     return;
   }
 
   // /step 5
-  if (clean.startsWith("/step 5") || clean.startswith("/step5") || clean.startswith("step 5")) {
+  if (clean.startsWith("/step 5") || clean.startsWith("/step5") || clean.startsWith("step 5")) {
     const mLinks = text.match(/step\s*5\s+([^\s-]+)[\s-]+([^\s]+)/i);
     if (mLinks && mLinks[1].toLowerCase() !== "start") {
       const src = mLinks[1].trim();
@@ -136,7 +168,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
   }
 
   // /step 6
-  if (clean.startsWith("/step 6") || clean.startswith("/step6") || clean.startswith("step 6")) {
+  if (clean.startsWith("/step 6") || clean.startsWith("/step6") || clean.startsWith("step 6")) {
     const mLinks = text.match(/step\s*6\s+([^\s-]+)[\s-]+([^\s]+)/i);
     if (mLinks && mLinks[1].toLowerCase() !== "start") {
       const src = mLinks[1].trim();
@@ -181,9 +213,10 @@ async function triggerGitHubWorkflow(workflowFile, inputsObj, pat) {
   }
 }
 
-async function sendStatus(chatId, threadId, pat) {
+async function sendStatus(chatId, threadId, pat, editMessageId = null) {
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
   let ghStatusList = [];
+  let keyboardButtons = [];
 
   if (pat && pat !== "YOUR_GITHUB_PAT_HERE") {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/actions/runs?status=in_progress`;
@@ -200,7 +233,14 @@ async function sendStatus(chatId, threadId, pat) {
         const data = await res.json();
         const runs = data.workflow_runs || [];
         if (runs.length > 0) {
-          runs.forEach(r => ghStatusList.push(`⚡ ${r.name} (Run #${r.id})`));
+          runs.forEach((r, idx) => {
+            const num = idx + 1;
+            ghStatusList.push(`⚡ ${num}. ${r.name} (Run #${r.id})`);
+            keyboardButtons.push([{
+              text: `🔎 Xem chi tiết Tiến trình #${num}`,
+              callback_data: `run_detail:${r.id}`
+            }]);
+          });
         } else {
           ghStatusList.push("⚪ Không có tiến trình cloud nào đang chạy");
         }
@@ -210,29 +250,118 @@ async function sendStatus(chatId, threadId, pat) {
     }
   }
 
+  // Add Refresh button
+  keyboardButtons.push([{ text: "🔄 Làm mới Báo cáo (/status)", callback_data: "refresh_status" }]);
+
   const msg = `📊 [BÁO CÁO TRẠNG THÁI HỆ THỐNG /status]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 SERVERLESS BOT: Hoạt động 24/7 trên Cloud (Không dùng VPS)\n\n☁️ GITHUB ACTIONS CLOUD:\n  ${ghStatusList.join("\n  ")}\n\n⏰ Giờ kiểm tra (GMT+7): ${nowStr}`;
-  await sendTelegramReply(msg, chatId, threadId);
+
+  if (editMessageId) {
+    await editTelegramMessage(msg, chatId, editMessageId, keyboardButtons);
+  } else {
+    await sendTelegramReply(msg, chatId, threadId, keyboardButtons);
+  }
 }
 
-async function sendHelp(chatId, threadId) {
-  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
-  await sendTelegramReply(helpMsg, chatId, threadId);
+async function sendRunDetail(chatId, messageId, threadId, runId, pat) {
+  const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  let detailText = `🔍 [CHI TIẾT TIẾN TRÌNH CLOUD - RUN #${runId}]\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+  if (pat && pat !== "YOUR_GITHUB_PAT_HERE") {
+    try {
+      // 1. Fetch Run info
+      const runUrl = `https://api.github.com/repos/${GITHUB_REPO}/actions/runs/${runId}`;
+      const runRes = await fetch(runUrl, {
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Authorization": `Bearer ${pat}`,
+          "User-Agent": "CloudflareWorker-TelegramBot",
+          "X-GitHub-Api-Version": "2022-11-28"
+        }
+      });
+      if (runRes.status === 200) {
+        const rData = await runRes.json();
+        detailText += `📌 Tiến trình: ${rData.name}\n`;
+        detailText += `⚡ Trạng thái: ${rData.status} (${rData.conclusion || "đang thực thi"})\n`;
+        detailText += `📅 Tạo lúc: ${new Date(rData.created_at).toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })}\n`;
+      }
+
+      // 2. Fetch Jobs & Steps
+      const jobsUrl = `https://api.github.com/repos/${GITHUB_REPO}/actions/runs/${runId}/jobs`;
+      const jobsRes = await fetch(jobsUrl, {
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Authorization": `Bearer ${pat}`,
+          "User-Agent": "CloudflareWorker-TelegramBot",
+          "X-GitHub-Api-Version": "2022-11-28"
+        }
+      });
+      if (jobsRes.status === 200) {
+        const jData = await jobsRes.json();
+        const jobs = jData.jobs || [];
+        detailText += `\n🚀 CÁC BƯỚC ĐANG THỰC THI (SUBSTEPS):\n`;
+        jobs.forEach(job => {
+          (job.steps || []).forEach(st => {
+            const stIcon = st.status === "completed" ? (st.conclusion === "success" ? "✅" : "❌") : "⚡";
+            detailText += `  ${stIcon} ${st.name} [${st.status}]\n`;
+          });
+        });
+      }
+    } catch (e) {
+      detailText += `⚠️ Không thể tải thông tin chi tiết từ GitHub API: ${e.message}\n`;
+    }
+  }
+
+  detailText += `\n⏰ Giờ kiểm tra (GMT+7): ${nowStr}`;
+
+  const keyboardButtons = [
+    [{ text: "🔄 Làm mới Chi tiết", callback_data: `run_detail:${runId}` }],
+    [{ text: "🔙 Quay lại Báo cáo Status", callback_data: "back_to_status" }]
+  ];
+
+  await editTelegramMessage(detailText, chatId, messageId, keyboardButtons);
 }
 
-async function sendTelegramReply(text, chatId, threadId) {
+async function sendTelegramReply(text, chatId, threadId, inlineKeyboard = null) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const params = {
+    chat_id: chatId || TARGET_CHAT_ID,
+    text: text,
+    message_thread_id: threadId || TARGET_THREAD_ID
+  };
+  if (inlineKeyboard) {
+    params.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+  }
+
   try {
     await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        chat_id: chatId || TARGET_CHAT_ID,
-        text: text,
-        message_thread_id: threadId || TARGET_THREAD_ID
-      })
+      body: new URLSearchParams(params)
     });
   } catch (e) {
     console.error("Send reply error:", e);
+  }
+}
+
+async function editTelegramMessage(text, chatId, messageId, inlineKeyboard = null) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`;
+  const params = {
+    chat_id: chatId || TARGET_CHAT_ID,
+    message_id: messageId,
+    text: text
+  };
+  if (inlineKeyboard) {
+    params.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+  }
+
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(params)
+    });
+  } catch (e) {
+    console.error("Edit message error:", e);
   }
 }
 
