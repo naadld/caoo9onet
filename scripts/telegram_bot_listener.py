@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 """
 O9O.NET Telegram Bot Command Listener (Topic 3953 Enabled)
-Listens for manual Telegram commands:
-  - /step 1 XX.yyy         (Normal scrape for Grade XX, Day yyy - skips existing)
-  - /step 1 force XX.yyy   (Force re-download Grade XX, Day yyy - overwrites existing)
+Supports full suite of manual control commands:
+  - /step 1 start           (Default scraper sequence, day small -> big)
+  - /step 1 XX              (Scrape all missing videos for Grade XX)
+  - /step 1 XX.yyy          (Scrape specific Grade XX, Day yyy - skips existing)
+  - /step 1 force XX.yyy    (Force re-download Grade XX, Day yyy - overwrites)
+  - /step 3                 (Run Git Publish & Google Doc logger)
+  - /step 4                 (Run AI Subtitles & Interactive JSON generator)
+  - /step 5 start           (Resume default GDrive copy - skips existing)
+  - /step 5 link1-link2     (Copy custom GDrive folder link1/ID1 -> link2/ID2)
+  - /step 6                 (Run GDrive folder comparator & report)
+  - /help                   (Show interactive command guide)
 """
 
 import os
@@ -87,13 +95,12 @@ def get_github_pat():
             pass
     return ""
 
-def trigger_github_workflow(grade, day, force=False):
+def trigger_github_generic_workflow(workflow_file, inputs_dict):
     pat = get_github_pat()
     if not pat:
-        print("⚠️ GitHub PAT Token not found in environment or ~/.git-credentials.")
         return False, "Không tìm thấy GitHub PAT token."
 
-    url = "https://api.github.com/repos/naadld/caoo9onet/actions/workflows/1_scraper_stream.yml/dispatches"
+    url = f"https://api.github.com/repos/naadld/caoo9onet/actions/workflows/{workflow_file}/dispatches"
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {pat}",
@@ -103,12 +110,7 @@ def trigger_github_workflow(grade, day, force=False):
 
     payload = {
         "ref": "main",
-        "inputs": {
-            "max_days": "1",
-            "grade": str(grade),
-            "day": str(day),
-            "force": "true" if force else "false"
-        }
+        "inputs": inputs_dict
     }
 
     data = json.dumps(payload).encode("utf-8")
@@ -137,63 +139,231 @@ def save_offset(offset):
     except Exception as e:
         print(f"⚠️ Cannot save offset: {e}")
 
-def process_command(text, chat_id, thread_id):
-    pattern = r'^/step\s*1(?:\s+(force))?\s+([a-zA-Z0-9]+)[\._](\d+)'
-    m = re.search(pattern, text, re.IGNORECASE)
-    if not m:
-        return
-
-    is_force = bool(m.group(1))
-    raw_grade = m.group(2)
-    raw_day = m.group(3)
-
-    grade = normalize_grade(raw_grade)
-    try:
-        day = int(raw_day)
-    except ValueError:
-        return
+def route_command(raw_text, chat_id, thread_id):
+    text = raw_text.strip()
+    clean = text.lower()
 
     vn_tz = timezone(timedelta(hours=7))
     now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    mode_text = "FORCE (Ghi đè file cũ)" if is_force else "THƯỜNG (Bỏ qua bài đã có)"
+    # HELP / START
+    if clean in ["/help", "help", "/start"] or clean.startswith("/help@") or clean.startswith("/start@"):
+        process_help(chat_id, thread_id)
+        return
 
-    ack_msg = (
-        f"📥 [ĐÃ NHẬN LỆNH THỦ CÔNG /step 1]\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📚 Grade: {grade}\n"
-        f"📅 Ngày: Ngày {day:03d}\n"
-        f"⚡ Chế độ: {mode_text}\n"
-        f"⏰ Thời gian: {now_str}\n"
-        f"🚀 Đang khởi chạy tiến trình cào trên GitHub Actions Cloud..."
-    )
-    send_telegram_reply(ack_msg, chat_id, thread_id)
+    # STEP 1 COMMANDS
+    if clean.startswith("/step 1") or clean.startswith("/step1") or clean.startswith("step 1"):
+        # 1. /step 1 force XX.yyy or /step 1 XX.yyy (specific day)
+        m_day = re.search(r'step\s*1\s+(force\s+)?([a-zA-Z0-9]+)[\._](\d+)', text, re.IGNORECASE)
+        if m_day:
+            is_force = bool(m_day.group(1))
+            raw_grade = m_day.group(2)
+            raw_day = m_day.group(3)
+            grade = normalize_grade(raw_grade)
+            try:
+                day = int(raw_day)
+                mode_text = "FORCE (Ghi đè file cũ)" if is_force else "THƯỜNG (Bỏ qua bài đã có)"
+                ack_msg = (
+                    f"📥 [ĐÃ NHẬN LỆNH /step 1 {raw_grade}.{day:03d}]\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"📚 Grade: {grade}\n"
+                    f"📅 Ngày: Ngày {day:03d}\n"
+                    f"⚡ Chế độ: {mode_text}\n"
+                    f"⏰ Thời gian: {now_str}\n"
+                    f"🚀 Đang kích hoạt tiến trình..."
+                )
+                send_telegram_reply(ack_msg, chat_id, thread_id)
+                success, info = trigger_github_generic_workflow("1_scraper_stream.yml", {
+                    "max_days": "1",
+                    "grade": str(grade),
+                    "day": str(day),
+                    "force": "true" if is_force else "false"
+                })
+                if success:
+                    send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+                else:
+                    send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+                    cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step1_direct_stream.py')} --grade \"{grade}\" --day {day} {'--force' if is_force else ''} --force-local --max-days 1 >> {os.path.join(BASE_DIR, 'stream.log')} 2>&1 &"
+                    subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+                return
+            except ValueError:
+                pass
 
-    success, info = trigger_github_workflow(grade, day, is_force)
-    if success:
-        send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
-    else:
-        # Fallback to local background execution if GitHub trigger fails
-        send_telegram_reply(f"⚠️ {info}\n⚡ Đang chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
-        cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step1_direct_stream.py')} --grade \"{grade}\" --day {day} {'--force' if is_force else ''} --force-local --max-days 1 >> {os.path.join(BASE_DIR, 'stream.log')} 2>&1 &"
+        # 2. /step 1 start
+        if "start" in clean:
+            ack_msg = (
+                f"🚀 [ĐÃ NHẬN LỆNH /step 1 start]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📚 Tiến trình cào mặc định toàn bộ các Grade\n"
+                f"📅 Quét từ ngày nhỏ đến ngày lớn (Day 001 -> Day 170)\n"
+                f"⏰ Thời gian: {now_str}\n"
+                f"🚀 Đang khởi chạy tiến trình..."
+            )
+            send_telegram_reply(ack_msg, chat_id, thread_id)
+            success, info = trigger_github_generic_workflow("1_scraper_stream.yml", {
+                "max_days": "170"
+            })
+            if success:
+                send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+            else:
+                send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+                cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step1_direct_stream.py')} --force-local --max-days 170 >> {os.path.join(BASE_DIR, 'stream.log')} 2>&1 &"
+                subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+            return
+
+        # 3. /step 1 XX (Grade overall)
+        m_grade = re.search(r'step\s*1\s+([a-zA-Z0-9]+)', text, re.IGNORECASE)
+        if m_grade:
+            raw_grade = m_grade.group(1)
+            grade = normalize_grade(raw_grade)
+            ack_msg = (
+                f"🚀 [ĐÃ NHẬN LỆNH /step 1 {raw_grade}]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📚 Cào toàn bộ bài học chưa có của {grade}\n"
+                f"📅 Quét từ Day 001 đến Day 170 (Bỏ qua bài đã có)\n"
+                f"⏰ Thời gian: {now_str}\n"
+                f"🚀 Đang khởi chạy..."
+            )
+            send_telegram_reply(ack_msg, chat_id, thread_id)
+            success, info = trigger_github_generic_workflow("1_scraper_stream.yml", {
+                "grade": str(grade),
+                "max_days": "170"
+            })
+            if success:
+                send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+            else:
+                send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+                cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step1_direct_stream.py')} --grade \"{grade}\" --force-local --max-days 170 >> {os.path.join(BASE_DIR, 'stream.log')} 2>&1 &"
+                subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+            return
+
+    # STEP 3 COMMAND
+    if clean.startswith("/step 3") or clean.startswith("/step3") or clean == "step 3":
+        ack_msg = (
+            f"🚀 [ĐÃ NHẬN LỆNH /step 3]\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📝 Khởi chạy Step 3: Git Publish & Ghi Log Google Doc...\n"
+            f"⏰ Thời gian: {now_str}"
+        )
+        send_telegram_reply(ack_msg, chat_id, thread_id)
+        cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step3_git_publish.py')} >> {os.path.join(BASE_DIR, 'step3.log')} 2>&1 &"
         subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+        send_telegram_reply("✅ [STEP 3] Tiến trình đã được kích hoạt chạy ngầm thành công!", chat_id, thread_id)
+        return
+
+    # STEP 4 COMMAND
+    if clean.startswith("/step 4") or clean.startswith("/step4") or clean == "step 4":
+        ack_msg = (
+            f"🚀 [ĐÃ NHẬN LỆNH /step 4]\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎙️ Khởi chạy Step 4: Tạo Phụ đề AI Whisper & File JSON tương tác...\n"
+            f"⏰ Thời gian: {now_str}"
+        )
+        send_telegram_reply(ack_msg, chat_id, thread_id)
+        success, info = trigger_github_generic_workflow("4_generate_subtitles.yml", {
+            "target_folder": "Grade 4"
+        })
+        if success:
+            send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+        else:
+            send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+            cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step4_generate_subtitles.py')} >> {os.path.join(BASE_DIR, 'step4.log')} 2>&1 &"
+            subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+        return
+
+    # STEP 5 COMMANDS
+    if clean.startswith("/step 5") or clean.startswith("/step5") or clean.startswith("step 5"):
+        # 1. Check custom link1-link2 or link1 link2
+        m_links = re.search(r'step\s*5\s+([^\s-]+)[\s-]+([^\s]+)', text, re.IGNORECASE)
+        if m_links and m_links.group(1).lower() != "start":
+            src = m_links.group(1).strip()
+            dst = m_links.group(2).strip()
+            ack_msg = (
+                f"🚀 [ĐÃ NHẬN LỆNH /step 5 CUSTOM COPY]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📁 Nguồn: {src}\n"
+                f"📂 Đích:  {dst}\n"
+                f"⏰ Thời gian: {now_str}\n"
+                f"🚀 Đang khởi chạy tiến trình copy GDrive..."
+            )
+            send_telegram_reply(ack_msg, chat_id, thread_id)
+            success, info = trigger_github_generic_workflow("5_gdrive_copier.yml", {
+                "src_folder": src,
+                "dst_folder": dst
+            })
+            if success:
+                send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+            else:
+                send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+                cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step5_gdrive_copier.py')} --src \"{src}\" --dst \"{dst}\" >> {os.path.join(BASE_DIR, 'step5.log')} 2>&1 &"
+                subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+            return
+
+        # 2. /step 5 start (or default fallback)
+        ack_msg = (
+            f"🚀 [ĐÃ NHẬN LỆNH /step 5 start]\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📂 Tiếp tục Copy thư mục GDrive dở dang (Nguồn -> Đích)\n"
+            f"⚡ Chế độ: Bỏ qua các file đã có\n"
+            f"⏰ Thời gian: {now_str}\n"
+            f"🚀 Đang khởi chạy..."
+        )
+        send_telegram_reply(ack_msg, chat_id, thread_id)
+        success, info = trigger_github_generic_workflow("5_gdrive_copier.yml", {})
+        if success:
+            send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+        else:
+            send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+            cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step5_gdrive_copier.py')} >> {os.path.join(BASE_DIR, 'step5.log')} 2>&1 &"
+            subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+        return
+
+    # STEP 6 COMMAND
+    if clean.startswith("/step 6") or clean.startswith("/step6") or clean == "step 6":
+        ack_msg = (
+            f"🚀 [ĐÃ NHẬN LỆNH /step 6]\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📊 Khởi chạy Step 6: Báo cáo đối chiếu & so sánh thư mục GDrive...\n"
+            f"⏰ Thời gian: {now_str}"
+        )
+        send_telegram_reply(ack_msg, chat_id, thread_id)
+        success, info = trigger_github_generic_workflow("6_folder_comparator.yml", {})
+        if success:
+            send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+        else:
+            send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+            cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step6_compare_folders.py')} >> {os.path.join(BASE_DIR, 'step6.log')} 2>&1 &"
+            subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+        return
 
 def process_help(chat_id, thread_id):
     help_msg = (
-        f"📖 [HƯỚNG DẪN SỬ DỤNG LỆNH CÀO VIDEO]\n"
+        f"📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET]\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔹 1. CÀO THƯỜNG (Bỏ qua bài đã có):\n"
-        f"   👉 Cú pháp: /step 1 XX.yyy\n"
-        f"   👉 Ví dụ: /step 1 01.010\n"
-        f"      (Cào bài Grade 1, Ngày 10 - chỉ tải bài chưa có)\n\n"
-        f"🔹 2. CÀO ÉP BUỘC (Ghi đè bài cũ):\n"
-        f"   👉 Cú pháp: /step 1 force XX.yyy\n"
-        f"   👉 Ví dụ: /step 1 force K4.150\n"
-        f"      (Tải lại & ghi đè Level K4, Ngày 150)\n\n"
-        f"📌 MÃ GRADE (XX):\n"
-        f"▪️ 01..12 tương ứng Grade 1..12\n"
-        f"▪️ K4, K5 tương ứng Level K4, Level K5\n\n"
-        f"ℹ️ Gõ /help bất kỳ lúc nào để hiển thị bảng hướng dẫn này."
+        f"🎬 STEP 1 - CÀO VIDEO:\n"
+        f"▪️ /step 1 start\n"
+        f"   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n"
+        f"▪️ /step 1 XX\n"
+        f"   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n"
+        f"▪️ /step 1 XX.yyy\n"
+        f"   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n"
+        f"▪️ /step 1 force XX.yyy\n"
+        f"   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n"
+        f"📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n"
+        f"▪️ /step 3\n"
+        f"   👉 Chạy đồng bộ log & Git commit/push\n\n"
+        f"🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n"
+        f"▪️ /step 4\n"
+        f"   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n"
+        f"📂 STEP 5 - COPY GDRIVE FOLDER:\n"
+        f"▪️ /step 5 start\n"
+        f"   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n"
+        f"▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n"
+        f"   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n"
+        f"📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n"
+        f"▪️ /step 6\n"
+        f"   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive\n\n"
+        f"ℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này."
     )
     send_telegram_reply(help_msg, chat_id, thread_id)
 
@@ -232,15 +402,11 @@ def poll_updates():
 
                     # Verify target chat (chat_id -1003954353565)
                     if chat_id == DEFAULT_CHAT_ID or chat_id == str(DEFAULT_CHAT_ID):
-                        clean_text = text.lower()
-                        if "/step" in clean_text or "step 1" in clean_text:
-                            process_command(text, chat_id, DEFAULT_THREAD_ID)
-                        elif "/help" in clean_text or "/start" in clean_text or clean_text == "help":
-                            process_help(chat_id, DEFAULT_THREAD_ID)
+                        route_command(text, chat_id, DEFAULT_THREAD_ID)
 
-        except urllib.error.HTTPError as e:
+        except urllib.error.HTTPError:
             pass
-        except Exception as e:
+        except Exception:
             pass
 
 def main():
