@@ -154,7 +154,7 @@ def route_command(raw_text, chat_id, thread_id):
     # STEP 1 COMMANDS
     if clean.startswith("/step 1") or clean.startswith("/step1") or clean.startswith("step 1"):
         # 1. /step 1 force XX.yyy or /step 1 XX.yyy (specific day)
-        m_day = re.search(r'step\s*1\s+(force\s+)?([a-zA-Z0-9]+)[\._](\d+)', text, re.IGNORECASE)
+        m_day = re.search(r'step\s*1\s+(?:(force)\s+)?([a-zA-Z0-9]+)[\._](\d+)', text, re.IGNORECASE)
         if m_day:
             is_force = bool(m_day.group(1))
             raw_grade = m_day.group(2)
