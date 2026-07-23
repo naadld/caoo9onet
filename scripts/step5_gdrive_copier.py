@@ -177,15 +177,13 @@ def execute_copy(src_val, dst_val):
         RCLONE_BIN, "--config", RCLONE_CONF, "copy",
         src_remote, dst_remote,
         "--update",
-        "--drive-server-side-copy",
+        "--server-side-across-configs",
         "--drive-stop-on-upload-limit",
         "--transfers", "8",
         "--checkers", "16",
         "--fast-list",
         "--contimeout", "30s",
         "--timeout", "3m",
-        "--low-speed-limit", "100k",
-        "--low-speed-time", "30s",
         "--retries", "3",
         "--stats", "10s", "-v"
     ]
