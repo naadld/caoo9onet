@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    timeout-minutes: 120
+    timeout-minutes: 20
     env:
       PYTHONUNBUFFERED: "1"
       PYTHONPATH: "."

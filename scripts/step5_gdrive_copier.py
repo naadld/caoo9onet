@@ -14,9 +14,20 @@ import time
 import shutil
 import argparse
 import subprocess
+import fcntl
 from datetime import datetime, timezone, timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOCK_FILE = os.path.join(BASE_DIR, "step5_copier.lock")
+
+# Enforce strict single-instance execution
+try:
+    lock_file_fd = open(LOCK_FILE, "w")
+    fcntl.flock(lock_file_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except (IOError, OSError):
+    print("⚠️ Another instance of step5_gdrive_copier.py is currently running. Skipping.")
+    sys.exit(0)
+
 DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
 DEFAULT_SRC_FOLDER = "1ZY-penoxRJgLHZ5i41hb7e0UqfFwt3YR"
@@ -161,14 +172,21 @@ def execute_copy(src_val, dst_val):
         log_to_google_doc(msg)
         return True
 
-    print("  🚀 Starting rclone copy operation (Tải tăng cường chống trùng)...")
+    print("  🚀 Starting rclone copy operation (Server-Side Direct Transfer)...")
     cmd = [
         RCLONE_BIN, "--config", RCLONE_CONF, "copy",
         src_remote, dst_remote,
         "--update",
+        "--drive-server-side-copy",
+        "--drive-stop-on-upload-limit",
         "--transfers", "8",
         "--checkers", "16",
         "--fast-list",
+        "--contimeout", "30s",
+        "--timeout", "3m",
+        "--low-speed-limit", "100k",
+        "--low-speed-time", "30s",
+        "--retries", "3",
         "--stats", "10s", "-v"
     ]
 
