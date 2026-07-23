@@ -48,6 +48,10 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: 📢 Report Substep 1 to Paperclip
+        run: |
+          python3 scripts/sync_paperclip_live.py --step step1 --status "SUBSTEP_1" --msg "🔹 [SUBSTEP 1/4] Checkout Code & Setup Python 3.12 environment completed."
+
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -70,6 +74,10 @@ jobs:
           cat << 'EOF' > credentials.json
           ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
           EOF
+
+      - name: 📢 Report Substep 2 to Paperclip
+        run: |
+          python3 scripts/sync_paperclip_live.py --step step1 --status "SUBSTEP_2" --msg "🔹 [SUBSTEP 2/4] FFmpeg, Rclone & GCP Credentials configured successfully."
 
       - name: Run Scraper & Stream to GDrive (Step 1)
         env:
@@ -103,4 +111,9 @@ jobs:
         run: |
           pip install faster-whisper eng-to-ipa deep-translator
           python3 -u scripts/step4_generate_subtitles.py --folder "Grade 5"
+
+      - name: 📢 Report Workflow Completion to Paperclip
+        if: always()
+        run: |
+          python3 scripts/sync_paperclip_live.py --step step1 --status "WORKFLOW_COMPLETED" --msg "🎉 [SUBSTEP 4/4] Entire GitHub Actions Cloud Workflow finished processing."
 
