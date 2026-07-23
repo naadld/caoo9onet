@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Step 5: GDrive Copier with Column D (Status), Column E (Source files #), Column F (Destination files #)
-Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8) via Rclone CSV Export,
-extracts Source Folder (Column B) and Target Folder (Column C).
-Processes ALL folders IN PARALLEL SIMULTANEOUSLY with ThreadPoolExecutor.
-Features Idempotent Incremental Sync: automatically skips existing files and only copies missing ones.
+Step 5: GDrive Copier with Dedicated Subfolders per Link
+Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8) via Rclone CSV Export.
+Extracts Folder Name (Col A), Source Folder (Col B), and Target Folder (Col C).
+Copies EACH link into its OWN DEDICATED SUBFOLDER inside the Target Folder (e.g. Target/K4-K5, Target/G1-G2, Target/accelus).
+Processes folders in parallel with Idempotent Incremental Sync and logs progress to Google Doc.
 """
 
 import os
@@ -183,13 +183,34 @@ def extract_folder_id(val):
         return m.group(1)
     return val.strip()
 
-def resolve_rclone_remote(folder_val):
-    folder_id_or_path = extract_folder_id(folder_val)
-    if re.match(r'^[a-zA-Z0-9_-]{25,50}$', folder_id_or_path) and '/' not in folder_id_or_path:
-        return f"vpsg24gb.aleron,root_folder_id={folder_id_or_path}:"
+def clean_folder_name(name_col):
+    if not name_col:
+        return "Uncategorized"
+    clean = str(name_col).strip().rstrip(':').strip()
+    clean = re.sub(r'[\\/*?:"<>|]', '_', clean)
+    return clean or "Uncategorized"
+
+def resolve_rclone_source_remote(folder_val):
+    folder_id = extract_folder_id(folder_val)
+    if re.match(r'^[a-zA-Z0-9_-]{25,50}$', folder_id) and '/' not in folder_id:
+        return f"vpsg24gb.aleron,root_folder_id={folder_id}:"
     else:
-        clean_path = folder_id_or_path.strip('/')
+        clean_path = folder_id.strip('/')
         return f"{REMOTE_BASE}{clean_path}"
+
+def resolve_rclone_target_remote(folder_val, name_col):
+    """
+    Resolves target remote so that EACH link is copied into its OWN DEDICATED SUBFOLDER
+    named after Column A (e.g. Target/K4-K5, Target/G1-G2, Target/accelus).
+    """
+    folder_id = extract_folder_id(folder_val)
+    clean_name = clean_folder_name(name_col)
+    
+    if re.match(r'^[a-zA-Z0-9_-]{25,50}$', folder_id) and '/' not in folder_id:
+        return f"vpsg24gb.aleron,root_folder_id={folder_id}:{clean_name}"
+    else:
+        clean_path = folder_id.strip('/')
+        return f"{REMOTE_BASE}{clean_path}/{clean_name}"
 
 def count_remote_files(remote_path):
     try:
@@ -205,9 +226,12 @@ def count_remote_files(remote_path):
         print(f"  ⚠️ File counting warning for {remote_path}: {e}")
         return 0
 
-def execute_copy(src_val, dst_val):
-    src_remote = resolve_rclone_remote(src_val)
-    dst_remote = resolve_rclone_remote(dst_val)
+def execute_copy(src_val, dst_val, name_col):
+    src_remote = resolve_rclone_source_remote(src_val)
+    dst_remote = resolve_rclone_target_remote(dst_val, name_col)
+
+    print(f"  📂 Source Remote: {src_remote}")
+    print(f"  📂 Target Dedicated Subfolder: {dst_remote}")
 
     # Use rclone copy with high parallel transfers and real-time output streaming
     # rclone natively checks existing files and skips them automatically!
@@ -248,27 +272,28 @@ def process_single_pair(item):
     existing_src_c = item['src_files_count']
     existing_dst_c = item['dst_files_count']
     pair_name = item.get('name', f"Row {row_num}")
+    clean_subfolder_name = clean_folder_name(pair_name)
 
-    print(f"\n🚀 [PARALLEL WORKER] Starting [{pair_name}] Row {row_num} (Status: '{status}')...")
+    print(f"\n🚀 [PARALLEL WORKER] Starting [{clean_subfolder_name}] Row {row_num} (Status: '{status}')...")
 
-    src_remote = resolve_rclone_remote(item['src'])
-    dst_remote = resolve_rclone_remote(item['dst'])
+    src_remote = resolve_rclone_source_remote(item['src'])
+    dst_remote = resolve_rclone_target_remote(item['dst'], pair_name)
 
     # Fast Check: If marked completed and existing file counts match, skip immediately
     if is_already_completed(status):
         if existing_src_c and existing_dst_c and existing_src_c == existing_dst_c and existing_src_c != "0":
-            print(f"  ⏭️ [{pair_name}] Row {row_num} already 100% completed & file counts match ({existing_dst_c}/{existing_src_c}). SKIPPING!")
-            return {"status": "skipped", "name": pair_name, "row": row_num}
+            print(f"  ⏭️ [{clean_subfolder_name}] Row {row_num} already 100% completed & file counts match ({existing_dst_c}/{existing_src_c}). SKIPPING!")
+            return {"status": "skipped", "name": clean_subfolder_name, "row": row_num}
         else:
             # Count files to verify
             src_c = count_remote_files(src_remote)
             dst_c = count_remote_files(dst_remote)
             if src_c > 0 and src_c == dst_c:
-                print(f"  ⏭️ [{pair_name}] Row {row_num} verified all files already copied ({dst_c}/{src_c}). SKIPPING!")
-                return {"status": "skipped", "name": pair_name, "row": row_num}
+                print(f"  ⏭️ [{clean_subfolder_name}] Row {row_num} verified all files already copied ({dst_c}/{src_c}). SKIPPING!")
+                return {"status": "skipped", "name": clean_subfolder_name, "row": row_num}
 
-    # Execute incremental rclone copy (skips existing files automatically!)
-    ok, src_remote, dst_remote = execute_copy(item['src'], item['dst'])
+    # Execute incremental rclone copy into dedicated subfolder (skips existing files automatically!)
+    ok, src_remote, dst_remote = execute_copy(item['src'], item['dst'], pair_name)
 
     # Count files after copy operation
     src_c = count_remote_files(src_remote)
@@ -278,21 +303,21 @@ def process_single_pair(item):
     now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
 
     if ok and src_c == dst_c and src_c > 0:
-        print(f"  🎉 [{pair_name}] Row {row_num} COMPLETED! All {dst_c}/{src_c} files matched.")
-        log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy [{pair_name}] từ [{item['src']}] sang [{item['dst']}] (Đủ {dst_c}/{src_c} files)")
-        return {"status": "success", "name": pair_name, "row": row_num}
+        print(f"  🎉 [{clean_subfolder_name}] Row {row_num} COMPLETED! All {dst_c}/{src_c} files matched in subfolder.")
+        log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy [{clean_subfolder_name}] từ [{item['src']}] sang [{item['dst']}/{clean_subfolder_name}] (Đủ {dst_c}/{src_c} files)")
+        return {"status": "success", "name": clean_subfolder_name, "row": row_num}
     elif ok and src_c != dst_c:
-        print(f"  ⚠️ [{pair_name}] Row {row_num} PARTIAL / MISMATCH! Src: {src_c} vs Dst: {dst_c}")
-        log_to_google_doc(f"{now_str}: ⚠️ Cảnh báo Step 5 Lệch file [{pair_name}] từ [{item['src']}] sang [{item['dst']}] (Đích: {dst_c} / Nguồn: {src_c})")
-        return {"status": "partial", "name": pair_name, "row": row_num}
+        print(f"  ⚠️ [{clean_subfolder_name}] Row {row_num} PARTIAL / MISMATCH! Src: {src_c} vs Dst: {dst_c}")
+        log_to_google_doc(f"{now_str}: ⚠️ Cảnh báo Step 5 Lệch file [{clean_subfolder_name}] từ [{item['src']}] sang [{item['dst']}/{clean_subfolder_name}] (Đích: {dst_c} / Nguồn: {src_c})")
+        return {"status": "partial", "name": clean_subfolder_name, "row": row_num}
     else:
-        print(f"  ❌ [{pair_name}] Row {row_num} FAILED copy operation.")
-        log_to_google_doc(f"{now_str}: Lỗi Step 5 Copy [{pair_name}] từ [{item['src']}] sang [{item['dst']}]")
-        return {"status": "fail", "name": pair_name, "row": row_num}
+        print(f"  ❌ [{clean_subfolder_name}] Row {row_num} FAILED copy operation.")
+        log_to_google_doc(f"{now_str}: Lỗi Step 5 Copy [{clean_subfolder_name}] từ [{item['src']}] sang [{item['dst']}]")
+        return {"status": "fail", "name": clean_subfolder_name, "row": row_num}
 
 def run_gdrive_copier():
     print("=" * 60)
-    print("🚀 STEP 5: PARALLEL GDRIVE COPIER (With Incremental Anti-Duplicate Verification)")
+    print("🚀 STEP 5: GDRIVE COPIER (Dedicated Subfolder per Link)")
     print("=" * 60)
 
     pairs = fetch_copy_pairs_from_gdrive_export()
@@ -301,7 +326,7 @@ def run_gdrive_copier():
         print("ℹ️ No copy pairs found to process.")
         return
 
-    print(f"\n⚡ Processing ALL {len(pairs)} folder pairs IN PARALLEL CONCURRENTLY (Max {len(pairs)} workers)...")
+    print(f"\n⚡ Processing ALL {len(pairs)} folder pairs IN PARALLEL into dedicated subfolders (Max {len(pairs)} workers)...")
 
     results = []
     with ThreadPoolExecutor(max_workers=min(len(pairs), 10)) as executor:
