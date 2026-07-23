@@ -29,7 +29,7 @@ DEFAULT_DST_FOLDER = "1kti0VyCp93sL49pn3JkyU2gBa-tr33Iz"
 PRIMARY_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
 FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg"
 DEFAULT_CHAT_ID = "-1003954353565"
-DEFAULT_THREAD_ID = 4049
+DEFAULT_THREAD_ID = 3953
 
 RCLONE_BIN = shutil.which("rclone") or "rclone"
 RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")

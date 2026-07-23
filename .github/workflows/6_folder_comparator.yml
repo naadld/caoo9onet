@@ -27,7 +27,7 @@ jobs:
       PYTHONPATH: "."
       TELEGRAM_BOT_TOKEN: "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
       TELEGRAM_CHAT_ID: "-1003954353565"
-      TELEGRAM_THREAD_ID: "4049"
+      TELEGRAM_THREAD_ID: "3953"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
