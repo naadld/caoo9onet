@@ -318,8 +318,35 @@ def route_command(raw_text, chat_id, thread_id):
             subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
         return
 
-    # STEP 6 COMMAND
-    if clean.startswith("/step 6") or clean.startswith("/step6") or clean == "step 6":
+    # STEP 6 COMMANDS
+    if clean.startswith("/step 6") or clean.startswith("/step6") or clean.startswith("step 6"):
+        # Check custom link1-link2 or link1 link2
+        m_links = re.search(r'step\s*6\s+([^\s-]+)[\s-]+([^\s]+)', text, re.IGNORECASE)
+        if m_links and m_links.group(1).lower() != "start":
+            src = m_links.group(1).strip()
+            dst = m_links.group(2).strip()
+            ack_msg = (
+                f"🚀 [ĐÃ NHẬN LỆNH /step 6 CUSTOM COMPARE]\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📁 Nguồn: {src}\n"
+                f"📂 Đích:  {dst}\n"
+                f"⏰ Thời gian: {now_str}\n"
+                f"📊 Đang khởi chạy tiến trình đối chiếu & so sánh..."
+            )
+            send_telegram_reply(ack_msg, chat_id, thread_id)
+            success, info = trigger_github_generic_workflow("6_folder_comparator.yml", {
+                "src_folder": src,
+                "dst_folder": dst
+            })
+            if success:
+                send_telegram_reply(f"✅ [KÍCH HOẠT THÀNH CÔNG]\n{info}\n🔗 Theo dõi tại: https://github.com/naadld/caoo9onet/actions", chat_id, thread_id)
+            else:
+                send_telegram_reply(f"⚠️ {info}\n⚡ Chuyển sang chạy dự phòng trên VPS...", chat_id, thread_id)
+                cmd = f"python3 {os.path.join(BASE_DIR, 'scripts/step6_compare_folders.py')} --src \"{src}\" --dst \"{dst}\" >> {os.path.join(BASE_DIR, 'step6.log')} 2>&1 &"
+                subprocess.Popen(cmd, shell=True, cwd=BASE_DIR)
+            return
+
+        # Default /step 6
         ack_msg = (
             f"🚀 [ĐÃ NHẬN LỆNH /step 6]\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -362,7 +389,9 @@ def process_help(chat_id, thread_id):
         f"   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n"
         f"📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n"
         f"▪️ /step 6\n"
-        f"   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive\n\n"
+        f"   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n"
+        f"▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n"
+        f"   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n"
         f"ℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này."
     )
     send_telegram_reply(help_msg, chat_id, thread_id)
