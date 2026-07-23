@@ -1,0 +1,74 @@
+name: 6. GDrive Folder Comparator
+
+on:
+  schedule:
+    # Run every 2 hours
+    - cron: '30 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      src_folder:
+        description: 'Source GDrive Folder URL or ID'
+        required: false
+        default: 'https://drive.google.com/drive/folders/1ZY-penoxRJgLHZ5i41hb7e0UqfFwt3YR'
+      dst_folder:
+        description: 'Target GDrive Folder URL or ID'
+        required: false
+        default: 'https://drive.google.com/drive/folders/1kti0VyCp93sL49pn3JkyU2gBa-tr33Iz'
+
+jobs:
+  compare_gdrive_folders:
+    name: Compare GDrive Folders & Report (Step 6)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 60
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
+      TELEGRAM_BOT_TOKEN: "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
+      TELEGRAM_CHAT_ID: "-1003954353565"
+      TELEGRAM_THREAD_ID: "4049"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-api-python-client google-auth
+
+      - name: Install Rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << 'EOF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          EOF
+
+      - name: Configure Google Credentials
+        run: |
+          cat << 'EOF' > credentials.json
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          EOF
+
+      - name: Run GDrive Folder Comparator (Step 6)
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+        run: |
+          SRC_ARG="${{ inputs.src_folder }}"
+          DST_ARG="${{ inputs.dst_folder }}"
+          if [ -n "$SRC_ARG" ] && [ -n "$DST_ARG" ]; then
+            python3 -u scripts/step6_compare_folders.py --src "$SRC_ARG" --dst "$DST_ARG"
+          else
+            python3 -u scripts/step6_compare_folders.py
+          fi
