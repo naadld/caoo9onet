@@ -139,6 +139,122 @@ def save_offset(offset):
     except Exception as e:
         print(f"⚠️ Cannot save offset: {e}")
 
+def check_vps_processes():
+    try:
+        output = subprocess.check_output(["ps", "aux"], text=True)
+    except Exception:
+        output = ""
+
+    status_dict = {
+        "listener": [],
+        "step1": [],
+        "step3": [],
+        "step4": [],
+        "step5": [],
+        "step6": []
+    }
+
+    for line in output.splitlines():
+        if "python" in line:
+            m = line.split()
+            if len(m) > 1:
+                pid = m[1]
+                if "telegram_bot_listener.py" in line:
+                    status_dict["listener"].append(pid)
+                elif "step1_direct_stream.py" in line:
+                    status_dict["step1"].append(pid)
+                elif "step3_git_publish.py" in line:
+                    status_dict["step3"].append(pid)
+                elif "step4_generate_subtitles.py" in line:
+                    status_dict["step4"].append(pid)
+                elif "step5_gdrive_copier.py" in line:
+                    status_dict["step5"].append(pid)
+                elif "step6_compare_folders.py" in line:
+                    status_dict["step6"].append(pid)
+
+    return status_dict
+
+def get_github_active_runs():
+    pat = get_github_pat()
+    if not pat:
+        return []
+
+    url = "https://api.github.com/repos/naadld/caoo9onet/actions/runs?status=in_progress"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {pat}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            active_runs = []
+            for run in data.get("workflow_runs", []):
+                name = run.get("name")
+                run_id = run.get("id")
+                html_url = run.get("html_url")
+                active_runs.append({"name": name, "id": run_id, "url": html_url})
+            return active_runs
+    except Exception as e:
+        print(f"⚠️ Error fetching GitHub active runs: {e}")
+        return []
+
+def process_status(chat_id, thread_id):
+    vn_tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    # 1. Check VPS Local Processes
+    proc_dict = check_vps_processes()
+    
+    local_status = []
+    if proc_dict["listener"]:
+        local_status.append(f"🤖 Bot Listener: 🟢 Đang chạy (PID {', '.join(proc_dict['listener'])})")
+    else:
+        local_status.append("🤖 Bot Listener: 🔴 Đang dừng")
+
+    if proc_dict["step1"]:
+        local_status.append(f"🎬 Step 1 Scraper: 🟢 Đang chạy (PID {', '.join(proc_dict['step1'])})")
+    else:
+        local_status.append("🎬 Step 1 Scraper: ⚪ Nhàn rỗi")
+
+    if proc_dict["step3"]:
+        local_status.append(f"📝 Step 3 Git Logger: 🟢 Đang chạy (PID {', '.join(proc_dict['step3'])})")
+
+    if proc_dict["step4"]:
+        local_status.append(f"🎙️ Step 4 Subtitles: 🟢 Đang chạy (PID {', '.join(proc_dict['step4'])})")
+
+    if proc_dict["step5"]:
+        local_status.append(f"📂 Step 5 Copier: 🟢 Đang chạy (PID {', '.join(proc_dict['step5'])})")
+    else:
+        local_status.append("📂 Step 5 Copier: ⚪ Nhàn rỗi")
+
+    if proc_dict["step6"]:
+        local_status.append(f"📊 Step 6 Comparator: 🟢 Đang chạy (PID {', '.join(proc_dict['step6'])})")
+    else:
+        local_status.append("📊 Step 6 Comparator: ⚪ Nhàn rỗi")
+
+    # 2. Check GitHub Actions Cloud Active Workflows
+    gh_runs = get_github_active_runs()
+    gh_status = []
+    if gh_runs:
+        for r in gh_runs:
+            gh_status.append(f"⚡ {r['name']} (Run #{r['id']})")
+    else:
+        gh_status.append("⚪ Không có tiến trình cloud nào đang chạy")
+
+    status_msg = (
+        f"📊 [BÁO CÁO TRẠNG THÁI HỆ THỐNG /status]\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🖥️ MÁY CHỦ VPS (LOCAL):\n"
+        f"  " + "\n  ".join(local_status) + "\n\n"
+        f"☁️ GITHUB ACTIONS CLOUD:\n"
+        f"  " + "\n  ".join(gh_status) + "\n\n"
+        f"⏰ Giờ kiểm tra (GMT+7): {now_str}"
+    )
+    send_telegram_reply(status_msg, chat_id, thread_id)
+
 def route_command(raw_text, chat_id, thread_id):
     text = raw_text.strip()
     clean = text.lower()
@@ -149,6 +265,11 @@ def route_command(raw_text, chat_id, thread_id):
     # HELP / START
     if clean in ["/help", "help", "/start"] or clean.startswith("/help@") or clean.startswith("/start@"):
         process_help(chat_id, thread_id)
+        return
+
+    # STATUS
+    if clean in ["/status", "status"] or clean.startswith("/status@"):
+        process_status(chat_id, thread_id)
         return
 
     # STEP 1 COMMANDS
@@ -392,6 +513,9 @@ def process_help(chat_id, thread_id):
         f"   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n"
         f"▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n"
         f"   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n"
+        f"⚡ KIỂM TRA HỆ THỐNG:\n"
+        f"▪️ /status\n"
+        f"   👉 Kiểm tra trạng thái các tiến trình đang chạy (VPS & Cloud)\n\n"
         f"ℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này."
     )
     send_telegram_reply(help_msg, chat_id, thread_id)
