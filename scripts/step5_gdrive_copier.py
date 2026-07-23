@@ -212,20 +212,29 @@ def execute_copy(src_val, dst_val):
     print(f"  📂 Source: {src_val}  -->  Remote: {src_remote}")
     print(f"  📂 Target: {dst_val}  -->  Remote: {dst_remote}")
 
-    # Use rclone copy (NEVER rclone move)
+    # Use rclone copy with high parallel transfers and real-time output streaming
     cmd = [
         RCLONE_BIN, "--config", RCLONE_CONF, "copy",
         src_remote, dst_remote,
+        "--transfers", "12",
+        "--checkers", "24",
+        "--fast-list",
         "--stats", "10s", "-v"
     ]
 
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        for line in iter(p.stdout.readline, ''):
+            if line:
+                sys.stdout.write("    " + line)
+                sys.stdout.flush()
+        p.wait()
+
         if p.returncode == 0:
             print("  ✅ Copy completed successfully.")
             return True, src_remote, dst_remote
         else:
-            print(f"  ❌ Copy failed (code {p.returncode}): {p.stderr.strip()}")
+            print(f"  ❌ Copy failed (code {p.returncode})")
             return False, src_remote, dst_remote
     except Exception as e:
         print(f"  ❌ Copy exception: {e}")
