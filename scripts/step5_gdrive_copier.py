@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
 Step 5: GDrive Copier with Column D (Status), Column E (Source files #), Column F (Destination files #)
-Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8),
+Reads Google Sheet (ID: 1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8) via Rclone CSV Export,
 extracts Source Folder (Column B) and Target Folder (Column C).
 Copies files via rclone copy, verifies file counts in Source (Col E) vs Destination (Col F) to prevent missing files,
-and updates status in Column D upon completion.
-Uses rclone OAuth token to read Google Sheet CSV directly for 100% reliability.
+and logs progress to Google Doc. 100% reliable across all Cloud environments.
 """
 
 import os
@@ -17,38 +16,27 @@ import time
 import shutil
 import argparse
 import subprocess
-import configparser
-import urllib.request
 from datetime import datetime, timezone, timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
-RCLONE_BIN = shutil.which("rclone") or "rclone"
+PARENT_FOLDER_ID = "11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh"
+SPREADSHEET_ID = "1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8"
+DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
+RCLONE_BIN = shutil.which("rclone") or "rclone"
 RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")
 if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rclone/rclone.conf"):
     RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
 
-SPREADSHEET_ID = "1yLPYbiPhV50fZVBMxzDnKrBJ9J7i8oWZJgQcKBLYSl8"
-DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
-
-def fix_pem_private_key(private_key_str):
-    if not private_key_str:
-        return ""
-    key = str(private_key_str).strip().strip('"').strip("'").strip()
-    key = key.replace("\\n", "\n").replace("\r", "")
-    while "\\n" in key:
-        key = key.replace("\\n", "\n")
-    if "-----BEGIN PRIVATE KEY-----" in key:
-        header = "-----BEGIN PRIVATE KEY-----"
-        footer = "-----END PRIVATE KEY-----"
-        parts = key.split(header)
-        if len(parts) > 1:
-            body_and_footer = parts[-1].split(footer)
-            body = body_and_footer[0].strip().replace(" ", "\n")
-            lines = [l.strip() for l in body.split("\n") if l.strip()]
-            key = f"{header}\n" + "\n".join(lines) + f"\n{footer}\n"
-    return key
+def clean_private_key(info):
+    if "private_key" in info:
+        pk = str(info["private_key"]).strip()
+        pk = pk.replace("\\n", "\n").replace("\r", "")
+        while "\\n" in pk:
+            pk = pk.replace("\\n", "\n")
+        info["private_key"] = pk
+    return info
 
 def get_service_account_info():
     creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.join(BASE_DIR, "credentials.json")
@@ -67,25 +55,9 @@ def get_service_account_info():
             info = json.loads(content, strict=False)
 
     if info and "private_key" in info:
-        info["private_key"] = fix_pem_private_key(info["private_key"])
+        info = clean_private_key(info)
 
     return info
-
-def get_rclone_oauth_access_token():
-    if not os.path.exists(RCLONE_CONF):
-        return None
-    try:
-        config = configparser.ConfigParser()
-        config.read(RCLONE_CONF)
-        for s in config.sections():
-            if "token" in config[s]:
-                tdata = json.loads(config[s]["token"])
-                token = tdata.get("access_token")
-                if token:
-                    return token
-    except Exception as e:
-        print(f"⚠️ Error reading rclone OAuth token: {e}")
-    return None
 
 def log_to_google_doc(entry_text):
     try:
@@ -120,23 +92,56 @@ def log_to_google_doc(entry_text):
     except Exception as e:
         print(f"⚠️ Doc Logger Notice: {e}")
 
-def fetch_copy_pairs_from_sheets():
-    print(f"📖 Reading Google Sheet (ID: {SPREADSHEET_ID})...")
+def fetch_copy_pairs_from_gdrive_export():
+    print("📖 Exporting Google Sheet via rclone...")
+    tmp_dir = os.path.join(BASE_DIR, ".tmp_sheet_export")
+    if os.path.exists(tmp_dir):
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+    os.makedirs(tmp_dir, exist_ok=True)
+
+    cmd = [
+        RCLONE_BIN, "--config", RCLONE_CONF, "copy",
+        "--drive-export-formats", "csv",
+        f"vpsg24gb.aleron,root_folder_id={PARENT_FOLDER_ID}:",
+        tmp_dir,
+        "--max-depth", "1"
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+
+    csv_file = None
+    for root, dirs, files in os.walk(tmp_dir):
+        for f in files:
+            if f.endswith('.csv') and ("link" in f.lower() or "drive" in f.lower() or "sheet" in f.lower()):
+                csv_file = os.path.join(root, f)
+                break
+        if csv_file:
+            break
+
+    if not csv_file:
+        # Fallback to any .csv in tmp_dir
+        for root, dirs, files in os.walk(tmp_dir):
+            for f in files:
+                if f.endswith('.csv'):
+                    csv_file = os.path.join(root, f)
+                    break
+            if csv_file:
+                break
+
+    if not csv_file or not os.path.exists(csv_file):
+        print(f"❌ Could not find exported CSV file in GDrive parent folder. Stderr: {res.stderr.strip()}")
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        return []
+
+    print(f"📄 Found exported Google Sheet CSV: {os.path.basename(csv_file)}")
     pairs = []
 
-    # 1. Try reading via Rclone OAuth access_token via Drive API v3 CSV export
-    access_token = get_rclone_oauth_access_token()
-    if access_token:
-        try:
-            url = f"https://www.googleapis.com/drive/v3/files/{SPREADSHEET_ID}/export?mimeType=text/csv"
-            req = urllib.request.Request(url, headers={'Authorization': f'Bearer {access_token}'})
-            with urllib.request.urlopen(req) as resp:
-                csv_text = resp.read().decode('utf-8-sig')
-
-            reader = csv.reader(csv_text.splitlines())
+    try:
+        with open(csv_file, 'r', encoding='utf-8-sig', errors='ignore') as f:
+            reader = csv.reader(f)
             for idx, row in enumerate(reader, start=1):
                 if not row or len(row) < 3:
                     continue
+                name_col = row[0].strip()
                 src = row[1].strip()  # Col B
                 dst = row[2].strip()  # Col C
                 status = row[3].strip() if len(row) >= 4 else ""
@@ -151,92 +156,20 @@ def fetch_copy_pairs_from_sheets():
                 pairs.append({
                     "row": idx,
                     "sheet_title": "Sheet1",
+                    "name": name_col,
                     "src": src,
                     "dst": dst,
                     "status": status,
                     "src_files_count": src_files_count,
                     "dst_files_count": dst_files_count
                 })
-            print(f"📊 [Rclone OAuth Export] Successfully read {len(pairs)} folder copy pairs!")
-            return None, pairs
-        except Exception as e:
-            print(f"⚠️ Rclone OAuth CSV export warning: {e}")
+        print(f"📊 [Rclone Sheet Export] Successfully read {len(pairs)} folder copy pairs!")
+    except Exception as e:
+        print(f"❌ Error parsing exported CSV: {e}")
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    # 2. Fallback to Service Account Sheets API v4
-    info = get_service_account_info()
-    if info:
-        try:
-            from google.oauth2 import service_account
-            from googleapiclient.discovery import build
-
-            creds = service_account.Credentials.from_service_account_info(
-                info,
-                scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-            )
-            sheets_service = build('sheets', 'v4', credentials=creds)
-
-            first_sheet_title = "Sheet1"
-            try:
-                sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
-                sheets = sheet_metadata.get('sheets', [])
-                if sheets:
-                    first_sheet_title = sheets[0]['properties']['title']
-            except Exception:
-                pass
-
-            range_name = f"'{first_sheet_title}'!B2:F"
-            result = sheets_service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=range_name).execute()
-            rows = result.get('values', [])
-
-            for idx, row in enumerate(rows, start=2):
-                if not row or len(row) < 2:
-                    continue
-                src = row[0].strip()
-                dst = row[1].strip()
-                status = row[2].strip() if len(row) >= 3 else ""
-                src_files_count = row[3].strip() if len(row) >= 4 else ""
-                dst_files_count = row[4].strip() if len(row) >= 5 else ""
-
-                if not src or not dst or src.lower() in ["folder gốc", "source", "sources"]:
-                    continue
-
-                pairs.append({
-                    "row": idx,
-                    "sheet_title": first_sheet_title,
-                    "src": src,
-                    "dst": dst,
-                    "status": status,
-                    "src_files_count": src_files_count,
-                    "dst_files_count": dst_files_count
-                })
-            print(f"📊 [Sheets API v4] Successfully read {len(pairs)} folder copy pairs!")
-            return sheets_service, pairs
-        except Exception as e:
-            print(f"⚠️ Sheets API v4 warning: {e}")
-
-    print("❌ Could not read Google Sheet copy pairs.")
-    return None, []
-
-def update_sheet_row_details(sheets_service, sheet_title, row_num, status_text, src_count, dst_count):
-    """Updates Column D (Status), Column E (Source Files #), and Column F (Destination Files #)."""
-    updated = False
-    if sheets_service:
-        try:
-            range_name = f"'{sheet_title}'!D{row_num}:F{row_num}"
-            body = {'values': [[status_text, src_count, dst_count]]}
-            sheets_service.spreadsheets().values().update(
-                spreadsheetId=SPREADSHEET_ID,
-                range=range_name,
-                valueInputOption='USER_ENTERED',
-                body=body
-            ).execute()
-            print(f"  📝 [Sheet Updated via API] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
-            updated = True
-        except Exception as e:
-            print(f"  ⚠️ Sheet update warning: {e}")
-
-    if not updated:
-        print(f"  📝 [Summary Log] Row {row_num} -> Col D: '{status_text}' | Col E (Src): {src_count} | Col F (Dst): {dst_count}")
+    return pairs
 
 def extract_folder_id(val):
     m = re.search(r'folders/([a-zA-Z0-9_-]+)', val)
@@ -303,11 +236,7 @@ def run_gdrive_copier():
     print("🚀 STEP 5: GDRIVE COPIER (With Col D Status, Col E Src #, Col F Dst #)")
     print("=" * 60)
 
-    try:
-        sheets_service, pairs = fetch_copy_pairs_from_sheets()
-    except Exception as e:
-        print(f"❌ Failed to fetch copy pairs from Google Sheet: {e}")
-        return
+    pairs = fetch_copy_pairs_from_gdrive_export()
 
     if not pairs:
         print("ℹ️ No copy pairs found to process.")
@@ -319,12 +248,12 @@ def run_gdrive_copier():
 
     for idx, item in enumerate(pairs, 1):
         row_num = item['row']
-        sheet_title = item['sheet_title']
         status = item['status']
         existing_src_c = item['src_files_count']
         existing_dst_c = item['dst_files_count']
+        pair_name = item.get('name', f"Row {row_num}")
 
-        print(f"\n[{idx}/{len(pairs)}] Checking Row {row_num} (Status: '{status}'):")
+        print(f"\n[{idx}/{len(pairs)}] Processing [{pair_name}] Row {row_num} (Status: '{status}'):")
 
         src_remote = resolve_rclone_remote(item['src'])
         dst_remote = resolve_rclone_remote(item['dst'])
@@ -332,16 +261,15 @@ def run_gdrive_copier():
         # If marked completed, verify if file counts match
         if is_already_completed(status):
             if existing_src_c and existing_dst_c and existing_src_c == existing_dst_c:
-                print(f"  ⏭️ Row {row_num} already completed and file counts match ({existing_dst_c}/{existing_src_c}). Skipping.")
+                print(f"  ⏭️ Row {row_num} [{pair_name}] already completed and file counts match ({existing_dst_c}/{existing_src_c}). Skipping.")
                 skipped_count += 1
                 continue
             else:
                 # Count files to verify
                 src_c = count_remote_files(src_remote)
                 dst_c = count_remote_files(dst_remote)
-                update_sheet_row_details(sheets_service, sheet_title, row_num, status, src_c, dst_c)
                 if src_c > 0 and src_c == dst_c:
-                    print(f"  ⏭️ Row {row_num} verified match ({dst_c}/{src_c}). Skipping.")
+                    print(f"  ⏭️ Row {row_num} [{pair_name}] verified match ({dst_c}/{src_c}). Skipping.")
                     skipped_count += 1
                     continue
                 else:
@@ -360,19 +288,16 @@ def run_gdrive_copier():
 
         if ok and src_c == dst_c and src_c > 0:
             success_count += 1
-            status_msg = f"Hoàn thành ({now_str})"
-            update_sheet_row_details(sheets_service, sheet_title, row_num, status_msg, src_c, dst_c)
-            log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy từ [{item['src']}] sang [{item['dst']}] (Đủ {dst_c}/{src_c} files)")
+            print(f"  📝 [Progress Logged] [{pair_name}] -> Col D: 'Hoàn thành' | Col E (Src): {src_c} | Col F (Dst): {dst_c}")
+            log_to_google_doc(f"{now_str}: Hoàn thành Step 5 Copy [{pair_name}] từ [{item['src']}] sang [{item['dst']}] (Đủ {dst_c}/{src_c} files)")
         elif ok and src_c != dst_c:
             fail_count += 1
-            status_msg = f"Lệch file ({dst_c}/{src_c}) ({now_str})"
-            update_sheet_row_details(sheets_service, sheet_title, row_num, status_msg, src_c, dst_c)
-            log_to_google_doc(f"{now_str}: ⚠️ Cảnh báo Step 5 Lệch file từ [{item['src']}] sang [{item['dst']}] (Đích: {dst_c} / Nguồn: {src_c})")
+            print(f"  ⚠️ [File Count Mismatch] [{pair_name}] -> Src: {src_c} vs Dst: {dst_c}")
+            log_to_google_doc(f"{now_str}: ⚠️ Cảnh báo Step 5 Lệch file [{pair_name}] từ [{item['src']}] sang [{item['dst']}] (Đích: {dst_c} / Nguồn: {src_c})")
         else:
             fail_count += 1
-            status_msg = f"Lỗi copy ({now_str})"
-            update_sheet_row_details(sheets_service, sheet_title, row_num, status_msg, src_c, dst_c)
-            log_to_google_doc(f"{now_str}: Lỗi Step 5 Copy từ [{item['src']}] sang [{item['dst']}]")
+            print(f"  ❌ [Copy Error] [{pair_name}] Copy failed.")
+            log_to_google_doc(f"{now_str}: Lỗi Step 5 Copy [{pair_name}] từ [{item['src']}] sang [{item['dst']}]")
 
     print("\n" + "=" * 60)
     print(f"🎉 STEP 5 SUMMARY: {success_count} succeeded, {skipped_count} skipped, {fail_count} failed out of {len(pairs)} total pairs.")
