@@ -1,0 +1,4 @@
+  File "/media/vpsg24gb/DATA1/o9o/scripts/step3_git_publish.py", line 21
+    if os.path.exists(STATUS_JSON_PATH):
+    ^
+IndentationError: expected an indented block after function definition on line 20

@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/media/vpsg24gb/DATA1/o9o/scripts/appscript_telegram_relay.py", line 55, in <module>
+    main()
+  File "/media/vpsg24gb/DATA1/o9o/scripts/appscript_telegram_relay.py", line 50, in main
+    httpd = HTTPServer(server_address, RelayHandler)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/usr/lib/python3.12/http/server.py", line 136, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/usr/lib/python3.12/socketserver.py", line 473, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+Traceback (most recent call last):
+  File "/media/vpsg24gb/DATA1/o9o/scripts/appscript_telegram_relay.py", line 55, in <module>
+    main()
+  File "/media/vpsg24gb/DATA1/o9o/scripts/appscript_telegram_relay.py", line 50, in main
+    httpd = HTTPServer(server_address, RelayHandler)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/usr/lib/python3.12/http/server.py", line 136, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/usr/lib/python3.12/socketserver.py", line 473, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+🚀 Telegram -> Google Apps Script Relay running on port 8088...
+🚀 Telegram -> Google Apps Script Relay running on port 8088...

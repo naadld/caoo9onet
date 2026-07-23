@@ -1,0 +1,3 @@
+faster-whisper
+eng-to-ipa
+deep-translator

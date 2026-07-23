@@ -1,0 +1,10 @@
+﻿HUONG DAN SU DUNG TOOL BONG BANG TAO JSON
+------------------------------------------------
+
+Buoc 1: Yeu cau may tinh phai cai dat Python truoc (tai tu python.org).
+Buoc 2: Chay file CaiDat.bat (chi can chay 1 lan duy nhat) de may tu dong tai cac thu vien AI ve.
+Buoc 3: De tao file JSON cho 1 video bat ky, chi can KEO THA file video do (vi du: video.mp4) vao file Tao_JSON.bat.
+Buoc 4: Doi may tinh chay xong (tuy toc do may, co the mat 15-60 phut). File JSON se tu dong xuat hien ngay ben canh file video do!
+
+*Luu y: Tool chi tu dong tao phan dich thuat va cau hoi trac nghiem tu dong (quizzes). Phan Overview, Practice nang cao va Discussion se can ban bo sung them hoac de trong (Web App van chay binh thuong).*
+

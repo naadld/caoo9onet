@@ -5,7 +5,7 @@ Compares Source Google Drive Folder vs Destination Google Drive Folder:
 - Number of Subfolders
 - Number of Files
 - Total Size (Bytes & Human-Readable GB/MB)
-Calculates completeness percentage and reports results to Telegram Bot (8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A) and Google Doc.
+Calculates completeness percentage and reports results to Telegram Bot and Google Doc.
 """
 
 import os
@@ -26,8 +26,8 @@ DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 DEFAULT_SRC_FOLDER = "1ZY-penoxRJgLHZ5i41hb7e0UqfFwt3YR"
 DEFAULT_DST_FOLDER = "1kti0VyCp93sL49pn3JkyU2gBa-tr33Iz"
 
-PRIMARY_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
-FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg"
+PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
 DEFAULT_CHAT_ID = "-1003954353565"
 DEFAULT_THREAD_ID = 3953
 

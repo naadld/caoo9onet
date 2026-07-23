@@ -3,8 +3,8 @@
  * Webhook Endpoint: Telegram -> Apps Script -> GitHub Actions API & Google Docs
  */
 
-const TELEGRAM_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A";
-const FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg";
+const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE";
+const FALLBACK_BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN_HERE";
 const TARGET_CHAT_ID     = "-1003954353565";
 const TARGET_THREAD_ID   = 3953;
 

@@ -27,8 +27,8 @@ from datetime import datetime, timezone, timedelta
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OFFSET_FILE = os.path.join(BASE_DIR, ".telegram_offset")
 
-PRIMARY_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A"
-FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg"
+PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
 DEFAULT_CHAT_ID = "-1003954353565"
 DEFAULT_THREAD_ID = 3953
 

@@ -75,7 +75,7 @@
   },
   "telegram": {
     "enabled": true,
-    "bot_token": "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg",
+    "bot_token": "TELEGRAM_BOT_TOKEN_ENV",
     "chat_id": "-1003954353565",
     "message_thread_id": 3953
   }
