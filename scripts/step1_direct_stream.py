@@ -44,7 +44,7 @@ YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
 TARGET_PAIRS = [
-    ["Grade 5"]
+    ["Grade 2"]
 ]
 
 def clean_private_key(info):
