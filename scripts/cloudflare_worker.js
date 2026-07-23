@@ -5,8 +5,8 @@
  * NO VPS REQUIRED! 24/7 FREE CLOUD HOSTING.
  */
 
-const TELEGRAM_BOT_TOKEN = "8525129998:AAG6-Ib_AfqEGc7jwroo58reg5UVYlRZ-3A";
-const FALLBACK_BOT_TOKEN = "8733078949:AAEX6WGeGasyVHXEYqgadgE8RFovyr64lBg";
+const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE";
+const FALLBACK_BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN_HERE";
 const TARGET_CHAT_ID     = "-1003954353565";
 const TARGET_THREAD_ID   = 3953;
 
@@ -16,6 +16,25 @@ const GITHUB_REPO        = "naadld/caoo9onet";
 
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    // Intercept progress logging endpoint from GitHub Actions and forward to VPS
+    if (url.pathname === "/api/progress") {
+      if (request.method === "POST") {
+        try {
+          const body = await request.text();
+          const vpsUrl = "https://compare-phosphate-hug.ngrok-free.dev/api/progress";
+          ctx.waitUntil(fetch(vpsUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: body
+          }));
+        } catch (e) {
+          console.error("Forward error:", e);
+        }
+        return new Response("OK", { status: 200 });
+      }
+    }
+
     if (request.method === "POST") {
       try {
         const update = await request.json();
