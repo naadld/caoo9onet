@@ -46,6 +46,9 @@ export default {
       return new Response("OK", { status: 200 });
     }
     return new Response("O9O.NET Serverless Telegram Bot is Running!", { status: 200 });
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(handleScheduled(env));
   }
 };
 
@@ -102,6 +105,28 @@ async function routeCommand(rawText, chatId, threadId, env) {
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
   const botTok = (env && env.TELEGRAM_BOT_TOKEN) || TELEGRAM_BOT_TOKEN;
+
+  // /auto off
+  if (clean === "/auto off" || clean.startsWith("/auto off@") || clean === "auto off") {
+    if (!env.O9O_KV) {
+      await sendTelegramReply("❌ Thao tác thất bại: Chưa liên kết KV Namespace `O9O_KV` vào Cloudflare Worker. Vui lòng tạo và liên kết KV Namespace tên `O9O_KV` trong cài đặt Worker.", chatId, threadId, null, botTok);
+      return;
+    }
+    await env.O9O_KV.put("auto_mode", "off");
+    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG ĐÃ TẮT]\n━━━━━━━━━━━━━━━━━━━━━━\n🔴 Trạng thái: ĐÃ TẮT /auto\n⚡ Hệ thống sẽ dừng tự động chạy. Chờ lệnh thủ công từ user.\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    return;
+  }
+
+  // /auto
+  if (clean === "/auto" || clean.startsWith("/auto@") || clean === "auto") {
+    if (!env.O9O_KV) {
+      await sendTelegramReply("❌ Thao tác thất bại: Chưa liên kết KV Namespace `O9O_KV` vào Cloudflare Worker. Vui lòng tạo và liên kết KV Namespace tên `O9O_KV` trong cài đặt Worker.", chatId, threadId, null, botTok);
+      return;
+    }
+    await env.O9O_KV.put("auto_mode", "on");
+    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video) & Step 4 (Tạo phụ đề)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    return;
+  }
 
   // /help
   if (clean === "/help" || clean === "help" || clean.startsWith("/help@") || clean === "/start") {
@@ -343,7 +368,7 @@ async function sendRunDetail(chatId, messageId, threadId, runId, pat, botTok) {
 }
 
 async function sendHelp(chatId, threadId, botTok) {
-  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
+  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n🤖 CHẾ ĐỘ TỰ ĐỘNG (AUTO CRON):\n▪️ /auto\n   👉 Kích hoạt chế độ chạy tự động Step 1 & Step 4 mỗi 30 phút\n▪️ /auto off\n   👉 Tắt chế độ chạy tự động\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
   await sendTelegramReply(helpMsg, chatId, threadId, null, botTok);
 }
 
@@ -410,4 +435,91 @@ function normalizeGrade(val) {
     "K4": "K4", "K4.": "K4", "K5": "K5", "K5.": "K5"
   };
   return mapping[str] || str;
+}
+
+async function handleScheduled(env) {
+  const pat = env.GITHUB_PAT || GITHUB_PAT;
+  const botTok = env.TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN;
+  const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+
+  if (!env.O9O_KV) {
+    console.error("O9O_KV namespace not bound.");
+    return;
+  }
+
+  const autoMode = await env.O9O_KV.get("auto_mode");
+  if (autoMode !== "on") {
+    console.log("Auto mode is OFF. Skipping scheduled run.");
+    return;
+  }
+
+  // Check running workflows
+  let step1Running = false;
+  let step4Running = false;
+
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/actions/runs?per_page=15`;
+    const res = await fetch(url, {
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Authorization": `Bearer ${pat}`,
+        "User-Agent": "CloudflareWorker-TelegramBot",
+        "X-GitHub-Api-Version": "2022-11-28"
+      }
+    });
+
+    if (res.status === 200) {
+      const data = await res.json();
+      const runs = data.workflow_runs || [];
+      runs.forEach(r => {
+        if (r.status === "in_progress" || r.status === "queued") {
+          if (r.path.includes("1_scraper_stream.yml")) {
+            step1Running = true;
+          }
+          if (r.path.includes("4_generate_subtitles.yml")) {
+            step4Running = true;
+          }
+        }
+      });
+    } else {
+      console.error(`Failed to fetch runs. Status: ${res.status}`);
+      return;
+    }
+  } catch (e) {
+    console.error("Error fetching runs:", e);
+    return;
+  }
+
+  // Triggering logic
+  if (step1Running && step4Running) {
+    // Both steps are running, skip and log/notify
+    await sendTelegramReply(`🤖 [CHU KỲ TỰ ĐỘNG - BỎ QUA]\n━━━━━━━━━━━━━━━━━━━━━━\n⚡ Cả hai tiến trình Step 1 (Cào video) và Step 4 (Tạo phụ đề) đều đang chạy.\n⏭️ Tiến trình tự động được hủy bỏ để chờ chu kỳ 30 phút tiếp theo.\n⏰ Thời gian: ${nowStr}`, TARGET_CHAT_ID, TARGET_THREAD_ID, null, botTok);
+    return;
+  }
+
+  let actionsTriggered = [];
+
+  if (!step1Running) {
+    // Trigger Step 1
+    const res1 = await triggerGitHubWorkflow("1_scraper_stream.yml", { "max_days": "170" }, pat);
+    if (res1.success) {
+      actionsTriggered.push("📥 Step 1 (Cào video)");
+    } else {
+      console.error("Failed to trigger Step 1:", res1.info);
+    }
+  }
+
+  if (!step4Running) {
+    // Trigger Step 4
+    const res4 = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 5" }, pat);
+    if (res4.success) {
+      actionsTriggered.push("🎙️ Step 4 (Tạo phụ đề)");
+    } else {
+      console.error("Failed to trigger Step 4:", res4.info);
+    }
+  }
+
+  if (actionsTriggered.length > 0) {
+    await sendTelegramReply(`🤖 [CHU KỲ TỰ ĐỘNG - KÍCH HOẠT THÀNH CÔNG]\n━━━━━━━━━━━━━━━━━━━━━━\n🚀 Đã kích hoạt các tiến trình:\n${actionsTriggered.map(act => `  ${act}`).join("\n")}\n⏰ Thời gian: ${nowStr}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions`, TARGET_CHAT_ID, TARGET_THREAD_ID, null, botTok);
+  }
 }
