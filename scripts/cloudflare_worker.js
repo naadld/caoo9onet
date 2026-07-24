@@ -55,7 +55,11 @@ export default {
 async function handleUpdate(update, env) {
   // Handle Inline Button Taps (Callback Query)
   if (update.callback_query) {
-    await handleCallbackQuery(update.callback_query, env);
+    const cb = update.callback_query;
+    const cbThreadId = cb.message ? cb.message.message_thread_id : null;
+    if (String(cbThreadId) !== String(TARGET_THREAD_ID)) return;
+
+    await handleCallbackQuery(cb, env);
     return;
   }
 
@@ -63,9 +67,10 @@ async function handleUpdate(update, env) {
   if (!message) return;
 
   const chatId = String(message.chat.id);
+  const msgThreadId = message.message_thread_id;
   const text = (message.text || "").trim();
 
-  if (chatId === TARGET_CHAT_ID || chatId === String(TARGET_CHAT_ID)) {
+  if ((chatId === TARGET_CHAT_ID || chatId === String(TARGET_CHAT_ID)) && String(msgThreadId) === String(TARGET_THREAD_ID)) {
     await routeCommand(text, chatId, TARGET_THREAD_ID, env);
   }
 }
@@ -105,10 +110,9 @@ async function routeCommand(rawText, chatId, threadId, env) {
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
   const botTok = (env && env.TELEGRAM_BOT_TOKEN) || TELEGRAM_BOT_TOKEN;
-
   // /auto off
   if (clean === "/auto off" || clean.startsWith("/auto off@") || clean === "auto off") {
-    if (!env.O9O_KV) {
+    if (!env || !env.O9O_KV) {
       await sendTelegramReply("❌ Thao tác thất bại: Chưa liên kết KV Namespace `O9O_KV` vào Cloudflare Worker. Vui lòng tạo và liên kết KV Namespace tên `O9O_KV` trong cài đặt Worker.", chatId, threadId, null, botTok);
       return;
     }
@@ -119,7 +123,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
 
   // /auto
   if (clean === "/auto" || clean.startsWith("/auto@") || clean === "auto") {
-    if (!env.O9O_KV) {
+    if (!env || !env.O9O_KV) {
       await sendTelegramReply("❌ Thao tác thất bại: Chưa liên kết KV Namespace `O9O_KV` vào Cloudflare Worker. Vui lòng tạo và liên kết KV Namespace tên `O9O_KV` trong cài đặt Worker.", chatId, threadId, null, botTok);
       return;
     }
