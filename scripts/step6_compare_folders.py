@@ -29,7 +29,7 @@ DEFAULT_DST_FOLDER = "1kti0VyCp93sL49pn3JkyU2gBa-tr33Iz"
 PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
 DEFAULT_CHAT_ID = "-1003954353565"
-DEFAULT_THREAD_ID = 3953
+DEFAULT_THREAD_ID = 4455
 
 RCLONE_BIN = shutil.which("rclone") or "rclone"
 RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone/rclone.conf")

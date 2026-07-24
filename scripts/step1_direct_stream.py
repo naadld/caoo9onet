@@ -31,7 +31,7 @@ LOCK_FILE = os.path.join(BASE_DIR, "step1_scraper.lock")
 PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
 DEFAULT_CHAT_ID = "-1003954353565"
-DEFAULT_THREAD_ID = 3953
+DEFAULT_THREAD_ID = 4455
 
 def send_telegram_msg(message):
     token = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN

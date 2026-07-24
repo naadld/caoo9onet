@@ -77,6 +77,6 @@
     "enabled": true,
     "bot_token": "TELEGRAM_BOT_TOKEN_ENV",
     "chat_id": "-1003954353565",
-    "message_thread_id": 3953
+    "message_thread_id": 4455
   }
 }

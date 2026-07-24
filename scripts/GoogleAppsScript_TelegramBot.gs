@@ -6,7 +6,7 @@
 const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE";
 const FALLBACK_BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN_HERE";
 const TARGET_CHAT_ID     = "-1003954353565";
-const TARGET_THREAD_ID   = 3953;
+const TARGET_THREAD_ID   = 4455;
 
 // Paste your GitHub Personal Access Token (PAT) here or set in Script Properties
 const GITHUB_PAT         = "YOUR_GITHUB_PAT_HERE"; 

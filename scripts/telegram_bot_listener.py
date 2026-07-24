@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-O9O.NET Telegram Bot Command Listener (Topic 3953 Enabled)
+O9O.NET Telegram Bot Command Listener (Topic 4455 Enabled)
 Supports full suite of manual control commands:
   - /step 1 start           (Default scraper sequence, day small -> big)
   - /step 1 XX              (Scrape all missing videos for Grade XX)
@@ -30,7 +30,7 @@ OFFSET_FILE = os.path.join(BASE_DIR, ".telegram_offset")
 PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
 DEFAULT_CHAT_ID = "-1003954353565"
-DEFAULT_THREAD_ID = 3953
+DEFAULT_THREAD_ID = 4455
 
 def normalize_grade(val):
     if not val:
