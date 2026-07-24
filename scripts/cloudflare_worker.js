@@ -8,7 +8,7 @@
 const TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE";
 const FALLBACK_BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN_HERE";
 const TARGET_CHAT_ID     = "-1003954353565";
-const TARGET_THREAD_ID   = 3953;
+const TARGET_THREAD_ID   = 4455;
 
 // Fill in your GitHub Personal Access Token (PAT) here (e.g. ghp_xxxxxxxxxxxx)
 const GITHUB_PAT         = "YOUR_GITHUB_PAT_HERE";
@@ -443,11 +443,11 @@ function normalizeGrade(val) {
 }
 
 async function handleScheduled(env) {
-  const pat = env.GITHUB_PAT || GITHUB_PAT;
-  const botTok = env.TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN;
+  const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
+  const botTok = (env && env.TELEGRAM_BOT_TOKEN) || TELEGRAM_BOT_TOKEN;
   const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
-  if (!env.O9O_KV) {
+  if (!env || !env.O9O_KV) {
     console.error("O9O_KV namespace not bound.");
     return;
   }
@@ -495,36 +495,42 @@ async function handleScheduled(env) {
     return;
   }
 
-  // Triggering logic
-  if (step1Running && step4Running) {
-    // Both steps are running, skip and log/notify
-    await sendTelegramReply(`🤖 [CHU KỲ TỰ ĐỘNG - BỎ QUA]\n━━━━━━━━━━━━━━━━━━━━━━\n⚡ Cả hai tiến trình Step 1 (Cào video) và Step 4 (Tạo phụ đề) đều đang chạy.\n⏭️ Tiến trình tự động được hủy bỏ để chờ chu kỳ 30 phút tiếp theo.\n⏰ Thời gian: ${nowStr}`, TARGET_CHAT_ID, TARGET_THREAD_ID, null, botTok);
-    return;
-  }
-
   let actionsTriggered = [];
+  let actionsSkipped = [];
 
+  // Step 1 check & trigger
   if (!step1Running) {
-    // Trigger Step 1
     const res1 = await triggerGitHubWorkflow("1_scraper_stream.yml", { "max_days": "170" }, pat);
     if (res1.success) {
-      actionsTriggered.push("📥 Step 1 (Cào video)");
+      actionsTriggered.push("📥 Step 1 (Cào video) - Bắt đầu chạy");
     } else {
-      console.error("Failed to trigger Step 1:", res1.info);
+      actionsSkipped.push(`📥 Step 1 (Cào video) - Lỗi kích hoạt: ${res1.info}`);
     }
+  } else {
+    actionsSkipped.push("📥 Step 1 (Cào video) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
+  // Step 4 check & trigger
   if (!step4Running) {
-    // Trigger Step 4
     const res4 = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 5" }, pat);
     if (res4.success) {
-      actionsTriggered.push("🎙️ Step 4 (Tạo phụ đề)");
+      actionsTriggered.push("🎙️ Step 4 (Tạo phụ đề) - Bắt đầu chạy");
     } else {
-      console.error("Failed to trigger Step 4:", res4.info);
+      actionsSkipped.push(`🎙️ Step 4 (Tạo phụ đề) - Lỗi kích hoạt: ${res4.info}`);
     }
+  } else {
+    actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
+  // Send unified report to Telegram
+  let reportMsg = `🤖 [CHU KỲ TỰ ĐỘNG - BÁO CÁO]\n━━━━━━━━━━━━━━━━━━━━━━\n`;
   if (actionsTriggered.length > 0) {
-    await sendTelegramReply(`🤖 [CHU KỲ TỰ ĐỘNG - KÍCH HOẠT THÀNH CÔNG]\n━━━━━━━━━━━━━━━━━━━━━━\n🚀 Đã kích hoạt các tiến trình:\n${actionsTriggered.map(act => `  ${act}`).join("\n")}\n⏰ Thời gian: ${nowStr}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions`, TARGET_CHAT_ID, TARGET_THREAD_ID, null, botTok);
+    reportMsg += `🚀 ĐÃ KÍCH HOẠT:\n${actionsTriggered.map(act => `  🟢 ${act}`).join("\n")}\n\n`;
   }
+  if (actionsSkipped.length > 0) {
+    reportMsg += `⏭️ HỦY BỎ / BỎ QUA:\n${actionsSkipped.map(act => `  🟡 ${act}`).join("\n")}\n\n`;
+  }
+  reportMsg += `⏰ Thời gian: ${nowStr}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions`;
+
+  await sendTelegramReply(reportMsg, TARGET_CHAT_ID, TARGET_THREAD_ID, null, botTok);
 }
