@@ -57,7 +57,8 @@ async function handleUpdate(update, env) {
   if (update.callback_query) {
     const cb = update.callback_query;
     const cbThreadId = cb.message ? cb.message.message_thread_id : null;
-    if (String(cbThreadId) !== String(TARGET_THREAD_ID)) return;
+    const cbChatId = cb.message ? String(cb.message.chat.id) : null;
+    if ((cbChatId !== TARGET_CHAT_ID && cbChatId !== String(TARGET_CHAT_ID)) || String(cbThreadId) !== String(TARGET_THREAD_ID)) return;
 
     await handleCallbackQuery(cb, env);
     return;
