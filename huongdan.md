@@ -9,10 +9,18 @@ Tệp này lưu trữ toàn bộ **Quy trình chuẩn (SOP)** và **Quy tắc an
 Khi người dùng đưa ra yêu cầu cào dữ liệu (ví dụ: *"chạy Lớp 4"*, *"cào Lớp 2 và Lớp 5"*, hoặc *"chạy tự động"*), Agent bắt buộc phải tuân thủ đúng **3 Bước Chuẩn Độc Lập** sau:
 
 ### 🔹 BƯỚC 1: CÀO VIDEO & ĐẨY SANG GOOGLE DRIVE (Step 1)
+* **QUY TẮC PHÂN BỔ LỚP (GRADE EXEMPTION & PRIORITY)**:
+  * 📌 **TIEU CHUẨN XÁC MINH HOÀN THÀNH 100% (STRICT COMPLETION CRITERIA)**:
+    Một Lớp chỉ được coi là hoàn thành 100% và đưa vào **Danh sách loại trừ (Exemption list)** khi thỏa mãn đủ **3 điều kiện thực tế**:
+    1. Đã cào đủ **170/170 Ngày học**.
+    2. Trong mỗi thư mục Ngày (`Ngày xxx`), **phải có đầy đủ tất cả thư mục Môn học (Subjects)** theo khung chương trình.
+    3. Trong từng thư mục Môn học, **phải có tệp video `.mp4` hoàn chỉnh, dung lượng hợp lệ (> 100 KB), không lỗi stream và xem được bình thường**.
+  * 🎯 **Thứ tự ưu tiên cào**: Cào theo thứ tự **từ nhỏ đến lớn** (đủ 14 lớp trừ các lớp đã kiểm tra thỏa mãn 3 tiêu chuẩn trên): `K4` ➔ `K5` ➔ `Grade 1` ➔ `Grade 2` ➔ `Grade 3` ➔ `Grade 4` ➔ `Grade 5` ➔ `Grade 6` ➔ `Grade 7` ➔ `Grade 8` ➔ `Grade 9` ➔ `Grade 10` ➔ `Grade 11` ➔ `Grade 12`.
 * **Cấu hình lớp theo yêu cầu của người dùng**:
   * **Chạy đơn 1 Lớp** (Ví dụ: *Chạy Lớp 4*): Cấu hình `TARGET_PAIRS = [["Grade 4"]]` trong `scripts/step1_direct_stream.py`.
-  * **Chạy 2 Lớp song song** (Ví dụ: *Chạy Lớp 2 và Lớp 5*): Cấu hình `TARGET_PAIRS = [["Grade 2", "Grade 5"]]`.
-  * **Chạy tự động toàn bộ 14 lớp**: Cấu hình mảng đầy đủ `TARGET_PAIRS = [["Grade 2", "Grade 5"], ["K4", "K5"], ["Grade 1", "Grade 4"], ...]`.
+  * **Chạy cặp song song** (Ví dụ: *K4 & K5* hoặc *Grade 1 & Grade 2*): Cấu hình `TARGET_PAIRS = [["K4", "K5"]]`.
+  * **Chạy tự động thứ tự chuẩn (từ nhỏ đến lớn)**: Cấu hình mảng 14 lớp:
+    `TARGET_PAIRS = [["K4", "K5"], ["Grade 1", "Grade 2"], ["Grade 3", "Grade 4"], ["Grade 5", "Grade 6"], ["Grade 7", "Grade 8"], ["Grade 9", "Grade 10"], ["Grade 11", "Grade 12"]]`.
 * **Cơ chế nạp 2 bước nguyên tử (Chống tạo thư mục rác)**:
   * Tải video từ `o9o.net` về thư mục tạm `.tmp_stream/{uuid}/` trên máy chủ.
   * Chỉ khi video **tải hoàn tất 100%** (xác minh dung lượng > 100 KB và không lỗi), lệnh mới thực hiện `rclone copyto` đẩy file sang Google Drive (`Abeka_Videos/{Grade}/Ngày {day}/{subject}/{file}.mp4`).
@@ -23,7 +31,7 @@ Khi người dùng đưa ra yêu cầu cào dữ liệu (ví dụ: *"chạy Lớ
 
 ### 🔹 BƯỚC 2: TẠO CHỈ MỤC & ĐỒNG BỘ DASHBOARD ONLINE (Step 2 & Upload)
 * Sau khi cào xong bài học:
-  1. Chạy `scripts/step2_link_database.py` để quét lại toàn bộ file ID trên Google Drive và biên dịch lại tệp `index_songsong.html` chứa link phát video trực tuyến.
+  1. Chạy `scripts/step2_link_database.py` để quét lại toàn bộ file ID trên Google Drive (bao gồm **tất cả các Lớp**, kể cả những Lớp đã 100% như Grade 2 & Grade 5) để biên dịch lại tệp `index_songsong.html` đầy đủ chứa link phát video trực tuyến cho toàn bộ học sinh.
   2. Chạy `scripts/upload_to_gdrive.py` để upload đè file `index_songsong.html` lên Google Drive File ID `17-iAoi4fK8DuxX7ucDBEvJbtLj4Q2rkX`.
 
 ### 🔹 BƯỚC 3: GHI LOG GOOGLE DOC & ĐỒNG BỘ GITHUB (Step 3 & Git)

@@ -8,11 +8,11 @@ on:
       src_folder:
         description: 'Source GDrive Folder URL or ID'
         required: false
-        default: 'https://drive.google.com/drive/folders/1lvVvFfOXZcoNO6tJ-OQwfBVFS1vLCq8A'
+        default: 'https://drive.google.com/drive/folders/1hqXZCKJTSgkQPNt8_2F0qTU2sf_E1EDz'
       dst_folder:
         description: 'Target GDrive Folder URL or ID'
         required: false
-        default: 'https://drive.google.com/drive/u/0/folders/1LQUXtdCgT_7lmbKVz96wYjStzi71CQYl'
+        default: 'https://drive.google.com/drive/folders/1QiiQs33W3NHf4GJ9_BaZYlAfnxRXjbS7'
 
 jobs:
   copy_gdrive_folders:
