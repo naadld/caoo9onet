@@ -29,6 +29,13 @@ Khi người dùng đưa ra yêu cầu cào dữ liệu (ví dụ: *"chạy Lớ
   * Luôn truyền cờ `--referer "https://www.o9o.net/"` và `--user-agent` cho `yt-dlp`.
   * **BẮT BUỘC CHUYỂN ĐỔI CHUẨN MP4**: Luôn truyền cờ `--remux-video mp4` cho `yt-dlp` để `ffmpeg` tự động chuyển đổi luồng MPEG-TS (`.ts`) thành tệp MP4 chuẩn nguyên bản (MPEG-4 / H.264), đảm bảo tất cả file video trên Google Drive 100% là chuẩn MP4 phát được trên trình duyệt, Google Drive Web Previewer, iOS và Android.
 
+### 🔹 BƯỚC 1.2: CÀO THEO GRADE & NGÀY HỌC CHỈ ĐỊNH (Step 1.2)
+* Xem chi tiết file hướng dẫn: [`step1.2/huongdanstep12.md`](file:///media/vpsg24gb/DATA1/o9o/step1.2/huongdanstep12.md).
+* Khi cần cào nhanh hoặc bổ sung 1 Ngày học bất kỳ của 1 Grade:
+  ```bash
+  python3 /media/vpsg24gb/DATA1/o9o/step1.2/step1_2_date_scraper.py --grade "<GRADE>" --day <DAY>
+  ```
+
 ### 🔹 BƯỚC 2: TẠO CHỈ MỤC & ĐỒNG BỘ DASHBOARD ONLINE (Step 2 & Upload)
 * Sau khi cào xong bài học:
   1. Chạy `scripts/step2_link_database.py` để quét lại toàn bộ file ID trên Google Drive (bao gồm **tất cả các Lớp**, kể cả những Lớp đã 100% như Grade 2 & Grade 5) để biên dịch lại tệp `index_songsong.html` đầy đủ chứa link phát video trực tuyến cho toàn bộ học sinh.
