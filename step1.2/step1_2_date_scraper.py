@@ -186,11 +186,50 @@ def load_database(grade):
                 return []
         return []
 
-def save_database(grade, db):
+def upsert_database_record(grade, record):
     db_file = get_db_file(grade)
     with db_lock:
+        db = []
+        if os.path.exists(db_file):
+            try:
+                with open(db_file, 'r', encoding='utf-8') as f:
+                    db = json.load(f)
+            except Exception:
+                db = []
+        
+        updated = False
+        for r in db:
+            if str(r.get('day')) == str(record.get('day')) and r.get('subject') == record.get('subject'):
+                r['link'] = record.get('link')
+                updated = True
+                break
+        
+        if not updated:
+            db.append(record)
+
+        def sort_key(r):
+            day_str = str(r.get('day', '000'))
+            day_num = int(re.sub(r'\D', '', day_str)) if re.sub(r'\D', '', day_str) else 0
+            return (day_num, r.get('subject', ''))
+        
+        db.sort(key=sort_key)
+        
         with open(db_file, 'w', encoding='utf-8') as f:
             json.dump(db, f, ensure_ascii=False, indent=4)
+
+def remove_database_record(grade, day, subject):
+    db_file = get_db_file(grade)
+    with db_lock:
+        if not os.path.exists(db_file):
+            return
+        try:
+            with open(db_file, 'r', encoding='utf-8') as f:
+                db = json.load(f)
+            db = [r for r in db if not (str(r.get('day')) == str(day) and r.get('subject') == subject)]
+            with open(db_file, 'w', encoding='utf-8') as f:
+                json.dump(db, f, ensure_ascii=False, indent=4)
+        except Exception:
+            pass
 
 def fetch_live_gdrive_index():
     print("🔍 Fetching live GDrive index to check existing files...")
@@ -312,9 +351,6 @@ def process_single_video(item_info, force_overwrite=False):
     
     print(f"  🎬 [{subject}] Target: {gdrive_rel_path}")
     
-    db = load_database(actual_g_name)
-    record_exists = any(r['day'] == day and r['subject'] == subject for r in db)
-    
     with gdrive_index_lock:
         file_on_gdrive = gdrive_rel_path.lower() in gdrive_index
         gdrive_size = gdrive_index.get(gdrive_rel_path.lower(), 0) if file_on_gdrive else 0
@@ -325,28 +361,21 @@ def process_single_video(item_info, force_overwrite=False):
     if is_valid_on_gdrive and not force_overwrite:
         print(f"    -> ⏭️ File already uploaded & valid ({gdrive_size / 1024 / 1024:.2f} MB). Skipping.")
         success = True
-        if not record_exists:
-            db = load_database(actual_g_name)
-            db.append({
-                "grade": actual_g_name,
-                "day": day,
-                "subject": subject,
-                "link": gdrive_rel_path
-            })
-            save_database(actual_g_name, db)
-            print(f"    -> Restored missing database record for {subject}.")
+        upsert_database_record(actual_g_name, {
+            "grade": actual_g_name,
+            "day": day,
+            "subject": subject,
+            "link": gdrive_rel_path
+        })
+        print(f"    -> Restored/verified database record for {subject}.")
     else:
         if force_overwrite and file_on_gdrive:
             print(f"    -> ⚡ [FORCE OVERWRITE] Re-downloading & overwriting existing file on GDrive: {subject}")
+            remove_database_record(actual_g_name, day, subject)
         elif file_on_gdrive:
             print(f"    -> ⚠️ File is invalid/empty on Google Drive ({gdrive_size} bytes). Re-streaming...")
         else:
             print(f"    -> ⚡ Direct pipe streaming from o9o.net to Google Drive for: {subject}")
-            
-        if record_exists and force_overwrite:
-            db = load_database(actual_g_name)
-            db = [r for r in db if not (r['day'] == day and r['subject'] == subject)]
-            save_database(actual_g_name, db)
             
         success = direct_stream_to_gdrive(link, gdrive_rel_path)
         vn_tz = timezone(timedelta(hours=7))
@@ -359,16 +388,13 @@ def process_single_video(item_info, force_overwrite=False):
             log_to_google_doc(f"{now_str}: Lỗi cào video {subject} ({actual_g_name}, Ngày {day})")
                 
     if success:
-        db = load_database(actual_g_name)
-        if not any(r['day'] == day and r['subject'] == subject for r in db):
-            db.append({
-                "grade": actual_g_name,
-                "day": day,
-                "subject": subject,
-                "link": gdrive_rel_path
-            })
-            save_database(actual_g_name, db)
-            print(f"    -> Updated database record for: {subject}")
+        upsert_database_record(actual_g_name, {
+            "grade": actual_g_name,
+            "day": day,
+            "subject": subject,
+            "link": gdrive_rel_path
+        })
+        print(f"    -> Updated database record for: {subject}")
         return True
     else:
         return False

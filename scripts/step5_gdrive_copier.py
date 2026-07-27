@@ -2,8 +2,8 @@
 """
 Step 5: GDrive Copier Script
 Copies contents from Source Google Drive Folder to Target Google Drive Folder using rclone.
-Default Source: https://drive.google.com/drive/folders/1lvVvFfOXZcoNO6tJ-OQwfBVFS1vLCq8A
-Default Target: https://drive.google.com/drive/u/0/folders/1LQUXtdCgT_7lmbKVz96wYjStzi71CQYl
+Default Source: https://drive.google.com/drive/folders/1hqXZCKJTSgkQPNt8_2F0qTU2sf_E1EDz
+Default Target: https://drive.google.com/drive/folders/1QiiQs33W3NHf4GJ9_BaZYlAfnxRXjbS7
 """
 
 import os
@@ -32,8 +32,8 @@ except (IOError, OSError):
 
 DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
-DEFAULT_SRC_FOLDER = "1lvVvFfOXZcoNO6tJ-OQwfBVFS1vLCq8A"
-DEFAULT_DST_FOLDER = "1LQUXtdCgT_7lmbKVz96wYjStzi71CQYl"
+DEFAULT_SRC_FOLDER = "1hqXZCKJTSgkQPNt8_2F0qTU2sf_E1EDz"
+DEFAULT_DST_FOLDER = "1QiiQs33W3NHf4GJ9_BaZYlAfnxRXjbS7"
 
 PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")

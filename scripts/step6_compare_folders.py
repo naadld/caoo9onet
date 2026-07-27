@@ -23,8 +23,8 @@ from datetime import datetime, timezone, timedelta
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOC_ID = "1Ew8UPThE2yN9S7EEzeeToUxZCMNpWbkNqhOfpsqXPBw"
 
-DEFAULT_SRC_FOLDER = "1lvVvFfOXZcoNO6tJ-OQwfBVFS1vLCq8A"
-DEFAULT_DST_FOLDER = "1LQUXtdCgT_7lmbKVz96wYjStzi71CQYl"
+DEFAULT_SRC_FOLDER = "1hqXZCKJTSgkQPNt8_2F0qTU2sf_E1EDz"
+DEFAULT_DST_FOLDER = "1QiiQs33W3NHf4GJ9_BaZYlAfnxRXjbS7"
 
 PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
