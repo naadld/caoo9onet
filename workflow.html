@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>o9o Live Workflows Operations Dashboard | NAADLD Abeka Scraper</title>
+  <meta name="description" content="Real-time operations dashboard monitoring active GitHub Actions workflows, process locks, and scraper logs.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/workflow.css">
+</head>
+<body>
+
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="site-logo">
+        <span>⚡ NAADLD o9o</span>
+        <span class="logo-badge">LIVE MONITOR</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">🏠 Home</a></li>
+        <li><a href="index_songsong.html">🎬 Player Dashboard</a></li>
+        <li><a href="workflow.html" class="active">⚡ Live Workflows Ops</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Live Operations Container -->
+  <main class="container">
+
+    <!-- Top Live Control Bar -->
+    <div class="control-bar">
+      <div class="status-summary">
+        <div class="pulse-indicator">
+          <span class="pulse-dot"></span>
+          <span>LIVE PIPELINE ACTIVE</span>
+        </div>
+        <span style="color: var(--text-muted); font-size: 0.9rem;">
+          Cập nhật gần nhất: <strong id="lastUpdatedTime" style="color: var(--text-main);">Fetching...</strong>
+        </span>
+      </div>
+      <div>
+        <button class="refresh-btn" id="refreshBtn">
+          <span>🔄 Refresh Live Status</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active GitHub Actions Cloud Runs Section -->
+    <section>
+      <h2 class="section-title">
+        <span>☁️ GitHub Actions Workflows (Cloud Live Runs)</span>
+      </h2>
+      <div class="workflow-runs-grid" id="workflowRunsGrid">
+        <!-- Rendered dynamically via JS -->
+        <div style="grid-column: 1/-1; padding: 24px; text-align: center; color: var(--text-muted);">
+          Đang tải dữ liệu tiến trình từ GitHub Actions API...
+        </div>
+      </div>
+    </section>
+
+    <!-- System Daemons & Active Locks Section -->
+    <section>
+      <h2 class="section-title">
+        <span>🖥️ Quản Lý Process & Locks Hệ Thống</span>
+      </h2>
+      <div class="system-grid">
+        <div class="system-card">
+          <h3 style="font-size: 1.05rem; margin-bottom: 14px; color: var(--accent-purple);">
+            🛡️ Daemons & Service Background
+          </h3>
+          <div class="daemon-list" id="daemonsList">
+            <!-- Rendered dynamically via JS -->
+          </div>
+        </div>
+
+        <div class="system-card">
+          <h3 style="font-size: 1.05rem; margin-bottom: 14px; color: var(--accent-yellow);">
+            🔒 Tệp Lock Đang Hoạt Động (.lock)
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+            Các tác vụ cào dữ liệu đang chiếm dụng khóa để tránh xung đột file ghi đè.
+          </p>
+          <div id="locksList">
+            <!-- Rendered dynamically via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-time Log Console Viewer -->
+    <section class="log-section">
+      <h2 class="section-title">
+        <span>📜 Terminal Nhật Ký Log Hệ Thống (Live Console View)</span>
+      </h2>
+
+      <div class="log-tabs">
+        <button class="log-tab-btn active" onclick="switchLogTab('stream.log', this)">stream.log</button>
+        <button class="log-tab-btn" onclick="switchLogTab('watchdog.log', this)">watchdog.log</button>
+        <button class="log-tab-btn" onclick="switchLogTab('relay.log', this)">relay.log</button>
+        <button class="log-tab-btn" onclick="switchLogTab('telegram_listener.log', this)">telegram_listener.log</button>
+      </div>
+
+      <div class="terminal-window" id="logTerminal">
+        Loading system log output...
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 NAADLD Abeka Homeschooling Collection • Live Workflows Ops Dashboard</p>
+    </div>
+  </footer>
+
+  <!-- Custom JS -->
+  <script src="js/workflow.js"></script>
+</body>
+</html>

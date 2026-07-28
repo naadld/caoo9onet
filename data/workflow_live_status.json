@@ -1,0 +1,135 @@
+{
+  "last_updated": "2026-07-28 12:23:17 GMT+7",
+  "active_pairs": [
+    [
+      "Grade 1",
+      "Grade 3"
+    ]
+  ],
+  "completed_grades": [
+    "K4",
+    "K5",
+    "Grade 2",
+    "Grade 5"
+  ],
+  "github_runs": [
+    {
+      "id": 30331311428,
+      "name": "3. Fetch & Cache o9o Playlists",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331311428",
+      "created_at": "2026-07-28T05:19:44Z",
+      "run_number": 110,
+      "commit_message": "Automated Pipeline Sync: 2026-07-28 12:19:40"
+    },
+    {
+      "id": 30331164901,
+      "name": "1. Abeka Video Scraper & GDrive Streamer",
+      "status": "pending",
+      "conclusion": null,
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331164901",
+      "created_at": "2026-07-28T05:16:41Z",
+      "run_number": 132,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30328923178,
+      "name": "4. Abeka Subtitle & Interactive JSON Generator",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328923178",
+      "created_at": "2026-07-28T04:30:08Z",
+      "run_number": 51,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30328922360,
+      "name": "1. Abeka Video Scraper & GDrive Streamer",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328922360",
+      "created_at": "2026-07-28T04:30:07Z",
+      "run_number": 131,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30328425375,
+      "name": "6. GDrive Folder Comparator",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328425375",
+      "created_at": "2026-07-28T04:19:26Z",
+      "run_number": 13,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30328267145,
+      "name": "5. GDrive Folder Copier",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328267145",
+      "created_at": "2026-07-28T04:16:00Z",
+      "run_number": 30,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30328131642,
+      "name": "6. GDrive Folder Comparator",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328131642",
+      "created_at": "2026-07-28T04:13:12Z",
+      "run_number": 12,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30327511291,
+      "name": "2. Web Player Indexer & GDrive Dashboard Sync",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30327511291",
+      "created_at": "2026-07-28T04:00:38Z",
+      "run_number": 154,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30324691379,
+      "name": "1. Abeka Video Scraper & GDrive Streamer",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30324691379",
+      "created_at": "2026-07-28T03:00:07Z",
+      "run_number": 130,
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+    },
+    {
+      "id": 30323297812,
+      "name": "2. Web Player Indexer & GDrive Dashboard Sync",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30323297812",
+      "created_at": "2026-07-28T02:30:27Z",
+      "run_number": 153,
+      "commit_message": "Automated Online Sync: 2026-07-27 21:45:07"
+    }
+  ],
+  "active_locks": [
+    "step1_2_grade_5_170.lock",
+    "step1_scraper.lock",
+    "step1_scraper_all.lock",
+    "step5_copier.lock"
+  ],
+  "running_daemons": {
+    "telegram_bot": true,
+    "appscript_relay": true,
+    "watchdog": true,
+    "active_scraper_local": false
+  },
+  "log_tails": {
+    "stream.log": "Tiến trình trên VPS đã bị chặn để không tốn CPU/RAM/băng thông VPS.\nVui lòng kích hoạt cào trên GitHub Actions Cloud hoặc chờ lịch tự động.\n============================================================\n============================================================\n⛔ [VPS EXECUTION BLOCKED]\nTheo nguyên tắc hệ thống, tiến trình cào chỉ được phép chạy 100% trên GitHub Cloud (GitHub Actions).\nTiến trình trên VPS đã bị chặn để không tốn CPU/RAM/băng thông VPS.\nVui lòng kích hoạt cào trên GitHub Actions Cloud hoặc chờ lịch tự động.\n============================================================\n============================================================\n⛔ [VPS EXECUTION BLOCKED]\nTheo nguyên tắc hệ thống, tiến trình cào chỉ được phép chạy 100% trên GitHub Cloud (GitHub Actions).\nTiến trình trên VPS đã bị chặn để không tốn CPU/RAM/băng thông VPS.\nVui lòng kích hoạt cào trên GitHub Actions Cloud hoặc chờ lịch tự động.\n============================================================\n",
+    "watchdog.log": "✅ Paperclip Dashboard live progress synced.\n============================================================\n🔄 O9O.NET 2-3 MINUTE WATCHDOG & 24/7 DAEMON RUNNER\n============================================================\n⚡ Streamer process is not running or has stalled. Launching new continuous stream worker...\n🚀 Started continuous stream worker with PID: 707118\n✅ HTML Player updated with latest GDrive data.\n✅ Paperclip Dashboard live progress synced.\n============================================================\n🔄 O9O.NET 2-3 MINUTE WATCHDOG & 24/7 DAEMON RUNNER\n============================================================\n⚡ Streamer process is not running or has stalled. Launching new continuous stream worker...\n🚀 Started continuous stream worker with PID: 720777\n✅ HTML Player updated with latest GDrive data.\n✅ Paperclip Dashboard live progress synced.\n",
+    "relay.log": "Traceback (most recent call last):\n  File \"/media/vpsg24gb/DATA1/o9o/scripts/appscript_telegram_relay.py\", line 55, in <module>\n    main()\n  File \"/media/vpsg24gb/DATA1/o9o/scripts/appscript_telegram_relay.py\", line 50, in main\n    httpd = HTTPServer(server_address, RelayHandler)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/socketserver.py\", line 457, in __init__\n    self.server_bind()\n  File \"/usr/lib/python3.12/http/server.py\", line 136, in server_bind\n    socketserver.TCPServer.server_bind(self)\n  File \"/usr/lib/python3.12/socketserver.py\", line 473, in server_bind\n    self.socket.bind(self.server_address)\nOSError: [Errno 98] Address already in use\n🚀 Telegram -> Google Apps Script Relay running on port 8088...\n🚀 Telegram -> Google Apps Script Relay running on port 8088...\n",
+    "telegram_listener.log": "🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n🤖 O9O.NET Telegram Bot Listener Daemon Started...\n"
+  }
+}
