@@ -1,5 +1,5 @@
 /* ============================================================
-   ABEKA LIVE WORKFLOW OPERATIONS DASHBOARD - JAVASCRIPT LOGIC
+   ABEKA KANBAN LIVE WORKFLOW DASHBOARD - JAVASCRIPT LOGIC
    ============================================================ */
 
 let currentStatusData = null;
@@ -19,7 +19,7 @@ function startAutoRefresh() {
   if (autoRefreshInterval) clearInterval(autoRefreshInterval);
   autoRefreshInterval = setInterval(() => {
     fetchLiveData();
-  }, 6000); // Poll every 6 seconds
+  }, 6000); // 6s polling
 }
 
 async function fetchLiveData() {
@@ -28,7 +28,7 @@ async function fetchLiveData() {
     const res = await fetch('data/workflow_live_status.json?t=' + Date.now());
     if (res.ok) {
       currentStatusData = await res.json();
-      renderDashboard(currentStatusData);
+      renderKanbanBoard(currentStatusData);
       if (statusElem) statusElem.innerText = currentStatusData.last_updated || 'Just now';
     }
   } catch (err) {
@@ -37,107 +37,138 @@ async function fetchLiveData() {
   }
 }
 
-function renderDashboard(data) {
-  renderGitHubRuns(data.github_runs || []);
-  renderDaemons(data.running_daemons || {});
-  renderActiveLocks(data.active_locks || []);
+function renderKanbanBoard(data) {
+  const queuedCol = document.getElementById('cardsQueued');
+  const progressCol = document.getElementById('cardsProgress');
+  const completedCol = document.getElementById('cardsCompleted');
+  const failedCol = document.getElementById('cardsFailed');
+
+  if (!queuedCol || !progressCol || !completedCol || !failedCol) return;
+
+  queuedCol.innerHTML = '';
+  progressCol.innerHTML = '';
+  completedCol.innerHTML = '';
+  failedCol.innerHTML = '';
+
+  let countQueued = 0;
+  let countProgress = 0;
+  let countCompleted = 0;
+  let countFailed = 0;
+
+  // 1. Sort & Render GitHub Action Runs into Kanban Columns
+  const runs = data.github_runs || [];
+  runs.forEach(run => {
+    const card = createGitHubRunCard(run);
+
+    if (run.status === 'in_progress') {
+      progressCol.appendChild(card);
+      countProgress++;
+    } else if (run.status === 'pending' || run.status === 'queued') {
+      queuedCol.appendChild(card);
+      countQueued++;
+    } else if (run.status === 'completed') {
+      if (run.conclusion === 'success') {
+        completedCol.appendChild(card);
+        countCompleted++;
+      } else {
+        failedCol.appendChild(card);
+        countFailed++;
+      }
+    }
+  });
+
+  // 2. Render Active Target Pairs into In Progress
+  const activePairs = data.active_pairs || [];
+  activePairs.forEach(pair => {
+    const pairCard = document.createElement('div');
+    pairCard.className = 'kanban-card';
+    pairCard.style.borderLeft = '3px solid var(--accent-blue)';
+    pairCard.innerHTML = `
+      <span class="card-tag tag-grade">⚡ Active Target Pair</span>
+      <div class="card-title">Scraping ${pair.join(' & ')}</div>
+      <div class="card-body">Currently executing multi-thread streaming to Google Drive.</div>
+      <div class="card-footer">
+        <span>SOP Sequence 01-03</span>
+        <span style="color: var(--accent-green);">● Active Stream</span>
+      </div>
+    `;
+    progressCol.appendChild(pairCard);
+    countProgress++;
+  });
+
+  // 3. Render Lock Files into In Progress
+  const locks = data.active_locks || [];
+  locks.forEach(lock => {
+    const lockCard = document.createElement('div');
+    lockCard.className = 'kanban-card';
+    lockCard.style.borderLeft = '3px solid var(--accent-yellow)';
+    lockCard.innerHTML = `
+      <span class="card-tag tag-lock">🔒 Process Lock</span>
+      <div class="card-title">${escapeHtml(lock)}</div>
+      <div class="card-body">Local file lock active to prevent write conflict.</div>
+      <div class="card-footer">
+        <span>Local VPS Process</span>
+        <span style="color: var(--accent-yellow);">Locked</span>
+      </div>
+    `;
+    progressCol.appendChild(lockCard);
+    countProgress++;
+  });
+
+  // 4. Render 100% Completed Grades into Completed Column
+  const completedGrades = data.completed_grades || [];
+  completedGrades.forEach(grade => {
+    const gradeCard = document.createElement('div');
+    gradeCard.className = 'kanban-card';
+    gradeCard.style.borderLeft = '3px solid var(--accent-green)';
+    gradeCard.innerHTML = `
+      <span class="card-tag tag-grade">✅ 100% Exemption List</span>
+      <div class="card-title">${escapeHtml(grade)}</div>
+      <div class="card-body">170/170 Days complete, all subjects verified MP4 >100KB.</div>
+      <div class="card-footer">
+        <span>Abeka Curriculum</span>
+        <span style="color: var(--accent-green);">Verified</span>
+      </div>
+    `;
+    completedCol.appendChild(gradeCard);
+    countCompleted++;
+  });
+
+  // Update Column Badge Counts
+  document.getElementById('countQueued').innerText = countQueued;
+  document.getElementById('countProgress').innerText = countProgress;
+  document.getElementById('countCompleted').innerText = countCompleted;
+  document.getElementById('countFailed').innerText = countFailed;
+
+  // 5. Render Log Terminal Output
   renderLogs(data.log_tails || {});
 }
 
-function renderGitHubRuns(runs) {
-  const container = document.getElementById('workflowRunsGrid');
-  if (!container) return;
+function createGitHubRunCard(run) {
+  const card = document.createElement('div');
+  card.className = 'kanban-card';
+  
+  let borderCol = 'var(--accent-purple)';
+  if (run.status === 'in_progress') borderCol = 'var(--accent-blue)';
+  else if (run.status === 'pending' || run.status === 'queued') borderCol = 'var(--accent-yellow)';
+  else if (run.conclusion === 'success') borderCol = 'var(--accent-green)';
+  else if (run.conclusion === 'failure') borderCol = 'var(--accent-red)';
+  
+  card.style.borderLeft = `3px solid ${borderCol}`;
 
-  if (runs.length === 0) {
-    container.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--text-muted);">No active workflow runs found.</div>`;
-    return;
-  }
-
-  container.innerHTML = '';
-  runs.forEach(run => {
-    const card = document.createElement('div');
-    
-    let statusClass = 'in_progress';
-    let statusLabel = run.status;
-
-    if (run.status === 'completed') {
-      if (run.conclusion === 'success') {
-        statusClass = 'completed_success';
-        statusLabel = 'SUCCESS';
-      } else {
-        statusClass = 'completed_failure';
-        statusLabel = run.conclusion ? run.conclusion.toUpperCase() : 'FAILED';
-      }
-    } else if (run.status === 'in_progress') {
-      statusClass = 'in_progress';
-      statusLabel = 'IN PROGRESS 🟢';
-    } else if (run.status === 'pending' || run.status === 'queued') {
-      statusClass = 'pending';
-      statusLabel = 'QUEUED 🟡';
-    }
-
-    const pillClass = run.status === 'completed' 
-      ? (run.conclusion === 'success' ? 'success' : 'failure') 
-      : (run.status === 'in_progress' ? 'in_progress' : 'pending');
-
-    card.className = `run-card ${statusClass}`;
-    card.innerHTML = `
-      <div class="run-header">
-        <div class="run-name">${escapeHtml(run.name)}</div>
-        <span class="status-pill ${pillClass}">${statusLabel}</span>
-      </div>
-      <div class="run-details">
-        <div><strong>Run ID:</strong> #${run.id} (Run #${run.run_number})</div>
-        <div><strong>Created:</strong> ${formatTime(run.created_at)}</div>
-        ${run.commit_message ? `<div class="run-commit">💬 ${escapeHtml(run.commit_message)}</div>` : ''}
-      </div>
-      <div class="run-footer">
-        <span>Cloud Execution</span>
-        <a href="${run.html_url}" target="_blank" rel="noopener" class="run-link-btn">
-          <span>🔗 View Logs on GitHub</span>
-        </a>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-function renderDaemons(daemons) {
-  const container = document.getElementById('daemonsList');
-  if (!container) return;
-
-  const daemonNames = {
-    telegram_bot: '🤖 Telegram Listener & Bot',
-    appscript_relay: '📡 AppScript Telegram Relay Server (Port 8088)',
-    watchdog: '🛡️ Local Watchdog Monitor Daemon',
-    active_scraper_local: '⚡ Local Python Scraper Instance'
-  };
-
-  container.innerHTML = '';
-  Object.keys(daemonNames).forEach(key => {
-    const isRunning = daemons[key];
-    const item = document.createElement('div');
-    item.className = 'daemon-item';
-    item.innerHTML = `
-      <span>${daemonNames[key]}</span>
-      <span class="${isRunning ? 'badge-on' : 'badge-off'}">
-        ${isRunning ? '● ACTIVE RUNNING' : '○ IDLE / INACTIVE'}
-      </span>
-    `;
-    container.appendChild(item);
-  });
-}
-
-function renderActiveLocks(locks) {
-  const container = document.getElementById('locksList');
-  if (!container) return;
-
-  if (!locks || locks.length === 0) {
-    container.innerHTML = `<span style="color: var(--text-dim); font-size: 0.85rem;">No active process lock files (.lock). System clear.</span>`;
-    return;
-  }
-
-  container.innerHTML = locks.map(l => `<span class="lock-badge">🔒 ${escapeHtml(l)}</span>`).join('');
+  card.innerHTML = `
+    <span class="card-tag tag-github">☁️ GitHub Actions #${run.run_number}</span>
+    <div class="card-title">${escapeHtml(run.name)}</div>
+    <div class="card-body">
+      <div>Status: <strong>${run.status.toUpperCase()}</strong> ${run.conclusion ? `(${run.conclusion.toUpperCase()})` : ''}</div>
+      ${run.commit_message ? `<div class="card-commit">💬 ${escapeHtml(run.commit_message)}</div>` : ''}
+    </div>
+    <div class="card-footer">
+      <span>${formatTime(run.created_at)}</span>
+      <a href="${run.html_url}" target="_blank" rel="noopener" class="card-link">🔗 GitHub Logs</a>
+    </div>
+  `;
+  return card;
 }
 
 function renderLogs(logTails) {
@@ -160,7 +191,7 @@ function switchLogTab(logName, btnElem) {
 function formatTime(isoStr) {
   if (!isoStr) return '';
   const d = new Date(isoStr);
-  return d.toLocaleTimeString() + ' (' + d.toLocaleDateString() + ')';
+  return d.toLocaleTimeString();
 }
 
 function escapeHtml(str) {
