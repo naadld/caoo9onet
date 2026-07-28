@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-28 12:25:35 GMT+7",
+  "last_updated": "2026-07-28 12:34:38 GMT+7",
   "active_pairs": [
     [
       "Grade 1",
@@ -14,6 +14,48 @@
   ],
   "github_runs": [
     {
+      "id": 30331836162,
+      "name": "2. Web Player Indexer & GDrive Dashboard Sync",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331836162",
+      "created_at": "2026-07-28T05:30:35Z",
+      "run_number": 155,
+      "commit_message": "Transform Live Workflows Ops Dashboard to Kanban Board layout",
+      "current_step": "Finished 13/13: Complete job",
+      "jobs": [
+        {
+          "job_name": "Index GDrive Files & Sync HTML Dashboard",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 13/13: Complete job",
+          "completed_steps": 13,
+          "total_steps": 13
+        }
+      ]
+    },
+    {
+      "id": 30331605848,
+      "name": "3. Fetch & Cache o9o Playlists",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331605848",
+      "created_at": "2026-07-28T05:25:44Z",
+      "run_number": 112,
+      "commit_message": "Transform Live Workflows Ops Dashboard to Kanban Board layout",
+      "current_step": "Finished 9/9: Complete job",
+      "jobs": [
+        {
+          "job_name": "fetch-playlists",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 9/9: Complete job",
+          "completed_steps": 9,
+          "total_steps": 9
+        }
+      ]
+    },
+    {
       "id": 30331554892,
       "name": "3. Fetch & Cache o9o Playlists",
       "status": "completed",
@@ -21,7 +63,18 @@
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331554892",
       "created_at": "2026-07-28T05:24:41Z",
       "run_number": 111,
-      "commit_message": "Add Live Workflows Operations Dashboard UI"
+      "commit_message": "Add Live Workflows Operations Dashboard UI",
+      "current_step": "Finished 9/9: Complete job",
+      "jobs": [
+        {
+          "job_name": "fetch-playlists",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 9/9: Complete job",
+          "completed_steps": 9,
+          "total_steps": 9
+        }
+      ]
     },
     {
       "id": 30331311428,
@@ -31,17 +84,39 @@
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331311428",
       "created_at": "2026-07-28T05:19:44Z",
       "run_number": 110,
-      "commit_message": "Automated Pipeline Sync: 2026-07-28 12:19:40"
+      "commit_message": "Automated Pipeline Sync: 2026-07-28 12:19:40",
+      "current_step": "Finished 9/9: Complete job",
+      "jobs": [
+        {
+          "job_name": "fetch-playlists",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 9/9: Complete job",
+          "completed_steps": 9,
+          "total_steps": 9
+        }
+      ]
     },
     {
       "id": 30331164901,
       "name": "1. Abeka Video Scraper & GDrive Streamer",
-      "status": "pending",
+      "status": "in_progress",
       "conclusion": null,
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30331164901",
       "created_at": "2026-07-28T05:16:41Z",
       "run_number": 132,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03",
+      "current_step": "Step 10/14: Run Scraper & Stream to GDrive (Step 1)",
+      "jobs": [
+        {
+          "job_name": "Scrape o9o Videos & Stream to GDrive",
+          "job_status": "in_progress",
+          "job_conclusion": null,
+          "active_step": "Step 10/14: Run Scraper & Stream to GDrive (Step 1)",
+          "completed_steps": 9,
+          "total_steps": 14
+        }
+      ]
     },
     {
       "id": 30328923178,
@@ -51,17 +126,39 @@
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328923178",
       "created_at": "2026-07-28T04:30:08Z",
       "run_number": 51,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03",
+      "current_step": "Step 8/10: Run Subtitle Generator (Step 4)",
+      "jobs": [
+        {
+          "job_name": "Generate Subtitles & Interactive JSON for Abeka Videos",
+          "job_status": "in_progress",
+          "job_conclusion": null,
+          "active_step": "Step 8/10: Run Subtitle Generator (Step 4)",
+          "completed_steps": 7,
+          "total_steps": 10
+        }
+      ]
     },
     {
       "id": 30328922360,
       "name": "1. Abeka Video Scraper & GDrive Streamer",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "cancelled",
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328922360",
       "created_at": "2026-07-28T04:30:07Z",
       "run_number": 131,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03",
+      "current_step": "Finished 15/15: Complete job",
+      "jobs": [
+        {
+          "job_name": "Scrape o9o Videos & Stream to GDrive",
+          "job_status": "completed",
+          "job_conclusion": "cancelled",
+          "active_step": "Finished 15/15: Complete job",
+          "completed_steps": 12,
+          "total_steps": 15
+        }
+      ]
     },
     {
       "id": 30328425375,
@@ -71,7 +168,18 @@
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328425375",
       "created_at": "2026-07-28T04:19:26Z",
       "run_number": 13,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03",
+      "current_step": "Finished 11/11: Complete job",
+      "jobs": [
+        {
+          "job_name": "Compare GDrive Folders & Report (Step 6)",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 11/11: Complete job",
+          "completed_steps": 11,
+          "total_steps": 11
+        }
+      ]
     },
     {
       "id": 30328267145,
@@ -81,7 +189,18 @@
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328267145",
       "created_at": "2026-07-28T04:16:00Z",
       "run_number": 30,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03",
+      "current_step": "Finished 11/11: Complete job",
+      "jobs": [
+        {
+          "job_name": "Copy GDrive Folder (Step 5)",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 11/11: Complete job",
+          "completed_steps": 11,
+          "total_steps": 11
+        }
+      ]
     },
     {
       "id": 30328131642,
@@ -91,27 +210,18 @@
       "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30328131642",
       "created_at": "2026-07-28T04:13:12Z",
       "run_number": 12,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
-    },
-    {
-      "id": 30327511291,
-      "name": "2. Web Player Indexer & GDrive Dashboard Sync",
-      "status": "completed",
-      "conclusion": "success",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30327511291",
-      "created_at": "2026-07-28T04:00:38Z",
-      "run_number": 154,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
-    },
-    {
-      "id": 30324691379,
-      "name": "1. Abeka Video Scraper & GDrive Streamer",
-      "status": "completed",
-      "conclusion": "cancelled",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30324691379",
-      "created_at": "2026-07-28T03:00:07Z",
-      "run_number": 130,
-      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03"
+      "commit_message": "Automated Online Sync: 2026-07-28 02:33:03",
+      "current_step": "Finished 11/11: Complete job",
+      "jobs": [
+        {
+          "job_name": "Compare GDrive Folders & Report (Step 6)",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 11/11: Complete job",
+          "completed_steps": 11,
+          "total_steps": 11
+        }
+      ]
     }
   ],
   "active_locks": [

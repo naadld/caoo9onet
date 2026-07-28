@@ -29,6 +29,49 @@ def get_git_credentials():
             pass
     return pat
 
+def fetch_run_jobs(run_id, pat):
+    cmd = [
+        "curl", "-s",
+        "-H", "Accept: application/vnd.github+json",
+        f"https://api.github.com/repos/naadld/caoo9onet/actions/runs/{run_id}/jobs"
+    ]
+    if pat:
+        cmd.insert(2, "-H")
+        cmd.insert(3, f"Authorization: Bearer {pat}")
+
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
+        if res.returncode == 0:
+            data = json.loads(res.stdout)
+            jobs_info = []
+            for j in data.get("jobs", []):
+                steps = j.get("steps", [])
+                active_step = None
+                completed_count = 0
+                total_steps = len(steps)
+                for idx, st in enumerate(steps, 1):
+                    if st.get("status") == "completed" and st.get("conclusion") == "success":
+                        completed_count += 1
+                    if st.get("status") == "in_progress":
+                        active_step = f"Step {idx}/{total_steps}: {st.get('name')}"
+                
+                if not active_step and steps:
+                    last_st = steps[-1]
+                    active_step = f"Finished {total_steps}/{total_steps}: {last_st.get('name')}"
+
+                jobs_info.append({
+                    "job_name": j.get("name"),
+                    "job_status": j.get("status"),
+                    "job_conclusion": j.get("conclusion"),
+                    "active_step": active_step or "Initializing...",
+                    "completed_steps": completed_count,
+                    "total_steps": total_steps
+                })
+            return jobs_info
+    except Exception:
+        pass
+    return []
+
 def fetch_github_workflows():
     pat = get_git_credentials()
     cmd = [
@@ -46,15 +89,23 @@ def fetch_github_workflows():
             data = json.loads(res.stdout)
             runs = []
             for r in data.get("workflow_runs", []):
+                run_id = r.get("id")
+                jobs_detail = fetch_run_jobs(run_id, pat)
+                current_step_display = ""
+                if jobs_detail and jobs_detail[0].get("active_step"):
+                    current_step_display = jobs_detail[0]["active_step"]
+
                 runs.append({
-                    "id": r.get("id"),
+                    "id": run_id,
                     "name": r.get("name"),
                     "status": r.get("status"),
                     "conclusion": r.get("conclusion"),
                     "html_url": r.get("html_url"),
                     "created_at": r.get("created_at"),
                     "run_number": r.get("run_number"),
-                    "commit_message": r.get("head_commit", {}).get("message", "") if r.get("head_commit") else ""
+                    "commit_message": r.get("head_commit", {}).get("message", "") if r.get("head_commit") else "",
+                    "current_step": current_step_display,
+                    "jobs": jobs_detail
                 })
             return runs
     except Exception as e:

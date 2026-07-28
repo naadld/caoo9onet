@@ -19,7 +19,7 @@ function startAutoRefresh() {
   if (autoRefreshInterval) clearInterval(autoRefreshInterval);
   autoRefreshInterval = setInterval(() => {
     fetchLiveData();
-  }, 6000); // 6s polling
+  }, 5000); // 5s polling
 }
 
 async function fetchLiveData() {
@@ -84,12 +84,13 @@ function renderKanbanBoard(data) {
     pairCard.className = 'kanban-card';
     pairCard.style.borderLeft = '3px solid var(--accent-blue)';
     pairCard.innerHTML = `
-      <span class="card-tag tag-grade">⚡ Active Target Pair</span>
+      <span class="card-tag tag-grade">⚡ Active Scraping Pair</span>
       <div class="card-title">Scraping ${pair.join(' & ')}</div>
-      <div class="card-body">Currently executing multi-thread streaming to Google Drive.</div>
+      <div class="card-step" style="color: var(--accent-green);">▶️ Executing Multi-Thread Direct Stream</div>
+      <div class="card-body">Tải video từ o9o.net, remux MP4 H.264 và rclone copyto sang GDrive.</div>
       <div class="card-footer">
         <span>SOP Sequence 01-03</span>
-        <span style="color: var(--accent-green);">● Active Stream</span>
+        <span style="color: var(--accent-green); font-weight: bold;">● Active Stream</span>
       </div>
     `;
     progressCol.appendChild(pairCard);
@@ -103,12 +104,13 @@ function renderKanbanBoard(data) {
     lockCard.className = 'kanban-card';
     lockCard.style.borderLeft = '3px solid var(--accent-yellow)';
     lockCard.innerHTML = `
-      <span class="card-tag tag-lock">🔒 Process Lock</span>
+      <span class="card-tag tag-lock">🔒 Process Lock Active</span>
       <div class="card-title">${escapeHtml(lock)}</div>
-      <div class="card-body">Local file lock active to prevent write conflict.</div>
+      <div class="card-step" style="color: var(--accent-yellow);">🔒 Lock Occupied by Local Process</div>
+      <div class="card-body">Tránh ghi đè file rác khi đang cào dữ liệu ngầm.</div>
       <div class="card-footer">
         <span>Local VPS Process</span>
-        <span style="color: var(--accent-yellow);">Locked</span>
+        <span style="color: var(--accent-yellow); font-weight: bold;">Locked</span>
       </div>
     `;
     progressCol.appendChild(lockCard);
@@ -122,12 +124,13 @@ function renderKanbanBoard(data) {
     gradeCard.className = 'kanban-card';
     gradeCard.style.borderLeft = '3px solid var(--accent-green)';
     gradeCard.innerHTML = `
-      <span class="card-tag tag-grade">✅ 100% Exemption List</span>
+      <span class="card-tag tag-grade">✅ 100% Verified Grade</span>
       <div class="card-title">${escapeHtml(grade)}</div>
-      <div class="card-body">170/170 Days complete, all subjects verified MP4 >100KB.</div>
+      <div class="card-step" style="color: var(--accent-green);">✅ Verified 170/170 Days Complete</div>
+      <div class="card-body">Tất cả bài học đầy đủ môn, video chuẩn MP4 >100KB, xem bình thường.</div>
       <div class="card-footer">
         <span>Abeka Curriculum</span>
-        <span style="color: var(--accent-green);">Verified</span>
+        <span style="color: var(--accent-green); font-weight: bold;">Exemption List</span>
       </div>
     `;
     completedCol.appendChild(gradeCard);
@@ -149,23 +152,43 @@ function createGitHubRunCard(run) {
   card.className = 'kanban-card';
   
   let borderCol = 'var(--accent-purple)';
-  if (run.status === 'in_progress') borderCol = 'var(--accent-blue)';
-  else if (run.status === 'pending' || run.status === 'queued') borderCol = 'var(--accent-yellow)';
-  else if (run.conclusion === 'success') borderCol = 'var(--accent-green)';
-  else if (run.conclusion === 'failure') borderCol = 'var(--accent-red)';
+  let stepPrefix = '▶️';
+  let stepStyle = 'color: var(--accent-green); font-weight: bold;';
+
+  if (run.status === 'in_progress') {
+    borderCol = 'var(--accent-blue)';
+    stepPrefix = '⚡ RUNNING STEP:';
+    stepStyle = 'color: var(--accent-blue); font-weight: bold; background: rgba(137, 180, 250, 0.15); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(137, 180, 250, 0.3);';
+  } else if (run.status === 'pending' || run.status === 'queued') {
+    borderCol = 'var(--accent-yellow)';
+    stepPrefix = '⏳ IN QUEUE:';
+    stepStyle = 'color: var(--accent-yellow);';
+  } else if (run.conclusion === 'success') {
+    borderCol = 'var(--accent-green)';
+    stepPrefix = '✅ COMPLETED:';
+    stepStyle = 'color: var(--accent-green);';
+  } else if (run.conclusion === 'failure') {
+    borderCol = 'var(--accent-red)';
+    stepPrefix = '❌ FAILED AT:';
+    stepStyle = 'color: var(--accent-red);';
+  }
   
   card.style.borderLeft = `3px solid ${borderCol}`;
 
+  const currentStep = run.current_step || (run.status === 'completed' ? 'Finished All Steps' : 'Initializing...');
+
   card.innerHTML = `
-    <span class="card-tag tag-github">☁️ GitHub Actions #${run.run_number}</span>
+    <span class="card-tag tag-github">☁️ GitHub Actions Run #${run.run_number}</span>
     <div class="card-title">${escapeHtml(run.name)}</div>
+    <div class="card-step" style="margin: 6px 0; font-size: 0.85rem; ${stepStyle}">
+      ${stepPrefix} ${escapeHtml(currentStep)}
+    </div>
     <div class="card-body">
-      <div>Status: <strong>${run.status.toUpperCase()}</strong> ${run.conclusion ? `(${run.conclusion.toUpperCase()})` : ''}</div>
       ${run.commit_message ? `<div class="card-commit">💬 ${escapeHtml(run.commit_message)}</div>` : ''}
     </div>
     <div class="card-footer">
       <span>${formatTime(run.created_at)}</span>
-      <a href="${run.html_url}" target="_blank" rel="noopener" class="card-link">🔗 GitHub Logs</a>
+      <a href="${run.html_url}" target="_blank" rel="noopener" class="card-link">🔗 Chi Tiết GitHub Log</a>
     </div>
   `;
   return card;
