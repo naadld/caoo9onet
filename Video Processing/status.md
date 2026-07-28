@@ -1,7 +1,7 @@
 # Abeka Video Processing Status
 
 This file is automatically updated by the automated cron batch processor.
-It tracks the video download and upload status for each grade to Google Drive (**aleron.dt@gmail.com**).
+It tracks the video download and upload status for each grade to Google Drive (**11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh**).
 
 ## Overall Progress: 2 / 2380 lessons (0.1%)
 ![Overall Progress](https://geps.dev/progress/0?c=00ff00)
@@ -24,4 +24,4 @@ It tracks the video download and upload status for each grade to Google Drive (*
 | G12 | 0/170 | 0.0% | ![Progress](https://geps.dev/progress/0) | None |
 
 ---
-*Last updated: 2026-07-20 16:42:54 +07*
+*Last updated: 2026-07-28 12:19:30 +07*
