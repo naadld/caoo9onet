@@ -156,8 +156,8 @@ def main():
 
     status_payload = {
         "last_updated": now_str,
-        "active_pairs": [["Grade 1", "Grade 3"]],
-        "completed_grades": ["K4", "K5", "Grade 2", "Grade 5"],
+        "active_pairs": [["Grade 4", "Grade 6"]],
+        "completed_grades": ["K4", "K5", "Grade 1", "Grade 2", "Grade 3", "Grade 5"],
         "github_runs": github_runs,
         "active_locks": active_locks,
         "running_daemons": daemons,
