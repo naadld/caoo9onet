@@ -89,7 +89,7 @@ function renderKanbanBoard(data) {
       <div class="card-step" style="color: var(--accent-green);">▶️ Executing Multi-Thread Direct Stream</div>
       <div class="card-body">Tải video từ o9o.net, remux MP4 H.264 và rclone copyto sang GDrive.</div>
       <div class="card-footer">
-        <span>SOP Sequence 01-03</span>
+        <span>SOP Sequence 04-06</span>
         <span style="color: var(--accent-green); font-weight: bold;">● Active Stream</span>
       </div>
     `;
