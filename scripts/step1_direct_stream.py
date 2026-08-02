@@ -634,6 +634,20 @@ def main():
         sys.exit(0)
 
     pairs = TARGET_PAIRS
+    
+    # Try to load dynamic active_pairs from progress file if no command-line override is specified
+    if not args.grade and not args.grade1_3_only and not args.grade2_5_only:
+        try:
+            prog = load_progress("SongSong")
+            if "active_pairs" in prog and isinstance(prog["active_pairs"], list) and len(prog["active_pairs"]) > 0:
+                if isinstance(prog["active_pairs"][0], list):
+                    pairs = prog["active_pairs"]
+                else:
+                    pairs = [prog["active_pairs"]]
+                print(f"📋 Loaded active_pairs from progress file: {pairs}")
+        except Exception as e:
+            print(f"⚠️ Warning loading active_pairs from progress: {e}")
+
     target_lock_name = None
     if args.grade:
         norm_g = normalize_grade(args.grade)
