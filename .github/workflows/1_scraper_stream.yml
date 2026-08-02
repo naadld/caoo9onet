@@ -110,7 +110,7 @@ jobs:
           GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
           pip install faster-whisper eng-to-ipa deep-translator
-          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 5"
+          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 7"
 
       - name: 📢 Report Workflow Completion to Paperclip
         if: always()

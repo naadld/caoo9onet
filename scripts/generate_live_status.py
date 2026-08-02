@@ -11,7 +11,7 @@ import time
 import subprocess
 from datetime import datetime, timezone, timedelta
 
-BASE_DIR = "/media/vpsg24gb/DATA1/o9o"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_JSON = os.path.join(BASE_DIR, "data", "workflow_live_status.json")
 
 def get_git_credentials():
@@ -156,8 +156,8 @@ def main():
 
     status_payload = {
         "last_updated": now_str,
-        "active_pairs": [["Grade 4", "Grade 6"]],
-        "completed_grades": ["K4", "K5", "Grade 1", "Grade 2", "Grade 3", "Grade 5"],
+        "active_pairs": [["Grade 7", "Grade 8"]],
+        "completed_grades": ["K4", "K5", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"],
         "github_runs": github_runs,
         "active_locks": active_locks,
         "running_daemons": daemons,

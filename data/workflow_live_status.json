@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-30 15:56:54 GMT+7",
+  "last_updated": "2026-08-02 16:25:57 GMT+7",
   "active_pairs": [
     [
       "Grade 7",
@@ -18,77 +18,14 @@
   ],
   "github_runs": [
     {
-      "id": 30528606592,
-      "name": "3. Fetch & Cache o9o Playlists",
-      "status": "completed",
-      "conclusion": "success",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30528606592",
-      "created_at": "2026-07-30T08:55:33Z",
-      "run_number": 121,
-      "commit_message": "Update pair to 4 and 6",
-      "current_step": "Finished 9/9: Complete job",
-      "jobs": [
-        {
-          "job_name": "fetch-playlists",
-          "job_status": "completed",
-          "job_conclusion": "success",
-          "active_step": "Finished 9/9: Complete job",
-          "completed_steps": 9,
-          "total_steps": 9
-        }
-      ]
-    },
-    {
-      "id": 30526992976,
-      "name": "4. Abeka Subtitle & Interactive JSON Generator",
-      "status": "in_progress",
-      "conclusion": null,
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30526992976",
-      "created_at": "2026-07-30T08:30:52Z",
-      "run_number": 72,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
-      "current_step": "Step 8/10: Run Subtitle Generator (Step 4)",
-      "jobs": [
-        {
-          "job_name": "Generate Subtitles & Interactive JSON for Abeka Videos",
-          "job_status": "in_progress",
-          "job_conclusion": null,
-          "active_step": "Step 8/10: Run Subtitle Generator (Step 4)",
-          "completed_steps": 7,
-          "total_steps": 10
-        }
-      ]
-    },
-    {
-      "id": 30526991556,
-      "name": "1. Abeka Video Scraper & GDrive Streamer",
-      "status": "in_progress",
-      "conclusion": null,
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30526991556",
-      "created_at": "2026-07-30T08:30:51Z",
-      "run_number": 169,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
-      "current_step": "Step 10/14: Run Scraper & Stream to GDrive (Step 1)",
-      "jobs": [
-        {
-          "job_name": "Scrape o9o Videos & Stream to GDrive",
-          "job_status": "in_progress",
-          "job_conclusion": null,
-          "active_step": "Step 10/14: Run Scraper & Stream to GDrive (Step 1)",
-          "completed_steps": 9,
-          "total_steps": 14
-        }
-      ]
-    },
-    {
-      "id": 30526972543,
+      "id": 30740921823,
       "name": "2. Web Player Indexer & GDrive Dashboard Sync",
       "status": "completed",
       "conclusion": "success",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30526972543",
-      "created_at": "2026-07-30T08:30:34Z",
-      "run_number": 200,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30740921823",
+      "created_at": "2026-08-02T09:01:12Z",
+      "run_number": 271,
+      "commit_message": "ci: load active_pairs dynamically from progress config",
       "current_step": "Finished 13/13: Complete job",
       "jobs": [
         {
@@ -102,98 +39,98 @@
       ]
     },
     {
-      "id": 30524831071,
-      "name": "3. Fetch & Cache o9o Playlists",
-      "status": "completed",
-      "conclusion": "success",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30524831071",
-      "created_at": "2026-07-30T07:59:06Z",
-      "run_number": 120,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
-      "current_step": "Finished 9/9: Complete job",
-      "jobs": [
-        {
-          "job_name": "fetch-playlists",
-          "job_status": "completed",
-          "job_conclusion": "success",
-          "active_step": "Finished 9/9: Complete job",
-          "completed_steps": 9,
-          "total_steps": 9
-        }
-      ]
-    },
-    {
-      "id": 30523167282,
-      "name": "1. Abeka Video Scraper & GDrive Streamer",
-      "status": "completed",
-      "conclusion": "cancelled",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30523167282",
-      "created_at": "2026-07-30T07:30:08Z",
-      "run_number": 168,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
-      "current_step": "Finished 15/15: Complete job",
-      "jobs": [
-        {
-          "job_name": "Scrape o9o Videos & Stream to GDrive",
-          "job_status": "completed",
-          "job_conclusion": "cancelled",
-          "active_step": "Finished 15/15: Complete job",
-          "completed_steps": 13,
-          "total_steps": 15
-        }
-      ]
-    },
-    {
-      "id": 30521435076,
-      "name": "2. Web Player Indexer & GDrive Dashboard Sync",
-      "status": "completed",
-      "conclusion": "success",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30521435076",
-      "created_at": "2026-07-30T07:00:31Z",
-      "run_number": 199,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
-      "current_step": "Finished 13/13: Complete job",
-      "jobs": [
-        {
-          "job_name": "Index GDrive Files & Sync HTML Dashboard",
-          "job_status": "completed",
-          "job_conclusion": "success",
-          "active_step": "Finished 13/13: Complete job",
-          "completed_steps": 13,
-          "total_steps": 13
-        }
-      ]
-    },
-    {
-      "id": 30519768540,
+      "id": 30740907914,
       "name": "4. Abeka Subtitle & Interactive JSON Generator",
       "status": "completed",
-      "conclusion": "cancelled",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30519768540",
-      "created_at": "2026-07-30T06:30:08Z",
-      "run_number": 71,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30740907914",
+      "created_at": "2026-08-02T09:00:50Z",
+      "run_number": 166,
+      "commit_message": "ci: load active_pairs dynamically from progress config",
       "current_step": "Finished 11/11: Complete job",
       "jobs": [
         {
           "job_name": "Generate Subtitles & Interactive JSON for Abeka Videos",
           "job_status": "completed",
-          "job_conclusion": "cancelled",
+          "job_conclusion": "success",
           "active_step": "Finished 11/11: Complete job",
-          "completed_steps": 9,
+          "completed_steps": 11,
           "total_steps": 11
         }
       ]
     },
     {
-      "id": 30518232208,
+      "id": 30739920166,
+      "name": "4. Abeka Subtitle & Interactive JSON Generator",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30739920166",
+      "created_at": "2026-08-02T08:30:50Z",
+      "run_number": 165,
+      "commit_message": "ci: load active_pairs dynamically from progress config",
+      "current_step": "Finished 11/11: Complete job",
+      "jobs": [
+        {
+          "job_name": "Generate Subtitles & Interactive JSON for Abeka Videos",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 11/11: Complete job",
+          "completed_steps": 11,
+          "total_steps": 11
+        }
+      ]
+    },
+    {
+      "id": 30739502925,
+      "name": "3. Fetch & Cache o9o Playlists",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30739502925",
+      "created_at": "2026-08-02T08:17:58Z",
+      "run_number": 135,
+      "commit_message": "ci: load active_pairs dynamically from progress config",
+      "current_step": "Finished 9/9: Complete job",
+      "jobs": [
+        {
+          "job_name": "fetch-playlists",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 9/9: Complete job",
+          "completed_steps": 9,
+          "total_steps": 9
+        }
+      ]
+    },
+    {
+      "id": 30738930033,
+      "name": "4. Abeka Subtitle & Interactive JSON Generator",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30738930033",
+      "created_at": "2026-08-02T08:00:51Z",
+      "run_number": 164,
+      "commit_message": "ci: add git pull --rebase to fetch playlists",
+      "current_step": "Finished 11/11: Complete job",
+      "jobs": [
+        {
+          "job_name": "Generate Subtitles & Interactive JSON for Abeka Videos",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 11/11: Complete job",
+          "completed_steps": 11,
+          "total_steps": 11
+        }
+      ]
+    },
+    {
+      "id": 30738929187,
       "name": "1. Abeka Video Scraper & GDrive Streamer",
       "status": "completed",
       "conclusion": "cancelled",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30518232208",
-      "created_at": "2026-07-30T06:00:07Z",
-      "run_number": 167,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30738929187",
+      "created_at": "2026-08-02T08:00:50Z",
+      "run_number": 226,
+      "commit_message": "ci: add git pull --rebase to fetch playlists",
       "current_step": "Finished 15/15: Complete job",
       "jobs": [
         {
@@ -201,20 +138,20 @@
           "job_status": "completed",
           "job_conclusion": "cancelled",
           "active_step": "Finished 15/15: Complete job",
-          "completed_steps": 13,
+          "completed_steps": 12,
           "total_steps": 15
         }
       ]
     },
     {
-      "id": 30516809161,
+      "id": 30738896314,
       "name": "2. Web Player Indexer & GDrive Dashboard Sync",
       "status": "completed",
       "conclusion": "success",
-      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30516809161",
-      "created_at": "2026-07-30T05:30:29Z",
-      "run_number": 198,
-      "commit_message": "Automated Online Sync: 2026-07-30 01:01:57",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30738896314",
+      "created_at": "2026-08-02T08:00:03Z",
+      "run_number": 270,
+      "commit_message": "ci: add git pull --rebase to fetch playlists",
       "current_step": "Finished 13/13: Complete job",
       "jobs": [
         {
@@ -224,6 +161,69 @@
           "active_step": "Finished 13/13: Complete job",
           "completed_steps": 13,
           "total_steps": 13
+        }
+      ]
+    },
+    {
+      "id": 30738746366,
+      "name": "1. Abeka Video Scraper & GDrive Streamer",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30738746366",
+      "created_at": "2026-08-02T07:55:25Z",
+      "run_number": 225,
+      "commit_message": "ci: add git pull --rebase to fetch playlists",
+      "current_step": "Finished 15/15: Complete job",
+      "jobs": [
+        {
+          "job_name": "Scrape o9o Videos & Stream to GDrive",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 15/15: Complete job",
+          "completed_steps": 15,
+          "total_steps": 15
+        }
+      ]
+    },
+    {
+      "id": 30738744904,
+      "name": "2. Web Player Indexer & GDrive Dashboard Sync",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30738744904",
+      "created_at": "2026-08-02T07:55:23Z",
+      "run_number": 269,
+      "commit_message": "ci: add git pull --rebase to fetch playlists",
+      "current_step": "Finished 13/13: Complete job",
+      "jobs": [
+        {
+          "job_name": "Index GDrive Files & Sync HTML Dashboard",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 13/13: Complete job",
+          "completed_steps": 13,
+          "total_steps": 13
+        }
+      ]
+    },
+    {
+      "id": 30738697757,
+      "name": "3. Fetch & Cache o9o Playlists",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/naadld/caoo9onet/actions/runs/30738697757",
+      "created_at": "2026-08-02T07:53:57Z",
+      "run_number": 134,
+      "commit_message": "ci: add git pull --rebase to fetch playlists",
+      "current_step": "Finished 9/9: Complete job",
+      "jobs": [
+        {
+          "job_name": "fetch-playlists",
+          "job_status": "completed",
+          "job_conclusion": "success",
+          "active_step": "Finished 9/9: Complete job",
+          "completed_steps": 9,
+          "total_steps": 9
         }
       ]
     }
@@ -236,7 +236,7 @@
   ],
   "running_daemons": {
     "telegram_bot": true,
-    "appscript_relay": true,
+    "appscript_relay": false,
     "watchdog": true,
     "active_scraper_local": false
   },

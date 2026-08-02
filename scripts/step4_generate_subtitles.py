@@ -27,7 +27,7 @@ if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rc
 FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
 
 TARGET_PAIRS = [
-    ["Grade 4"]
+    ["Grade 7"]
 ]
 
 def clean_private_key(info):
@@ -251,7 +251,7 @@ def transcribe_and_generate(audio_path, output_json, output_srt, model_size="tin
     print(f"✅ Created SRT: {output_srt}")
     return True
 
-def run_subtitle_generator(target_folder="Grade 4"):
+def run_subtitle_generator(target_folder="Grade 7"):
     print("=" * 60)
     print(f"🚀 STEP 4: ABEKA SUBTITLE & JSON GENERATOR (Target: {target_folder})")
     print("=" * 60)
@@ -359,7 +359,7 @@ def run_subtitle_generator(target_folder="Grade 4"):
 
 def main():
     parser = argparse.ArgumentParser(description="Step 4: AI Subtitle & Interactive JSON Generator for Abeka Videos.")
-    parser.add_argument("--folder", default="Grade 4", help="Folder to target on Google Drive (e.g. 'Grade 4')")
+    parser.add_argument("--folder", default="Grade 7", help="Folder to target on Google Drive (e.g. 'Grade 7')")
     args = parser.parse_args()
 
     run_subtitle_generator(target_folder=args.folder)

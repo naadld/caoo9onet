@@ -88,10 +88,10 @@ if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rc
 YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
-# Completed grades: K4, K5, Grade 2 (02), Grade 5 (05), Grade 1, Grade 3
-# Active sequence target: Pair 04-06 (Grade 4 & Grade 6)
+# Completed grades: K4, K5, Grade 2 (02), Grade 5 (05), Grade 1, Grade 3, Grade 4, Grade 6
+# Active sequence target: Pair 07-08 (Grade 7 & Grade 8)
 TARGET_PAIRS = [
-    ["Grade 4", "Grade 6"]
+    ["Grade 7", "Grade 8"]
 ]
 
 def clean_private_key(info):
@@ -291,8 +291,12 @@ def load_progress(script_id="SongSong"):
 
 def save_progress(script_id, pair_idx, day_num):
     prog_file = get_progress_file(script_id)
+    existing = load_progress(script_id)
+    data = {"pair_idx": pair_idx, "day_num": day_num}
+    if isinstance(existing, dict) and "active_pairs" in existing:
+        data["active_pairs"] = existing["active_pairs"]
     with open(prog_file, 'w', encoding='utf-8') as f:
-        json.dump({"pair_idx": pair_idx, "day_num": day_num}, f)
+        json.dump(data, f)
 
 def fetch_live_gdrive_index():
     print("🔍 Fetching live GDrive index to prevent multi-machine duplicates...")
