@@ -3,7 +3,6 @@ main = "scripts/cloudflare_worker.js"
 compatibility_date = "2023-01-01"
 
 [vars]
-TELEGRAM_BOT_TOKEN = "8525129998:AAH9PfSY-lIieT0T0Rbewa7_8LqQHoKEy7k"
 
 [triggers]
 crons = ["*/30 * * * *"]

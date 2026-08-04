@@ -28,7 +28,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCK_FILE = os.path.join(BASE_DIR, "step1_scraper.lock")
 
 # Telegram Bot Credentials (matched from Step 5-6)
-PRIMARY_BOT_TOKEN = "8525129998:AAH9PfSY-lIieT0T0Rbewa7_8LqQHoKEy7k"
+PRIMARY_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 FALLBACK_BOT_TOKEN = ""
 DEFAULT_CHAT_ID = "-1003954353565"
 DEFAULT_THREAD_ID = 4455
