@@ -1,6 +1,7 @@
 name = "telegram-bot-worker"
 main = "scripts/cloudflare_worker.js"
 compatibility_date = "2023-01-01"
+account_id = "ef0cdb72b520ceb69113c4e6f3705024"
 
 [vars]
 
@@ -9,4 +10,4 @@ crons = ["*/30 * * * *"]
 
 [[kv_namespaces]]
 binding = "O9O_KV"
-id = "ff293e1910664ea9b47864035bbba671"
+id = "5ab72d46a799416484c24377068829e9"

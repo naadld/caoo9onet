@@ -544,6 +544,89 @@ function normalizeGrade(val) {
   return mapping[str] || str;
 }
 
+async function getScrapedVideoProgress(env) {
+  const grades = [
+    "K4 (Age 4)", "K5 (Age 5)",
+    "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
+    "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"
+  ];
+
+  let currentItemsMap = {};
+
+  await Promise.all(grades.map(async (grade) => {
+    try {
+      const url = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/database_${encodeURIComponent(grade)}.json?t=${Date.now()}`;
+      const res = await fetch(url, { headers: { "User-Agent": "CloudflareWorker-TelegramBot" } });
+      if (res.status === 200) {
+        const list = await res.json();
+        for (const item of list) {
+          const g = item.grade || grade;
+          const d = item.day;
+          const s = item.subject || "Video";
+          const key = `${g} | Ngày ${d} | ${s}`;
+          currentItemsMap[key] = { grade: g, day: d, subject: s };
+        }
+      }
+    } catch (e) { }
+  }));
+
+  const currentKeys = Object.keys(currentItemsMap);
+
+  let prevKeysJson = null;
+  if (env && env.O9O_KV) {
+    prevKeysJson = await env.O9O_KV.get("scraped_items_snapshot");
+  }
+
+  if (prevKeysJson === null) {
+    if (env && env.O9O_KV) {
+      await env.O9O_KV.put("scraped_items_snapshot", JSON.stringify(currentKeys));
+    }
+    return `📹 [TIẾN ĐỘ CÀO 30 PHÚT VỪA QUA]\n🟢 Đã khởi tạo bộ đếm theo dõi (Hiện có ${currentKeys.length} video trong DB).`;
+  }
+
+  let prevSet = new Set();
+  try {
+    prevSet = new Set(JSON.parse(prevKeysJson));
+  } catch (e) { }
+
+  const newKeys = currentKeys.filter(k => !prevSet.has(k));
+
+  if (env && env.O9O_KV) {
+    await env.O9O_KV.put("scraped_items_snapshot", JSON.stringify(currentKeys));
+  }
+
+  if (newKeys.length === 0) {
+    return `📹 [TIẾN ĐỘ CÀO 30 PHÚT VỪA QUA]\nℹ️ Trong 30 phút qua: KHÔNG CÓ video mới nào được cào thêm.`;
+  }
+
+  let grouped = {};
+  for (const k of newKeys) {
+    const info = currentItemsMap[k];
+    if (!info) continue;
+    const g = info.grade;
+    const d = info.day;
+    if (!grouped[g]) grouped[g] = {};
+    if (!grouped[g][d]) grouped[g][d] = [];
+    grouped[g][d].push(info.subject);
+  }
+
+  let text = `📹 [TIẾN ĐỘ CÀO 30 PHÚT VỪA QUA - TỔNG: +${newKeys.length} VIDEO MỚI]\n`;
+  for (const g of Object.keys(grouped).sort()) {
+    const daysObj = grouped[g];
+    const dayKeys = Object.keys(daysObj).sort((a, b) => parseInt(a) - parseInt(b));
+    let totalGradeVideos = 0;
+    dayKeys.forEach(d => totalGradeVideos += daysObj[d].length);
+
+    text += `📁 ${g} (${totalGradeVideos} video):\n`;
+    for (const d of dayKeys) {
+      const subs = daysObj[d];
+      text += `   + Ngày ${d} (${subs.length} môn): ${subs.join(", ")}\n`;
+    }
+  }
+
+  return text.trim();
+}
+
 async function handleScheduled(env) {
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
   const botTok = (env && env.TELEGRAM_BOT_TOKEN) || TELEGRAM_BOT_TOKEN;
@@ -668,8 +751,11 @@ async function handleScheduled(env) {
       actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
-  // Step 7 check & trigger
-  if (!step7Running) {
+  // Step 7 check & trigger (PAUSED BY DEFAULT as K4-K5, 01-06 are completed)
+  const step7Enabled = (await env.O9O_KV.get("step7_enabled")) === "true";
+  if (!step7Enabled) {
+    actionsSkipped.push("🧹 Step 7 (Dọn dẹp GDrive) - Đã tạm ngưng (Đã xong K4-K5 & 01-06)");
+  } else if (!step7Running) {
     const res7 = await triggerGitHubWorkflow("7_cleanup_duplicates.yml", {}, pat);
     if (res7.success) {
       actionsTriggered.push("🧹 Step 7 (Dọn dẹp GDrive) - Bắt đầu chạy");
@@ -680,15 +766,20 @@ async function handleScheduled(env) {
     actionsSkipped.push("🧹 Step 7 (Dọn dẹp GDrive) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
+  // Get video scraping progress in the last 30 minutes
+  const videoProgressReport = await getScrapedVideoProgress(env);
+
   // Send unified report to Telegram
-  let reportMsg = `🤖 [CHU KỲ TỰ ĐỘNG - BÁO CÁO]\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+  let reportMsg = `🤖 [CHU KỲ TỰ ĐỘNG - BÁO CÁO 30 PHÚT]\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+  reportMsg += `${videoProgressReport}\n\n`;
   if (actionsTriggered.length > 0) {
-    reportMsg += `🚀 ĐÃ KÍCH HOẠT:\n${actionsTriggered.map(act => `  🟢 ${act}`).join("\n")}\n\n`;
+    reportMsg += `🚀 ĐÃ KÍCH HOẠT WORKFLOW:\n${actionsTriggered.map(act => `  🟢 ${act}`).join("\n")}\n\n`;
   }
   if (actionsSkipped.length > 0) {
-    reportMsg += `⏭️ HỦY BỎ / BỎ QUA:\n${actionsSkipped.map(act => `  🟡 ${act}`).join("\n")}\n\n`;
+    reportMsg += `⏭️ HỦY BỎ / TẠM NGƯNG:\n${actionsSkipped.map(act => `  🟡 ${act}`).join("\n")}\n\n`;
   }
   reportMsg += `⏰ Thời gian: ${nowStr}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions`;
 
   await sendTelegramReply(reportMsg, TARGET_CHAT_ID, TARGET_THREAD_ID, null, botTok);
 }
+
