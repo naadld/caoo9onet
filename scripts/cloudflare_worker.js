@@ -751,8 +751,8 @@ async function handleScheduled(env) {
       actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
-  // Step 7 check & trigger (PAUSED BY DEFAULT as K4-K5, 01-06 are completed)
-  const step7Enabled = (await env.O9O_KV.get("step7_enabled")) === "true";
+  // Step 7 check & trigger (Vô hiệu hoá theo yêu cầu)
+  const step7Enabled = false;
   if (!step7Enabled) {
     actionsSkipped.push("🧹 Step 7 (Dọn dẹp GDrive) - Đã tạm ngưng (Đã xong K4-K5 & 01-06)");
   } else if (!step7Running) {
