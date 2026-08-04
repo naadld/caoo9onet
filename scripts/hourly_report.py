@@ -37,6 +37,7 @@ def send_telegram_msg(message):
 
 def get_current_db_items(pairs):
     items = set()
+    max_day = 0
     active_grades = set()
     for p in pairs:
         for g in p:
@@ -50,22 +51,27 @@ def get_current_db_items(pairs):
                     data = json.load(f)
                     for r in data:
                         items.add(f"{r.get('grade')} | Ngày {r.get('day')} | {r.get('subject')}")
+                        d = r.get('day')
+                        try:
+                            d = int(d)
+                            if d > max_day:
+                                max_day = d
+                        except:
+                            pass
             except:
                 pass
-    return items
+    return items, max_day
 
 def get_status():
     try:
-        # Lấy tiến độ
+        # Lấy tiến độ các cặp đang chạy
         prog_file = os.path.join(BASE_DIR, "progress_SongSong.json")
         pairs = []
-        day = 1
         if os.path.exists(prog_file):
             try:
                 with open(prog_file, "r") as f:
                     data = json.load(f)
                     pairs = data.get("active_pairs", [])
-                    day = data.get("day_num", 1)
             except:
                 pass
                 
@@ -78,7 +84,7 @@ def get_status():
             except:
                 pass
                 
-        current_items = get_current_db_items(pairs)
+        current_items, actual_day = get_current_db_items(pairs)
         new_items = current_items - old_items
         
         # Save new state
@@ -112,8 +118,7 @@ def get_status():
             new_items_text = "\n\n⚠️ Trong 1 giờ qua KHÔNG có bài mới nào được cào thêm."
 
         # Kiểm tra step 1 trên Github hoặc Cloud (Vì đã chặn local)
-        # Thực ra khó check process của Cloudflare, ta chỉ hiện tiến độ
-        prog_info = f"\n📚 Cặp đang làm: {pairs}\n📅 Vị trí ngày: {day}"
+        prog_info = f"\n📚 Cặp đang làm: {pairs}\n📅 Vị trí ngày thực tế: {actual_day}"
                 
         msg = f"📊 [BÁO CÁO TIẾN ĐỘ HÀNG GIỜ]{prog_info}{new_items_text}"
         
@@ -137,7 +142,7 @@ if __name__ == "__main__":
         if os.path.exists(prog_file):
             with open(prog_file, "r") as f:
                 pairs = json.load(f).get("active_pairs", [])
-        current_items = get_current_db_items(pairs)
+        current_items, _ = get_current_db_items(pairs)
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(list(current_items), f, ensure_ascii=False)
         send_telegram_msg("🟢 Trình báo cáo tự động đã khởi động. Sẽ gửi báo cáo chi tiết file/folder mới vào mỗi giờ.")
