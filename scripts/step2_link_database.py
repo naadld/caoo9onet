@@ -181,7 +181,7 @@ def main():
     try:
         res = subprocess.run(
             [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "--format", "ip", "-R", REMOTE_PATH],
-            capture_output=True, text=True, timeout=120
+            capture_output=True, text=True, timeout=600
         )
         lines = res.stdout.splitlines()
         print(f"  Indexed {len(lines)} GDrive files.")

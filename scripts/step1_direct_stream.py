@@ -28,8 +28,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCK_FILE = os.path.join(BASE_DIR, "step1_scraper.lock")
 
 # Telegram Bot Credentials (matched from Step 5-6)
-PRIMARY_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-FALLBACK_BOT_TOKEN = os.getenv("TELEGRAM_FALLBACK_BOT_TOKEN", "")
+PRIMARY_BOT_TOKEN = "8525129998:AAH9PfSY-lIieT0T0Rbewa7_8LqQHoKEy7k"
+FALLBACK_BOT_TOKEN = ""
 DEFAULT_CHAT_ID = "-1003954353565"
 DEFAULT_THREAD_ID = 4455
 
@@ -298,26 +298,34 @@ def save_progress(script_id, pair_idx, day_num):
     with open(prog_file, 'w', encoding='utf-8') as f:
         json.dump(data, f)
 
-def fetch_live_gdrive_index():
+def fetch_live_gdrive_index(pairs_to_run):
     print("🔍 Fetching live GDrive index to prevent multi-machine duplicates...")
     g_files = {}  # path.lower() -> size in bytes
     try:
-        res = subprocess.run(
-            [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "-R", "--format", "ps", "--separator", ";", REMOTE_BASE],
-            capture_output=True, text=True, timeout=60
-        )
-        for line in res.stdout.splitlines():
-            line = line.strip()
-            if ";" in line:
-                parts = line.split(";", 1)
-                path = parts[0].strip()
-                if path.endswith(".mp4"):
-                    try:
-                        size = int(parts[1].strip())
-                    except ValueError:
-                        size = 0
-                    g_files[path.lower()] = size
-        print(f"  Indexed {len(g_files)} existing video files on Google Drive.")
+        active_grades = set()
+        for pair in pairs_to_run:
+            for g in pair:
+                active_grades.add(g)
+
+        for grade_name in active_grades:
+            print(f"  -> Indexing remote folder: {grade_name}/")
+            res = subprocess.run(
+                [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "-R", "--format", "ps", "--separator", ";", f"{REMOTE_BASE}{grade_name}/"],
+                capture_output=True, text=True, timeout=120
+            )
+            for line in res.stdout.splitlines():
+                line = line.strip()
+                if ";" in line:
+                    parts = line.split(";", 1)
+                    path = parts[0].strip()
+                    if path.endswith(".mp4"):
+                        try:
+                            size = int(parts[1].strip())
+                        except ValueError:
+                            size = 0
+                        full_path = f"{grade_name}/{path}".lower()
+                        g_files[full_path] = size
+        print(f"  Indexed {len(g_files)} existing video files on Google Drive for active grades.")
     except Exception as e:
         print(f"  ⚠️ Live GDrive indexing warning: {e}")
     return g_files
@@ -392,7 +400,7 @@ def normalize_grade(val):
     }
     return mapping.get(val_upper, val)
 
-def process_single_video(item_info, force_overwrite=False):
+def process_single_video(item_info, local_db_cache, force_overwrite=False):
     actual_g_name = item_info["actual_g_name"]
     day = item_info["day"]
     subject = item_info["subject"]
@@ -401,15 +409,21 @@ def process_single_video(item_info, force_overwrite=False):
     
     print(f"  🎬 [{subject}] Target: {gdrive_rel_path}")
     
+    # Check local database cache first
+    is_in_local_db = False
+    if actual_g_name in local_db_cache:
+        is_in_local_db = (str(day), subject) in local_db_cache[actual_g_name]
+
     with gdrive_index_lock:
         file_on_gdrive = gdrive_rel_path.lower() in gdrive_index
         gdrive_size = gdrive_index.get(gdrive_rel_path.lower(), 0) if file_on_gdrive else 0
         
-    is_valid_on_gdrive = file_on_gdrive and gdrive_size > 100000
+    is_valid_on_gdrive = (file_on_gdrive and gdrive_size > 100000) or is_in_local_db
     
     success = False
     if is_valid_on_gdrive and not force_overwrite:
-        print(f"    -> ⏭️ File already uploaded & valid ({gdrive_size / 1024 / 1024:.2f} MB). Skipping.")
+        reason = "local database" if is_in_local_db else f"GDrive ({gdrive_size / 1024 / 1024:.2f} MB)"
+        print(f"    -> ⏭️ File already completed in {reason}. Skipping.")
         success = True
         upsert_database_record(actual_g_name, {
             "grade": actual_g_name,
@@ -459,8 +473,8 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, target_day=No
         print(f"Target GDrive Remote: {REMOTE_BASE}")
         print("=" * 60)
 
-        gdrive_index = fetch_live_gdrive_index()
-
+        gdrive_index = fetch_live_gdrive_index(pairs_to_run)
+        
         print("\n1. Accessing main menu to map grades...")
         html = fetch(BASE_URL)
         soup = BeautifulSoup(html, 'html.parser')
@@ -473,6 +487,17 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, target_day=No
                 if "Home" not in name:
                     all_grade_links[name] = a['href']
                     
+        # Load local databases into cache for the targeted pairs
+        local_db_cache = {}
+        for pair in pairs_to_run:
+            for g_name_short in pair:
+                actual_g_name = next((k for k in all_grade_links.keys() if g_name_short.lower() in k.lower()), None)
+                if actual_g_name:
+                    db_data = load_database(actual_g_name)
+                    local_db_cache[actual_g_name] = set()
+                    for r in db_data:
+                        local_db_cache[actual_g_name].add((str(r.get('day')), r.get('subject')))
+
         print("2. Mapping lesson days for grade pairs...")
         grade_days_map = {}
         for pair in pairs_to_run:
@@ -583,7 +608,7 @@ def run_direct_streaming(pairs_to_run=TARGET_PAIRS, max_days=None, target_day=No
                     if day_tasks:
                         print(f"\n⚡ Processing {len(day_tasks)} videos concurrently (Max 5 parallel streams)...")
                         with ThreadPoolExecutor(max_workers=5) as executor:
-                            futures = {executor.submit(process_single_video, t, force_overwrite): t for t in day_tasks}
+                            futures = {executor.submit(process_single_video, t, local_db_cache, force_overwrite): t for t in day_tasks}
                             for future in as_completed(futures):
                                 res = future.result()
                                 if not res:
