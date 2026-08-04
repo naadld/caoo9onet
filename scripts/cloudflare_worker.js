@@ -38,7 +38,7 @@ export default {
     if (request.method === "POST") {
       try {
         const update = await request.json();
-        ctx.waitUntil(handleUpdate(update, env));
+        await handleUpdate(update, env);
       } catch (err) {
         console.error("Worker Error:", err);
       }
@@ -467,12 +467,15 @@ async function sendTelegramReply(text, chatId, threadId, inlineKeyboard = null, 
     params.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
   }
 
+  console.log(`Sending to Telegram: url=${url}, chat_id=${params.chat_id}, thread_id=${params.message_thread_id}, botTok=${botTok ? "EXISTS" : "MISSING"}`);
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(params)
     });
+    const resText = await res.text();
+    console.log(`Telegram response status: ${res.status}, body: ${resText}`);
   } catch (e) {
     console.error("Send reply error:", e);
   }
@@ -539,6 +542,8 @@ async function handleScheduled(env) {
 
   // Check running workflows
   let step1Running = false;
+  let step2Running = false;
+  let step3Running = false;
   let step4Running = false;
 
   try {
@@ -559,6 +564,12 @@ async function handleScheduled(env) {
         if (r.status === "in_progress" || r.status === "queued") {
           if (r.path.includes("1_scraper_stream.yml")) {
             step1Running = true;
+          }
+          if (r.path.includes("2_web_dashboard_sync.yml")) {
+            step2Running = true;
+          }
+          if (r.path.includes("3_fetch_playlists.yml")) {
+            step3Running = true;
           }
           if (r.path.includes("4_generate_subtitles.yml")) {
             step4Running = true;
@@ -587,6 +598,30 @@ async function handleScheduled(env) {
     }
   } else {
     actionsSkipped.push("📥 Step 1 (Cào video) - Có tiến trình cũ đang chạy (Bỏ qua)");
+  }
+
+  // Step 2 check & trigger
+  if (!step2Running) {
+    const res2 = await triggerGitHubWorkflow("2_web_dashboard_sync.yml", {}, pat);
+    if (res2.success) {
+      actionsTriggered.push("🖥️ Step 2 (Dashboard) - Bắt đầu chạy");
+    } else {
+      actionsSkipped.push(`🖥️ Step 2 (Dashboard) - Lỗi kích hoạt: ${res2.info}`);
+    }
+  } else {
+    actionsSkipped.push("🖥️ Step 2 (Dashboard) - Có tiến trình cũ đang chạy (Bỏ qua)");
+  }
+
+  // Step 3 check & trigger
+  if (!step3Running) {
+    const res3 = await triggerGitHubWorkflow("3_fetch_playlists.yml", {}, pat);
+    if (res3.success) {
+      actionsTriggered.push("📋 Step 3 (Lấy Playlists) - Bắt đầu chạy");
+    } else {
+      actionsSkipped.push(`📋 Step 3 (Lấy Playlists) - Lỗi kích hoạt: ${res3.info}`);
+    }
+  } else {
+    actionsSkipped.push("📋 Step 3 (Lấy Playlists) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
   // Step 4 check & trigger
