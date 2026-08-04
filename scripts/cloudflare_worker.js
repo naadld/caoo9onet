@@ -202,8 +202,20 @@ async function routeCommand(rawText, chatId, threadId, env) {
 
   // /step 4
   if (clean.startsWith("/step 4") || clean.startsWith("/step4") || clean === "step 4") {
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI Whisper & Interactive JSON...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
-    const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 5" }, pat);
+    const mGrade = text.match(/step\s*4\s+(.+)/i);
+    let targetFolder = "K4 (Age 4)";
+    if (mGrade) {
+      targetFolder = mGrade[1].trim();
+    } else {
+      try {
+        const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?t=${Date.now()}`);
+        if (gRes.status === 200) {
+          targetFolder = (await gRes.text()).trim();
+        }
+      } catch (e) { }
+    }
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI cho ${targetFolder}...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": targetFolder }, pat);
     await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
     return;
   }
@@ -626,11 +638,19 @@ async function handleScheduled(env) {
 
   // Step 4 check & trigger
   if (!step4Running) {
-    const res4 = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": "Grade 5" }, pat);
+    let currentSubtitleGrade = "K4 (Age 4)";
+    try {
+      const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?t=${Date.now()}`);
+      if (gRes.status === 200) {
+        currentSubtitleGrade = (await gRes.text()).trim();
+      }
+    } catch (e) { }
+
+    const res4 = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": currentSubtitleGrade }, pat);
     if (res4.success) {
-      actionsTriggered.push("🎙️ Step 4 (Tạo phụ đề) - Bắt đầu chạy");
+      actionsTriggered.push(`🎙️ Step 4 (Tạo phụ đề cho ${currentSubtitleGrade}) - Bắt đầu chạy`);
     } else {
-      actionsSkipped.push(`🎙️ Step 4 (Tạo phụ đề) - Lỗi kích hoạt: ${res4.info}`);
+      actionsSkipped.push(`🎙️ Step 4 (Tạo phụ đề cho ${currentSubtitleGrade}) - Lỗi kích hoạt: ${res4.info}`);
     }
   } else {
     actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");

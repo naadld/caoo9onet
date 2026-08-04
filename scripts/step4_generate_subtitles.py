@@ -357,6 +357,34 @@ def run_subtitle_generator(target_folder="Grade 7"):
     print(f"🎉 STEP 4 SUMMARY: Processed {processed_count} new subtitles, Skipped {skipped_count} existing.")
     print("=" * 60)
 
+    # Check if we should level up
+    if processed_count == 0 and skipped_count > 0 and skipped_count == len(mp4_files):
+        print(f"🌟 Tất cả video của {target_folder} đều đã có phụ đề. Chuẩn bị chuyển sang lớp tiếp theo!")
+        grades_order = ["K4 (Age 4)", "K5 (Age 5)", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+        try:
+            current_idx = grades_order.index(target_folder)
+            next_idx = (current_idx + 1) % len(grades_order)
+            next_grade = grades_order[next_idx]
+            
+            # Write to local file
+            status_file = os.path.join(BASE_DIR, "data", "current_subtitle_grade.txt")
+            os.makedirs(os.path.dirname(status_file), exist_ok=True)
+            with open(status_file, "w", encoding="utf-8") as f:
+                f.write(next_grade)
+            
+            # Commit and push to git
+            print(f"🚀 Tự động tăng cấp lên: {next_grade}. Đang đồng bộ lên Github...")
+            subprocess.run(["git", "config", "--global", "user.email", "bot@o9o.net"])
+            subprocess.run(["git", "config", "--global", "user.name", "O9O Bot"])
+            subprocess.run(["git", "add", status_file])
+            subprocess.run(["git", "commit", "-m", f"Auto-advance subtitle grade to {next_grade}"])
+            subprocess.run(["git", "push"])
+            print("✅ Đã cập nhật file trạng thái thành công!")
+        except ValueError:
+            print(f"⚠️ {target_folder} không nằm trong danh sách tự động tăng cấp.")
+        except Exception as e:
+            print(f"⚠️ Lỗi khi tăng cấp: {e}")
+
 def main():
     parser = argparse.ArgumentParser(description="Step 4: AI Subtitle & Interactive JSON Generator for Abeka Videos.")
     parser.add_argument("--folder", default="Grade 7", help="Folder to target on Google Drive (e.g. 'Grade 7')")
