@@ -255,6 +255,14 @@ async function routeCommand(rawText, chatId, threadId, env) {
     await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
     return;
   }
+
+  // /step 7
+  if (clean.startsWith("/step 7") || clean.startsWith("/step7") || clean === "step 7") {
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 7]\n━━━━━━━━━━━━━━━━━━━━━━\n🧹 Khởi chạy Step 7: Dọn dẹp & Gộp thư mục trùng lặp trên Google Drive...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    const res = await triggerGitHubWorkflow("7_cleanup_duplicates.yml", {}, pat);
+    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
+    return;
+  }
 }
 
 async function triggerGitHubWorkflow(workflowFile, inputsObj, pat) {
@@ -464,7 +472,7 @@ async function sendLatest(chatId, threadId, pat, botTok) {
 }
 
 async function sendHelp(chatId, threadId, botTok) {
-  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n🤖 CHẾ ĐỘ TỰ ĐỘNG (AUTO CRON):\n▪️ /auto\n   👉 Kích hoạt chế độ chạy tự động Step 1 & Step 4 mỗi 30 phút\n▪️ /auto off\n   👉 Tắt chế độ chạy tự động\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
+  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n🧹 STEP 7 - DỌN DẸP & GỘP FOLDER TRÙNG:\n▪️ /step 7\n   👉 Khởi chạy tiến trình gộp thư mục & xóa file lỗi trên GDrive\n\n🤖 CHẾ ĐỘ TỰ ĐỘNG (AUTO CRON):\n▪️ /auto\n   👉 Kích hoạt chế độ chạy tự động Step 1 & Step 4 mỗi 30 phút\n▪️ /auto off\n   👉 Tắt chế độ chạy tự động\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
   await sendTelegramReply(helpMsg, chatId, threadId, null, botTok);
 }
 
