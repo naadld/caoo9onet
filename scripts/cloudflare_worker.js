@@ -69,7 +69,9 @@ async function handleUpdate(update, env) {
 
   const chatId = String(message.chat.id);
   const msgThreadId = message.message_thread_id;
-  const text = (message.text || "").trim();
+  const text = message.text || message.caption || "";
+  
+  console.log(`Received text: "${text}" from chatId: ${chatId}, threadId: ${msgThreadId}`);
 
   if ((chatId === TARGET_CHAT_ID || chatId === String(TARGET_CHAT_ID)) && String(msgThreadId) === String(TARGET_THREAD_ID)) {
     await routeCommand(text, chatId, TARGET_THREAD_ID, env);
