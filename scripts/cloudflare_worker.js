@@ -131,7 +131,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
       return;
     }
     await env.O9O_KV.put("auto_mode", "on");
-    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video) & Step 4 (Tạo phụ đề)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video), Step 4 (Tạo phụ đề), Step 7 (Dọn dẹp)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
     return;
   }
 
@@ -565,6 +565,7 @@ async function handleScheduled(env) {
   let step2Running = false;
   let step3Running = false;
   let step4Running = false;
+  let step7Running = false;
 
   try {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/actions/runs?per_page=15`;
@@ -593,6 +594,9 @@ async function handleScheduled(env) {
           }
           if (r.path.includes("4_generate_subtitles.yml")) {
             step4Running = true;
+          }
+          if (r.path.includes("7_cleanup_duplicates.yml")) {
+            step7Running = true;
           }
         }
       });
@@ -661,7 +665,19 @@ async function handleScheduled(env) {
       actionsSkipped.push(`🎙️ Step 4 (Tạo phụ đề cho ${currentSubtitleGrade}) - Lỗi kích hoạt: ${res4.info}`);
     }
   } else {
-    actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
+      actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
+  }
+
+  // Step 7 check & trigger
+  if (!step7Running) {
+    const res7 = await triggerGitHubWorkflow("7_cleanup_duplicates.yml", {}, pat);
+    if (res7.success) {
+      actionsTriggered.push("🧹 Step 7 (Dọn dẹp GDrive) - Bắt đầu chạy");
+    } else {
+      actionsSkipped.push(`🧹 Step 7 (Dọn dẹp GDrive) - Lỗi kích hoạt: ${res7.info}`);
+    }
+  } else {
+    actionsSkipped.push("🧹 Step 7 (Dọn dẹp GDrive) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
   // Send unified report to Telegram
