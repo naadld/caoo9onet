@@ -1,0 +1,51 @@
+name: 7. GDrive Duplicates Cleanup & Dedupe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup_duplicates:
+    name: Cleanup & Merge Duplicate Folders
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 120
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << 'RCLONE_CONF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          RCLONE_CONF
+
+      - name: Run Cleanup Script (Step 7)
+        run: |
+          python3 scripts/step7_cleanup_duplicates.py
+          
+      - name: Setup Git Identity
+        run: |
+          git config --global user.email "bot@o9o.net"
+          git config --global user.name "O9O Bot"
+          
+      - name: Commit Updated Database
+        run: |
+          git add database_*.json
+          git commit -m "Auto-update database after dedupe cleanup" || echo "No changes to commit"
+          git push
