@@ -12,7 +12,7 @@ const TARGET_THREAD_ID   = 4455;
 
 // Fill in your GitHub Personal Access Token (PAT) here (e.g. ghp_xxxxxxxxxxxx)
 const GITHUB_PAT         = "YOUR_GITHUB_PAT_HERE";
-const GITHUB_REPO        = "naadld/caoo9onet";
+const GITHUB_REPO = "naadld/caoo9onet";
 
 export default {
   async fetch(request, env, ctx) {
@@ -102,7 +102,7 @@ async function answerCallback(callbackQueryId, botTok) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ callback_query_id: callbackQueryId })
     });
-  } catch (e) {}
+  } catch (e) { }
 }
 
 async function routeCommand(rawText, chatId, threadId, env) {
@@ -142,6 +142,12 @@ async function routeCommand(rawText, chatId, threadId, env) {
   // /status
   if (clean === "/status" || clean === "status" || clean.startsWith("/status@")) {
     await sendStatus(chatId, threadId, pat, botTok);
+    return;
+  }
+
+  // /latest
+  if (clean === "/latest" || clean === "latest" || clean.startsWith("/latest@")) {
+    await sendLatest(chatId, threadId, pat, botTok);
     return;
   }
 
@@ -370,6 +376,77 @@ async function sendRunDetail(chatId, messageId, threadId, runId, pat, botTok) {
   ];
 
   await editTelegramMessage(detailText, chatId, messageId, keyboardButtons, botTok);
+}
+
+async function sendLatest(chatId, threadId, pat, botTok) {
+  const nowStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  await sendTelegramReply("⏳ Đang tải báo cáo mới nhất từ hệ thống...", chatId, threadId, null, botTok);
+
+  let msg = `📊 [BÁO CÁO TIẾN ĐỘ THỰC TẾ LỚN NHẤT]\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+  try {
+    // 1. Check Step 1 (progress & databases)
+    let activePairsStr = "Không xác định";
+    let maxDay = 0;
+
+    // Fetch progress_SongSong.json
+    const progUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/progress_SongSong.json`;
+    const progRes = await fetch(progUrl);
+    let activeGrades = new Set();
+    if (progRes.status === 200) {
+      const pData = await progRes.json();
+      const pairs = pData.active_pairs || [];
+      activePairsStr = JSON.stringify(pairs);
+      pairs.forEach(p => p.forEach(g => activeGrades.add(g)));
+    }
+
+    // Fetch databases to find max_day
+    for (const grade of activeGrades) {
+      const dbUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/database_${encodeURIComponent(grade)}.json`;
+      const dbRes = await fetch(dbUrl);
+      if (dbRes.status === 200) {
+        const dbData = await dbRes.json();
+        dbData.forEach(r => {
+          let d = r.day;
+          try {
+            d = parseInt(d, 10);
+            if (d > maxDay) maxDay = d;
+          } catch (e) { }
+        });
+      }
+    }
+
+    msg += `🎬 STEP 1:\n`;
+    msg += `  ▪️ Đang cào cặp: ${activePairsStr}\n`;
+    msg += `  ▪️ Ngày thực tế cao nhất: ${maxDay > 0 ? maxDay : "Chưa có dữ liệu"}\n\n`;
+
+    // 2. Check Step 2, 3, 4 (workflow_live_status.json)
+    msg += `🚀 TÌNH TRẠNG CÁC BƯỚC KHÁC:\n`;
+    const liveUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/workflow_live_status.json`;
+    const liveRes = await fetch(liveUrl);
+    if (liveRes.status === 200) {
+      const liveData = await liveRes.json();
+
+      const getStepInfo = (searchName) => {
+        const run = liveData.find(r => r.name && r.name.includes(searchName));
+        if (!run) return "Chưa có thông tin";
+        const statusStr = run.status === "completed" ? (run.conclusion || "hoàn tất") : "đang chạy";
+        return `[${statusStr.toUpperCase()}] ${run.current_step || ""}`;
+      };
+
+      msg += `  ▪️ STEP 2 (Dashboard): ${getStepInfo("2. Web Player Indexer")}\n`;
+      msg += `  ▪️ STEP 3 (Fetch Playlists): ${getStepInfo("3. Fetch & Cache")}\n`;
+      msg += `  ▪️ STEP 4 (Subtitles): ${getStepInfo("4. Abeka Subtitle")}\n`;
+    } else {
+      msg += `  ▪️ Không thể tải thông tin trạng thái các bước.\n`;
+    }
+
+  } catch (e) {
+    msg += `⚠️ Lỗi khi tải dữ liệu: ${e.message}\n`;
+  }
+
+  msg += `\n⏰ Cập nhật lúc: ${nowStr}`;
+  await sendTelegramReply(msg, chatId, threadId, null, botTok);
 }
 
 async function sendHelp(chatId, threadId, botTok) {
