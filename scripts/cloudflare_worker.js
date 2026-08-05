@@ -131,7 +131,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
       return;
     }
     await env.O9O_KV.put("auto_mode", "on");
-    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video), Step 4 (Tạo phụ đề), Step 7 (Dọn dẹp)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video), Step 4 (Tạo phụ đề)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
     return;
   }
 
@@ -208,43 +208,9 @@ async function routeCommand(rawText, chatId, threadId, env) {
       targetFolder = mGrade[1].trim();
     } else {
       try {
-        const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?t=${Date.now()}`);
-        if (gRes.status === 200) {
-          targetFolder = (await gRes.text()).trim();
-        }
-      } catch (e) { }
-    }
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI cho ${targetFolder}...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
-    const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": targetFolder }, pat);
-    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
-    return;
+        const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?    return;
   }
-
-  // /step 5
-  if (clean.startsWith("/step 5") || clean.startsWith("/step5") || clean.startsWith("step 5")) {
-    const mLinks = text.match(/step\s*5\s+([^\s-]+)[\s-]+([^\s]+)/i);
-    if (mLinks && mLinks[1].toLowerCase() !== "start") {
-      const src = mLinks[1].trim();
-      const dst = mLinks[2].trim();
-      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 5 CUSTOM COPY]\n━━━━━━━━━━━━━━━━━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId, null, botTok);
-      const res = await triggerGitHubWorkflow("5_gdrive_copier.yml", { "src_folder": src, "dst_folder": dst }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
-      return;
-    }
-
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 5 start]\n━━━━━━━━━━━━━━━━━━━━━━\n📂 Tiếp tục Copy thư mục GDrive dở dang (Nguồn -> Đích)\n⚡ Chế độ: Bỏ qua các file đã có\n⏰ Thời gian: ${nowStr}\n🚀 Đang khởi chạy GitHub Actions Cloud...`, chatId, threadId, null, botTok);
-    const res = await triggerGitHubWorkflow("5_gdrive_copier.yml", {}, pat);
-    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
-    return;
-  }
-
-  // /step 6
-  if (clean.startsWith("/step 6") || clean.startsWith("/step6") || clean.startsWith("step 6")) {
-    const mLinks = text.match(/step\s*6\s+([^\s-]+)[\s-]+([^\s]+)/i);
-    if (mLinks && mLinks[1].toLowerCase() !== "start") {
-      const src = mLinks[1].trim();
-      const dst = mLinks[2].trim();
-      await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 6 CUSTOM COMPARE]\n━━━━━━━━━━━━━━━━━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n📊 Đang khởi chạy tiến trình đối chiếu & so sánh...`, chatId, threadId, null, botTok);
+}�━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n📊 Đang khởi chạy tiến trình đối chiếu & so sánh...`, chatId, threadId, null, botTok);
       const res = await triggerGitHubWorkflow("6_folder_comparator.yml", { "src_folder": src, "dst_folder": dst }, pat);
       await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
       return;
@@ -472,7 +438,7 @@ async function sendLatest(chatId, threadId, pat, botTok) {
 }
 
 async function sendHelp(chatId, threadId, botTok) {
-  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n📂 STEP 5 - COPY GDRIVE FOLDER:\n▪️ /step 5 start\n   👉 Chạy tiếp copy thư mục dở dang (Không tải lại file đã có)\n▪️ /step 5 link1-link2 (hoặc /step 5 link1 link2)\n   👉 Copy từ link1 (hoặc ID1) sang link2 (hoặc ID2)\n\n📊 STEP 6 - SO SÁNH & ĐỐI CHIẾU:\n▪️ /step 6\n   👉 Báo cáo đối chiếu dữ liệu 2 thư mục GDrive mặc định\n▪️ /step 6 link1-link2 (hoặc /step 6 link1 link2)\n   👉 So sánh đối chiếu giữa link1 (hoặc ID1) và link2 (hoặc ID2)\n\n🧹 STEP 7 - DỌN DẸP & GỘP FOLDER TRÙNG:\n▪️ /step 7\n   👉 Khởi chạy tiến trình gộp thư mục & xóa file lỗi trên GDrive\n\n🤖 CHẾ ĐỘ TỰ ĐỘNG (AUTO CRON):\n▪️ /auto\n   👉 Kích hoạt chế độ chạy tự động Step 1 & Step 4 mỗi 30 phút\n▪️ /auto off\n   👉 Tắt chế độ chạy tự động\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
+  const helpMsg = `📖 [BẢNG HƯỚNG DẪN LỆNH BOT TELEGRAM O9O.NET (SERVERLESS CLOUD)]\n━━━━━━━━━━━━━━━━━━━━━━\n🎬 STEP 1 - CÀO VIDEO:\n▪️ /step 1 start\n   👉 Chạy tiến trình cào mặc định (từng Grade từ ngày nhỏ -> lớn)\n▪️ /step 1 XX\n   👉 Cào bài học chưa có của Grade XX (Ví dụ: /step 1 05)\n▪️ /step 1 XX.yyy\n   👉 Cào bài học cụ thể (Ví dụ: /step 1 01.010 - Bỏ qua bài đã có)\n▪️ /step 1 force XX.yyy\n   👉 Cào ép buộc bài cụ thể (Ví dụ: /step 1 force K4.150 - Ghi đè file)\n\n📝 STEP 3 - ĐỒNG BỘ GIT & GOOGLE DOC:\n▪️ /step 3\n   👉 Chạy đồng bộ log & Git commit/push\n\n🎙️ STEP 4 - TẠO PHỤ ĐỀ AI WHISPER:\n▪️ /step 4\n   👉 Khởi chạy tạo phụ đề AI & file JSON tương tác\n\n🤖 CHẾ ĐỘ TỰ ĐỘNG (AUTO CRON):\n▪️ /auto\n   👉 Kích hoạt chế độ chạy tự động Step 1 & Step 4 mỗi 30 phút\n▪️ /auto off\n   👉 Tắt chế độ chạy tự động\n\n⚡ KIỂM TRA HỆ THỐNG:\n▪️ /status\n   👉 Kiểm tra trạng thái các tiến trình Cloud đang chạy\n\nℹ️ Gõ /help bất kỳ lúc nào để hiển thị danh sách này.`;
   await sendTelegramReply(helpMsg, chatId, threadId, null, botTok);
 }
 
@@ -677,9 +643,6 @@ async function handleScheduled(env) {
           }
           if (r.path.includes("4_generate_subtitles.yml")) {
             step4Running = true;
-          }
-          if (r.path.includes("7_cleanup_duplicates.yml")) {
-            step7Running = true;
           }
         }
       });
