@@ -220,7 +220,14 @@ async function routeCommand(rawText, chatId, threadId, env) {
     return;
   }
 
+  // /report
+  if (clean.startsWith("/report") || clean === "report") {
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /report]\n━━━━━━━━━━━━━━━━━━━━━━\n📊 Khởi chạy Báo cáo Chi tiết Tiến độ Cào Video & Phụ đề AI...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    const res = await triggerGitHubWorkflow("5_daily_report.yml", {}, pat);
+    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT BÁO CÁO THÀNH CÔNG]\n${res.info}\n🔗 Báo cáo sẽ gửi trực tiếp vào nhóm Telegram trong ít giây!` : `❌ ${res.info}`, chatId, threadId, null, botTok);
+    return;
   }
+}
 
 async function triggerGitHubWorkflow(workflowFile, inputsObj, pat) {
   if (!pat || pat === "YOUR_GITHUB_PAT_HERE") {
