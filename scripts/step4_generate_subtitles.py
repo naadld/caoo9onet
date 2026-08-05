@@ -360,7 +360,7 @@ def run_subtitle_generator(target_folder="Grade 7"):
     # Check if we should level up
     if processed_count == 0 and skipped_count > 0 and skipped_count == len(mp4_files):
         print(f"🌟 Tất cả video của {target_folder} đều đã có phụ đề. Chuẩn bị chuyển sang lớp tiếp theo!")
-        grades_order = ["K4 (Age 4)", "K5 (Age 5)", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+        grades_order = ["Grade 5", "K4 (Age 4)", "K5 (Age 5)", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"]
         try:
             current_idx = grades_order.index(target_folder)
             next_idx = (current_idx + 1) % len(grades_order)
@@ -386,11 +386,20 @@ def run_subtitle_generator(target_folder="Grade 7"):
             print(f"⚠️ Lỗi khi tăng cấp: {e}")
 
 def main():
+    status_file = os.path.join(BASE_DIR, "data", "current_subtitle_grade.txt")
+    default_grade = "Grade 5"
+    if os.path.exists(status_file):
+        with open(status_file, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+            if content:
+                default_grade = content
+
     parser = argparse.ArgumentParser(description="Step 4: AI Subtitle & Interactive JSON Generator for Abeka Videos.")
-    parser.add_argument("--folder", default="Grade 7", help="Folder to target on Google Drive (e.g. 'Grade 7')")
+    parser.add_argument("--folder", default=default_grade, help=f"Folder to target on Google Drive (default: '{default_grade}')")
     args = parser.parse_args()
 
     run_subtitle_generator(target_folder=args.folder)
 
 if __name__ == "__main__":
     main()
+

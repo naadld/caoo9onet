@@ -6,7 +6,7 @@ on:
       target_folder:
         description: 'Google Drive folder to target'
         required: true
-        default: 'Grade 4'
+        default: 'Grade 5'
 
 jobs:
   generate_subtitles:
@@ -54,5 +54,5 @@ jobs:
 
       - name: Run Subtitle Generator (Step 4)
         run: |
-          FOLDER="${{ github.event.inputs.target_folder || 'Grade 4' }}"
+          FOLDER="${{ github.event.inputs.target_folder || 'Grade 5' }}"
           python3 -u scripts/step4_generate_subtitles.py --folder "$FOLDER"
