@@ -1,0 +1,65 @@
+name: 5. Abeka Daily Report Generator (07:00 & 17:00 GMT+7)
+
+on:
+  schedule:
+    # 00:00 UTC = 07:00 AM GMT+7
+    # 10:00 UTC = 17:00 PM GMT+7
+    - cron: '0 0,10 * * *'
+  workflow_dispatch:          # Manual trigger option
+
+permissions:
+  contents: write
+
+jobs:
+  daily_report:
+    name: Generate & Send Daily Status Report via Telegram
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << 'EOF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          EOF
+
+      - name: Configure Google Credentials
+        run: |
+          cat << 'EOF' > credentials.json
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          EOF
+
+      - name: Run Daily Report Script
+        run: |
+          python3 -u scripts/daily_report.py
+
+      - name: Commit & Push Daily Snapshot
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          rm -f credentials.json
+          git add data/daily_report_snapshot.json 2>/dev/null || true
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "chore(report): update daily report snapshot [skip ci]"
+            git push origin main
+          else
+            echo "ℹ️ No snapshot changes to commit."
+          fi
