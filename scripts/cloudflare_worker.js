@@ -131,7 +131,7 @@ async function routeCommand(rawText, chatId, threadId, env) {
       return;
     }
     await env.O9O_KV.put("auto_mode", "on");
-    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video), Step 4 (Tạo phụ đề)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    await sendTelegramReply(`🤖 [CHẾ ĐỘ TỰ ĐỘNG KHỞI CHẠY]\n━━━━━━━━━━━━━━━━━━━━━━\n🟢 Trạng thái: ĐÃ BẬT /auto\n⏰ Chu kỳ: Quét mỗi 30 phút qua Cloudflare Scheduler\n⚡ Các bước chạy tự động: Step 1 (Cào video), Step 4 (Tạo phụ đề), Step 7 (Dọn dẹp)\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
     return;
   }
 
@@ -208,28 +208,19 @@ async function routeCommand(rawText, chatId, threadId, env) {
       targetFolder = mGrade[1].trim();
     } else {
       try {
-        const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?    return;
-  }
-}�━━━━━━\n📁 Nguồn: ${src}\n📂 Đích:  ${dst}\n⏰ Thời gian: ${nowStr}\n📊 Đang khởi chạy tiến trình đối chiếu & so sánh...`, chatId, threadId, null, botTok);
-      const res = await triggerGitHubWorkflow("6_folder_comparator.yml", { "src_folder": src, "dst_folder": dst }, pat);
-      await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
-      return;
+        const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?t=${Date.now()}`);
+        if (gRes.status === 200) {
+          targetFolder = (await gRes.text()).trim();
+        }
+      } catch (e) { }
     }
-
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 6]\n━━━━━━━━━━━━━━━━━━━━━━\n📊 Khởi chạy Step 6: Báo cáo đối chiếu & so sánh thư mục GDrive...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
-    const res = await triggerGitHubWorkflow("6_folder_comparator.yml", {}, pat);
+    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 4]\n━━━━━━━━━━━━━━━━━━━━━━\n🎙️ Khởi chạy Tạo Phụ đề AI cho ${targetFolder}...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
+    const res = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": targetFolder }, pat);
     await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
     return;
   }
 
-  // /step 7
-  if (clean.startsWith("/step 7") || clean.startsWith("/step7") || clean === "step 7") {
-    await sendTelegramReply(`🚀 [ĐÃ NHẬN LỆNH /step 7]\n━━━━━━━━━━━━━━━━━━━━━━\n🧹 Khởi chạy Step 7: Dọn dẹp & Gộp thư mục trùng lặp trên Google Drive...\n⏰ Thời gian: ${nowStr}`, chatId, threadId, null, botTok);
-    const res = await triggerGitHubWorkflow("7_cleanup_duplicates.yml", {}, pat);
-    await sendTelegramReply(res.success ? `✅ [KÍCH HOẠT THÀNH CÔNG]\n${res.info}\n🔗 Theo dõi tại: https://github.com/${GITHUB_REPO}/actions` : `❌ ${res.info}`, chatId, threadId, null, botTok);
-    return;
   }
-}
 
 async function triggerGitHubWorkflow(workflowFile, inputsObj, pat) {
   if (!pat || pat === "YOUR_GITHUB_PAT_HERE") {
@@ -644,6 +635,9 @@ async function handleScheduled(env) {
           if (r.path.includes("4_generate_subtitles.yml")) {
             step4Running = true;
           }
+          if (r.path.includes("7_cleanup_duplicates.yml")) {
+            step7Running = true;
+          }
         }
       });
     } else {
@@ -714,20 +708,7 @@ async function handleScheduled(env) {
       actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
-  // Step 7 check & trigger (Vô hiệu hoá theo yêu cầu)
-  const step7Enabled = false;
-  if (!step7Enabled) {
-    actionsSkipped.push("🧹 Step 7 (Dọn dẹp GDrive) - Đã tạm ngưng (Đã xong K4-K5 & 01-06)");
-  } else if (!step7Running) {
-    const res7 = await triggerGitHubWorkflow("7_cleanup_duplicates.yml", {}, pat);
-    if (res7.success) {
-      actionsTriggered.push("🧹 Step 7 (Dọn dẹp GDrive) - Bắt đầu chạy");
-    } else {
-      actionsSkipped.push(`🧹 Step 7 (Dọn dẹp GDrive) - Lỗi kích hoạt: ${res7.info}`);
-    }
-  } else {
-    actionsSkipped.push("🧹 Step 7 (Dọn dẹp GDrive) - Có tiến trình cũ đang chạy (Bỏ qua)");
-  }
+  
 
   // Get video scraping progress in the last 30 minutes
   const videoProgressReport = await getScrapedVideoProgress(env);
