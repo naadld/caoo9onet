@@ -508,88 +508,6 @@ function normalizeGrade(val) {
   return mapping[str] || str;
 }
 
-async function getScrapedVideoProgress(env) {
-  const grades = [
-    "K4 (Age 4)", "K5 (Age 5)",
-    "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-    "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"
-  ];
-
-  let currentItemsMap = {};
-
-  await Promise.all(grades.map(async (grade) => {
-    try {
-      const url = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/database_${encodeURIComponent(grade)}.json?t=${Date.now()}`;
-      const res = await fetch(url, { headers: { "User-Agent": "CloudflareWorker-TelegramBot" } });
-      if (res.status === 200) {
-        const list = await res.json();
-        for (const item of list) {
-          const g = item.grade || grade;
-          const d = item.day;
-          const s = item.subject || "Video";
-          const key = `${g} | Ngày ${d} | ${s}`;
-          currentItemsMap[key] = { grade: g, day: d, subject: s };
-        }
-      }
-    } catch (e) { }
-  }));
-
-  const currentKeys = Object.keys(currentItemsMap);
-
-  let prevKeysJson = null;
-  if (env && env.O9O_KV) {
-    prevKeysJson = await env.O9O_KV.get("scraped_items_snapshot");
-  }
-
-  if (prevKeysJson === null) {
-    if (env && env.O9O_KV) {
-      await env.O9O_KV.put("scraped_items_snapshot", JSON.stringify(currentKeys));
-    }
-    return `📹 [TIẾN ĐỘ CÀO 30 PHÚT VỪA QUA]\n🟢 Đã khởi tạo bộ đếm theo dõi (Hiện có ${currentKeys.length} video trong DB).`;
-  }
-
-  let prevSet = new Set();
-  try {
-    prevSet = new Set(JSON.parse(prevKeysJson));
-  } catch (e) { }
-
-  const newKeys = currentKeys.filter(k => !prevSet.has(k));
-
-  if (env && env.O9O_KV) {
-    await env.O9O_KV.put("scraped_items_snapshot", JSON.stringify(currentKeys));
-  }
-
-  if (newKeys.length === 0) {
-    return `📹 [TIẾN ĐỘ CÀO 30 PHÚT VỪA QUA]\nℹ️ Trong 30 phút qua: KHÔNG CÓ video mới nào được cào thêm.`;
-  }
-
-  let grouped = {};
-  for (const k of newKeys) {
-    const info = currentItemsMap[k];
-    if (!info) continue;
-    const g = info.grade;
-    const d = info.day;
-    if (!grouped[g]) grouped[g] = {};
-    if (!grouped[g][d]) grouped[g][d] = [];
-    grouped[g][d].push(info.subject);
-  }
-
-  let text = `📹 [TIẾN ĐỘ CÀO 30 PHÚT VỪA QUA - TỔNG: +${newKeys.length} VIDEO MỚI]\n`;
-  for (const g of Object.keys(grouped).sort()) {
-    const daysObj = grouped[g];
-    const dayKeys = Object.keys(daysObj).sort((a, b) => parseInt(a) - parseInt(b));
-    let totalGradeVideos = 0;
-    dayKeys.forEach(d => totalGradeVideos += daysObj[d].length);
-
-    text += `📁 ${g} (${totalGradeVideos} video):\n`;
-    for (const d of dayKeys) {
-      const subs = daysObj[d];
-      text += `   + Ngày ${d} (${subs.length} môn): ${subs.join(", ")}\n`;
-    }
-  }
-
-  return text.trim();
-}
 
 async function handleScheduled(env) {
   const pat = (env && env.GITHUB_PAT) || GITHUB_PAT;
@@ -608,11 +526,7 @@ async function handleScheduled(env) {
   }
 
   // Check running workflows
-  let step1Running = false;
-  let step2Running = false;
-  let step3Running = false;
-  let step4Running = false;
-  let step7Running = false;
+  let runningWorkflows = new Set();
 
   try {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/actions/runs?per_page=15`;
@@ -630,21 +544,8 @@ async function handleScheduled(env) {
       const runs = data.workflow_runs || [];
       runs.forEach(r => {
         if (r.status === "in_progress" || r.status === "queued") {
-          if (r.path.includes("1_scraper_stream.yml")) {
-            step1Running = true;
-          }
-          if (r.path.includes("2_web_dashboard_sync.yml")) {
-            step2Running = true;
-          }
-          if (r.path.includes("3_fetch_playlists.yml")) {
-            step3Running = true;
-          }
-          if (r.path.includes("4_generate_subtitles.yml")) {
-            step4Running = true;
-          }
-          if (r.path.includes("7_cleanup_duplicates.yml")) {
-            step7Running = true;
-          }
+          const fileName = r.path.split("/").pop();
+          runningWorkflows.add(fileName);
         }
       });
     } else {
@@ -660,59 +561,55 @@ async function handleScheduled(env) {
   let actionsSkipped = [];
 
   // Step 1 check & trigger
-  if (!step1Running) {
+  if (!runningWorkflows.has("1_scraper_stream.yml")) {
     const res1 = await triggerGitHubWorkflow("1_scraper_stream.yml", { "max_days": "170" }, pat);
-    if (res1.success) {
-      actionsTriggered.push("📥 Step 1 (Cào video) - Bắt đầu chạy");
-    } else {
-      actionsSkipped.push(`📥 Step 1 (Cào video) - Lỗi kích hoạt: ${res1.info}`);
-    }
+    if (res1.success) actionsTriggered.push("📥 Step 1 (Cào video)");
+    else actionsSkipped.push(`📥 Step 1 (Lỗi: ${res1.info})`);
   } else {
-    actionsSkipped.push("📥 Step 1 (Cào video) - Có tiến trình cũ đang chạy (Bỏ qua)");
+    actionsSkipped.push("📥 Step 1 (Đang chạy)");
   }
 
   // Step 2 check & trigger
-  if (!step2Running) {
+  if (!runningWorkflows.has("2_web_dashboard_sync.yml")) {
     const res2 = await triggerGitHubWorkflow("2_web_dashboard_sync.yml", {}, pat);
-    if (res2.success) {
-      actionsTriggered.push("🖥️ Step 2 (Dashboard) - Bắt đầu chạy");
-    } else {
-      actionsSkipped.push(`🖥️ Step 2 (Dashboard) - Lỗi kích hoạt: ${res2.info}`);
-    }
+    if (res2.success) actionsTriggered.push("🖥️ Step 2 (Dashboard)");
+    else actionsSkipped.push(`🖥️ Step 2 (Lỗi: ${res2.info})`);
   } else {
-    actionsSkipped.push("🖥️ Step 2 (Dashboard) - Có tiến trình cũ đang chạy (Bỏ qua)");
+    actionsSkipped.push("🖥️ Step 2 (Đang chạy)");
   }
 
   // Step 3 check & trigger
-  if (!step3Running) {
+  if (!runningWorkflows.has("3_fetch_playlists.yml")) {
     const res3 = await triggerGitHubWorkflow("3_fetch_playlists.yml", {}, pat);
-    if (res3.success) {
-      actionsTriggered.push("📋 Step 3 (Lấy Playlists) - Bắt đầu chạy");
-    } else {
-      actionsSkipped.push(`📋 Step 3 (Lấy Playlists) - Lỗi kích hoạt: ${res3.info}`);
-    }
+    if (res3.success) actionsTriggered.push("📋 Step 3 (Lấy Playlists)");
+    else actionsSkipped.push(`📋 Step 3 (Lỗi: ${res3.info})`);
   } else {
-    actionsSkipped.push("📋 Step 3 (Lấy Playlists) - Có tiến trình cũ đang chạy (Bỏ qua)");
+    actionsSkipped.push("📋 Step 3 (Đang chạy)");
   }
 
-  // Step 4 check & trigger
-  if (!step4Running) {
-    let currentSubtitleGrade = "K4 (Age 4)";
-    try {
-      const gRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/current_subtitle_grade.txt?t=${Date.now()}`);
-      if (gRes.status === 200) {
-        currentSubtitleGrade = (await gRes.text()).trim();
-      }
-    } catch (e) { }
+  // Trigger all Step 4s
+  const step4Workflows = [
+    { file: "4_generate_subtitles.yml", name: "Grade 9" },
+    { file: "4_generate_subtitles_g10.yml", name: "Grade 10" },
+    { file: "4_generate_subtitles_g1.yml", name: "Grade 1" },
+    { file: "4_generate_subtitles_g2.yml", name: "Grade 2" },
+    { file: "4_generate_subtitles_g3.yml", name: "Grade 3" },
+    { file: "4_generate_subtitles_g4.yml", name: "Grade 4" },
+    { file: "4_generate_subtitles_g6.yml", name: "Grade 6" },
+    { file: "4_generate_subtitles_g7.yml", name: "Grade 7" },
+    { file: "4_generate_subtitles_g8.yml", name: "Grade 8" },
+    { file: "4_generate_subtitles_k4.yml", name: "K4" },
+    { file: "4_generate_subtitles_k5.yml", name: "K5" }
+  ];
 
-    const res4 = await triggerGitHubWorkflow("4_generate_subtitles.yml", { "target_folder": currentSubtitleGrade }, pat);
-    if (res4.success) {
-      actionsTriggered.push(`🎙️ Step 4 (Tạo phụ đề cho ${currentSubtitleGrade}) - Bắt đầu chạy`);
+  for (const s4 of step4Workflows) {
+    if (!runningWorkflows.has(s4.file)) {
+      const res4 = await triggerGitHubWorkflow(s4.file, {}, pat);
+      if (res4.success) actionsTriggered.push(`🎙️ Step 4 (${s4.name})`);
+      else actionsSkipped.push(`🎙️ Step 4 (${s4.name} - Lỗi: ${res4.info})`);
     } else {
-      actionsSkipped.push(`🎙️ Step 4 (Tạo phụ đề cho ${currentSubtitleGrade}) - Lỗi kích hoạt: ${res4.info}`);
+      actionsSkipped.push(`🎙️ Step 4 (${s4.name} - Đang chạy)`);
     }
-  } else {
-      actionsSkipped.push("🎙️ Step 4 (Tạo phụ đề) - Có tiến trình cũ đang chạy (Bỏ qua)");
   }
 
   
