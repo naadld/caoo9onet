@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-08-06 17:16:10",
+  "timestamp": "2026-08-06 18:59:07",
   "shift": "🌇 BÁO CÁO CHIỀU (17:00 PM)",
   "grades": {
     "K4 (Age 4)": {
       "mp4": 1356,
-      "srt": 519,
-      "json": 519,
+      "srt": 520,
+      "json": 520,
       "days": 170,
       "folders": 1356
     },
     "K5 (Age 5)": {
       "mp4": 1710,
-      "srt": 59,
-      "json": 59,
+      "srt": 60,
+      "json": 60,
       "days": 170,
       "folders": 1710
     },
@@ -32,15 +32,15 @@
     },
     "Grade 3": {
       "mp4": 1563,
-      "srt": 48,
-      "json": 48,
+      "srt": 49,
+      "json": 49,
       "days": 170,
       "folders": 1563
     },
     "Grade 4": {
       "mp4": 1394,
-      "srt": 77,
-      "json": 77,
+      "srt": 78,
+      "json": 78,
       "days": 170,
       "folders": 1394
     },
@@ -73,18 +73,18 @@
       "folders": 882
     },
     "Grade 9": {
-      "mp4": 111,
-      "srt": 22,
-      "json": 22,
-      "days": 18,
-      "folders": 111
+      "mp4": 149,
+      "srt": 30,
+      "json": 30,
+      "days": 24,
+      "folders": 149
     },
     "Grade 10": {
-      "mp4": 110,
+      "mp4": 152,
       "srt": 12,
       "json": 12,
-      "days": 18,
-      "folders": 110
+      "days": 24,
+      "folders": 152
     },
     "Grade 11": {
       "mp4": 0,
@@ -101,6 +101,6 @@
       "folders": 0
     }
   },
-  "total_mp4": 15545,
-  "total_srt": 2342
+  "total_mp4": 15625,
+  "total_srt": 2354
 }
