@@ -613,12 +613,12 @@ async function handleScheduled(env) {
   }
 
   // Step 5 check & trigger
-  if (!runningWorkflows.has("5_gdrive_copier.yml")) {
-    const res5 = await triggerGitHubWorkflow("5_gdrive_copier.yml", {}, pat);
-    if (res5.success) actionsTriggered.push("📁 Step 5 (GDrive Copier)");
-    else actionsSkipped.push(`📁 Step 5 (Lỗi: ${res5.info})`);
+  if (!runningWorkflows.has("5_daily_report.yml")) {
+    const res5 = await triggerGitHubWorkflow("5_daily_report.yml", {}, pat);
+    if (res5.success) actionsTriggered.push("📊 Step 5 (Daily Report)");
+    else actionsSkipped.push(`📊 Step 5 (Lỗi: ${res5.info})`);
   } else {
-    actionsSkipped.push("📁 Step 5 (Đang chạy)");
+    actionsSkipped.push("📊 Step 5 (Đang chạy)");
   }
 
 

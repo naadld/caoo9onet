@@ -2,9 +2,8 @@ name: 5. Abeka Daily Report Generator (07:00 & 17:00 GMT+7)
 
 on:
   schedule:
-    # 00:00 UTC = 07:00 AM GMT+7
-    # 10:00 UTC = 17:00 PM GMT+7
-    - cron: '0 0,10 * * *'
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
   workflow_dispatch:          # Manual trigger option
 
 permissions:
