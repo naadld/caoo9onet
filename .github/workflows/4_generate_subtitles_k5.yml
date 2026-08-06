@@ -1,12 +1,24 @@
 name: 4.K5 Subtitle Generator
 
 on:
+  workflow_run:
+    workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
+    types:
+      - completed
   schedule:
-    - cron: '22,52 * * * *'
+    - cron:
+  workflow_run:
+    workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
+    types:
+      - completed '22,52 * * * *'
   workflow_dispatch:
     inputs:
       target_folder:
-        description: 'Google Drive folder to target'
+        description:
+  workflow_run:
+    workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
+    types:
+      - completed 'Google Drive folder to target'
         required: true
         default: 'K5 (Age 5)'
 
@@ -17,7 +29,11 @@ concurrency:
 jobs:
   generate_subtitles:
     name: Generate Subtitles & Interactive JSON for Abeka Videos
-    runs-on: ubuntu-latest
+    runs-on:
+  workflow_run:
+    workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
+    types:
+      - completed ubuntu-latest
     permissions:
       contents: write
     timeout-minutes: 120
@@ -33,7 +49,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version:
+  workflow_run:
+    workflows: ["1. Abeka Video Scraper & GDrive Streamer"]
+    types:
+      - completed '3.12'
 
       - name: Install Python Dependencies
         run: |
