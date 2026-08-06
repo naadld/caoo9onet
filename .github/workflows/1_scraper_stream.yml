@@ -100,12 +100,5 @@ jobs:
           echo "Running command: $CMD"
           eval $CMD
 
-      - name: Generate AI Subtitles & Interactive JSON (Step 4)
-        env:
-          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: |
-          pip install faster-whisper eng-to-ipa deep-translator
-          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 7"
 
 
