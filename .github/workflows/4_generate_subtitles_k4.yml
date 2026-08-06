@@ -1,0 +1,58 @@
+name: 4.K4 Subtitle Generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_folder:
+        description: 'Google Drive folder to target'
+        required: true
+        default: 'K4 (Age 4)'
+
+jobs:
+  generate_subtitles:
+    name: Generate Subtitles & Interactive JSON for Abeka Videos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 120
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install beautifulsoup4 gspread oauth2client google-api-python-client google-auth faster-whisper eng-to-ipa deep-translator
+
+      - name: Install Rclone & FFmpeg
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << 'INNER_EOF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          INNER_EOF
+
+      - name: Configure Google Credentials
+        run: |
+          cat << 'INNER_EOF' > credentials.json
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          INNER_EOF
+
+      - name: Run Subtitle Generator (Step 4)
+        run: |
+          FOLDER="${{ github.event.inputs.target_folder || 'K4 (Age 4)' }}"
+          python3 -u scripts/step4_generate_subtitles.py --folder "$FOLDER"
