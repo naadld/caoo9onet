@@ -612,13 +612,16 @@ async function handleScheduled(env) {
     }
   }
 
-  // Step 5 check & trigger
-  if (!runningWorkflows.has("5_daily_report.yml")) {
-    const res5 = await triggerGitHubWorkflow("5_daily_report.yml", {}, pat);
-    if (res5.success) actionsTriggered.push("📊 Step 5 (Daily Report)");
-    else actionsSkipped.push(`📊 Step 5 (Lỗi: ${res5.info})`);
-  } else {
-    actionsSkipped.push("📊 Step 5 (Đang chạy)");
+  // Step 5 check & trigger (Every 2 hours)
+  const currentHour = new Date().getUTCHours();
+  if (currentHour % 2 === 0) {
+    if (!runningWorkflows.has("5_daily_report.yml")) {
+      const res5 = await triggerGitHubWorkflow("5_daily_report.yml", {}, pat);
+      if (res5.success) actionsTriggered.push("📊 Step 5 (Daily Report - 2 tiếng/lần)");
+      else actionsSkipped.push(`📊 Step 5 (Lỗi: ${res5.info})`);
+    } else {
+      actionsSkipped.push("📊 Step 5 (Đang chạy)");
+    }
   }
 
 

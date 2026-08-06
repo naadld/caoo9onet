@@ -1,9 +1,9 @@
-name: 5. Abeka Daily Report Generator (07:00 & 17:00 GMT+7)
+name: 5. Abeka Daily Report Generator (Every 2 Hours)
 
 on:
   schedule:
-    # Run every 30 minutes
-    - cron: '*/30 * * * *'
+    # Run once every 2 hours
+    - cron: '0 */2 * * *'
   workflow_dispatch:          # Manual trigger option
 
 permissions:
