@@ -16,6 +16,8 @@ import uuid
 import shutil
 import argparse
 import subprocess
+import urllib.request
+import urllib.parse
 from datetime import datetime, timezone, timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,6 +27,37 @@ RCLONE_CONF = os.getenv("RCLONE_CONFIG") or os.path.expanduser("~/.config/rclone
 if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rclone/rclone.conf"):
     RCLONE_CONF = "/home/vpsg24gb/.config/rclone/rclone.conf"
 FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
+
+PRIMARY_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+DEFAULT_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "-1003954353565")
+DEFAULT_THREAD_ID = os.environ.get("TELEGRAM_THREAD_ID", "4455")
+
+def send_telegram_msg(message):
+    token = os.getenv("TELEGRAM_BOT_TOKEN") or PRIMARY_BOT_TOKEN
+    chat_id = os.getenv("TELEGRAM_CHAT_ID") or DEFAULT_CHAT_ID
+    thread_id = os.getenv("TELEGRAM_THREAD_ID") or DEFAULT_THREAD_ID
+
+    if not token:
+        print("⚠️ No TELEGRAM_BOT_TOKEN provided, skipping Telegram report.")
+        return
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message
+    }
+    if thread_id:
+        payload["message_thread_id"] = thread_id
+
+    data = urllib.parse.urlencode(payload).encode("utf-8")
+    try:
+        req = urllib.request.Request(url, data=data)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                print("📱 [Telegram Notification Sent]")
+    except Exception as e:
+        print(f"⚠️ Telegram send failed: {e}")
+
 
 TARGET_PAIRS = [
     ["Grade 7"]
@@ -356,6 +389,25 @@ def run_subtitle_generator(target_folder="Grade 7"):
     print("\n" + "=" * 60)
     print(f"🎉 STEP 4 SUMMARY: Processed {processed_count} new subtitles, Skipped {skipped_count} existing.")
     print("=" * 60)
+
+    # Gửi Báo Cáo Sang Telegram
+    vn_tz = timezone(timedelta(hours=7))
+    now_str = datetime.now(vn_tz).strftime("%Y-%m-%d %H:%M:%S")
+    if processed_count > 0:
+        tg_msg = (
+            f"🎬 [BÁO CÁO PHỤ ĐỀ STEP 4 - {target_folder}]\n"
+            f"⏰ {now_str} (GMT+7)\n"
+            f"✅ Đã tạo mới {processed_count} phụ đề SRT & JSON.\n"
+            f"⏩ Đã bỏ qua {skipped_count} video đã có phụ đề."
+        )
+    else:
+        tg_msg = (
+            f"🎬 [BÁO CÁO PHỤ ĐỀ STEP 4 - {target_folder}]\n"
+            f"⏰ {now_str} (GMT+7)\n"
+            f"ℹ️ Tiến độ: Tất cả {skipped_count}/{len(mp4_files)} video đã có phụ đề đầy đủ."
+        )
+    send_telegram_msg(tg_msg)
+
 
     # Check if we should level up
     if processed_count == 0 and skipped_count > 0 and skipped_count == len(mp4_files):

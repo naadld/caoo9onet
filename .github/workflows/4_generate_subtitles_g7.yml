@@ -59,6 +59,10 @@ jobs:
           INNER_EOF
 
       - name: Run Subtitle Generator (Step 4)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
         run: |
           FOLDER="${{ github.event.inputs.target_folder || 'Grade 7' }}"
           python3 -u scripts/step4_generate_subtitles.py --folder "$FOLDER"
