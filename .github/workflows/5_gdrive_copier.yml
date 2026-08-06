@@ -1,0 +1,70 @@
+name: 5. GDrive Folder Copier
+
+on:
+  schedule:
+    - cron: '25,55 * * * *'
+  workflow_dispatch:
+    inputs:
+      src:
+        description: 'Source GDrive Folder URL or ID'
+        required: false
+        default: '1hqXZCKJTSgkQPNt8_2F0qTU2sf_E1EDz'
+      dst:
+        description: 'Target GDrive Folder URL or ID'
+        required: false
+        default: '1QiiQs33W3NHf4GJ9_BaZYlAfnxRXjbS7'
+
+concurrency:
+  group: gdrive-copier-step5
+  cancel-in-progress: false
+
+jobs:
+  copy_gdrive:
+    name: Copy GDrive Folder (Step 5)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 120
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "."
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies & Rclone
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-api-python-client google-auth gspread oauth2client
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure Rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          cat << 'EOF' > ~/.config/rclone/rclone.conf
+          ${{ secrets.RCLONE_CONF_DATA }}
+          EOF
+
+      - name: Configure Google Credentials
+        run: |
+          cat << 'EOF' > credentials.json
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          EOF
+
+      - name: Run Step 5 GDrive Copier
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
+        run: |
+          SRC="${{ github.event.inputs.src || '1hqXZCKJTSgkQPNt8_2F0qTU2sf_E1EDz' }}"
+          DST="${{ github.event.inputs.dst || '1QiiQs33W3NHf4GJ9_BaZYlAfnxRXjbS7' }}"
+          python3 -u scripts/step5_gdrive_copier.py --src "$SRC" --dst "$DST"
