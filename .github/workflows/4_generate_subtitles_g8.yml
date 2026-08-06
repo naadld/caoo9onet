@@ -1,12 +1,18 @@
 name: 4.08 Subtitle Generator
 
 on:
+  schedule:
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       target_folder:
         description: 'Google Drive folder to target'
         required: true
         default: 'Grade 8'
+
+concurrency:
+  group: "subtitle-${{ github.workflow }}"
+  cancel-in-progress: false
 
 jobs:
   generate_subtitles:
