@@ -25,6 +25,7 @@ def load_status():
         except Exception:
             pass
 
+
     status = {}
     for grade in GRADES:
         grade_dir = os.path.join(DATA_DIR, grade)

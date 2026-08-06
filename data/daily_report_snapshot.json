@@ -1,6 +1,8 @@
 {
-  "timestamp": "2026-08-05 21:27:34",
+  "timestamp": "2026-08-05 21:27:05",
   "shift": "🌇 BÁO CÁO CHIỀU (17:00 PM)",
+  "total_mp4": 15133,
+  "total_srt": 1748,
   "grades": {
     "K4 (Age 4)": {
       "mp4": 1356,
@@ -100,7 +102,5 @@
       "days": 0,
       "folders": 0
     }
-  },
-  "total_mp4": 15133,
-  "total_srt": 1748
+  }
 }

@@ -1,0 +1,16 @@
+2026/08/06 09:57:33 NOTICE: Ngày 002: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 002/Science 7: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 066: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 070: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 082: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 102: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 121: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 146: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 149: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 154: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 161: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:33 NOTICE: Ngày 170: Skipped merge duplicate directories as --dry-run is set (size 0)
+2026/08/06 09:57:37 NOTICE: Ngày 002/Science 7/Grade 7 - 002 - Science 7.mp4: Found 2 files with duplicate names
+2026/08/06 09:57:37 NOTICE: Ngày 002/Science 7/Grade 7 - 002 - Science 7.mp4: Deleting 1/2 identical duplicates (md5 7a43d84fb1340eac56d136d1b634ff64)
+2026/08/06 09:57:37 NOTICE: Ngày 002/Science 7/Grade 7 - 002 - Science 7.mp4: Skipped delete as --dry-run is set (size 619.477Mi)
+2026/08/06 09:57:37 NOTICE: Ngày 002/Science 7/Grade 7 - 002 - Science 7.mp4: All duplicates removed
