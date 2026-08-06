@@ -88,10 +88,10 @@ if not os.path.exists(RCLONE_CONF) and os.path.exists("/home/vpsg24gb/.config/rc
 YTDLP_BIN = shutil.which("yt-dlp") or "yt-dlp"
 
 REMOTE_BASE = "vpsg24gb.aleron,root_folder_id=11fQ8VYTmwRX9fMJFXeTrTTeZGDqki6dh:"
-# Completed grades: K4, K5, Grade 2 (02), Grade 5 (05), Grade 1, Grade 3, Grade 4, Grade 6
-# Active sequence target: Pair 07-08 (Grade 7 & Grade 8)
+# Completed grades: K4, K5, Grade 2 (02), Grade 5 (05), Grade 1, Grade 3, Grade 4, Grade 6, Grade 7, Grade 8
+# Active sequence target: Pair 09-10 (Grade 9 & Grade 10)
 TARGET_PAIRS = [
-    ["Grade 7", "Grade 8"]
+    ["Grade 9", "Grade 10"]
 ]
 
 def clean_private_key(info):
