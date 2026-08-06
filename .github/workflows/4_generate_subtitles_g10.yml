@@ -11,7 +11,7 @@ on:
         default: 'Grade 10'
 
 concurrency:
-  group: "subtitle-${{{{ github.workflow }}}}"
+  group: "subtitle-${{ github.workflow }}"
   cancel-in-progress: false
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          token: ${{{{ secrets.GITHUB_TOKEN }}}}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -49,16 +49,16 @@ jobs:
         run: |
           mkdir -p ~/.config/rclone
           cat << 'INNER_EOF' > ~/.config/rclone/rclone.conf
-          ${{{{ secrets.RCLONE_CONF_DATA }}}}
+          ${{ secrets.RCLONE_CONF_DATA }}
           INNER_EOF
 
       - name: Configure Google Credentials
         run: |
           cat << 'INNER_EOF' > credentials.json
-          ${{{{ secrets.GCP_SERVICE_ACCOUNT_JSON }}}}
+          ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
           INNER_EOF
 
       - name: Run Subtitle Generator (Step 4)
         run: |
-          FOLDER="${{{{ github.event.inputs.target_folder || 'Grade 10' }}}}"
+          FOLDER="${{ github.event.inputs.target_folder || 'Grade 10' }}"
           python3 -u scripts/step4_generate_subtitles.py --folder "$FOLDER"
