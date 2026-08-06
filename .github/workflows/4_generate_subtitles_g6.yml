@@ -2,7 +2,7 @@ name: 4.06 Subtitle Generator
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '14,44 * * * *'
   workflow_dispatch:
     inputs:
       target_folder:

@@ -2,7 +2,7 @@ name: 4.K5 Subtitle Generator
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '22,52 * * * *'
   workflow_dispatch:
     inputs:
       target_folder:
