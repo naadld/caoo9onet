@@ -1,92 +1,90 @@
 {
-  "timestamp": "2026-08-05 21:27:05",
+  "timestamp": "2026-08-06 17:16:10",
   "shift": "🌇 BÁO CÁO CHIỀU (17:00 PM)",
-  "total_mp4": 15133,
-  "total_srt": 1748,
   "grades": {
     "K4 (Age 4)": {
       "mp4": 1356,
-      "srt": 310,
-      "json": 310,
+      "srt": 519,
+      "json": 519,
       "days": 170,
       "folders": 1356
     },
     "K5 (Age 5)": {
       "mp4": 1710,
-      "srt": 0,
-      "json": 0,
+      "srt": 59,
+      "json": 59,
       "days": 170,
       "folders": 1710
     },
     "Grade 1": {
       "mp4": 2699,
-      "srt": 0,
-      "json": 0,
+      "srt": 63,
+      "json": 63,
       "days": 170,
       "folders": 2699
     },
     "Grade 2": {
       "mp4": 2063,
-      "srt": 0,
-      "json": 0,
+      "srt": 47,
+      "json": 47,
       "days": 170,
       "folders": 2063
     },
     "Grade 3": {
       "mp4": 1563,
-      "srt": 0,
-      "json": 0,
+      "srt": 48,
+      "json": 48,
       "days": 170,
       "folders": 1563
     },
     "Grade 4": {
       "mp4": 1394,
-      "srt": 49,
-      "json": 41,
+      "srt": 77,
+      "json": 77,
       "days": 170,
       "folders": 1394
     },
     "Grade 5": {
       "mp4": 1391,
-      "srt": 1385,
-      "json": 1376,
+      "srt": 1390,
+      "json": 1391,
       "days": 170,
       "folders": 1391
     },
     "Grade 6": {
       "mp4": 1394,
-      "srt": 0,
-      "json": 0,
+      "srt": 38,
+      "json": 38,
       "days": 170,
       "folders": 1394
     },
     "Grade 7": {
-      "mp4": 778,
-      "srt": 4,
-      "json": 4,
-      "days": 151,
-      "folders": 777
+      "mp4": 872,
+      "srt": 44,
+      "json": 44,
+      "days": 170,
+      "folders": 872
     },
     "Grade 8": {
-      "mp4": 785,
-      "srt": 0,
-      "json": 0,
-      "days": 151,
-      "folders": 784
+      "mp4": 882,
+      "srt": 23,
+      "json": 23,
+      "days": 170,
+      "folders": 882
     },
     "Grade 9": {
-      "mp4": 0,
-      "srt": 0,
-      "json": 0,
-      "days": 0,
-      "folders": 0
+      "mp4": 111,
+      "srt": 22,
+      "json": 22,
+      "days": 18,
+      "folders": 111
     },
     "Grade 10": {
-      "mp4": 0,
-      "srt": 0,
-      "json": 0,
-      "days": 0,
-      "folders": 0
+      "mp4": 110,
+      "srt": 12,
+      "json": 12,
+      "days": 18,
+      "folders": 110
     },
     "Grade 11": {
       "mp4": 0,
@@ -102,5 +100,7 @@
       "days": 0,
       "folders": 0
     }
-  }
+  },
+  "total_mp4": 15545,
+  "total_srt": 2342
 }
