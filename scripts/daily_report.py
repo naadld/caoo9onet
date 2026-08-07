@@ -78,7 +78,7 @@ def send_telegram_msg(message):
 def scan_grade_gdrive(folder):
     cmd = [RCLONE_BIN, "--config", RCLONE_CONF, "lsf", "-R", f"{REMOTE_BASE}{folder}"]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         lines = res.stdout.splitlines()
         mp4_files = [f for f in lines if f.endswith(".mp4")]
         srt_files = [f for f in lines if f.endswith(".srt")]

@@ -318,8 +318,8 @@ def run_subtitle_generator(target_folder="Grade 7"):
         json_rel_path = base_no_ext + ".json"
 
         # Check if JSON already exists (Interactive JSON is mandatory)
-        if json_rel_path.lower() in existing_subs:
-            print(f"[{idx}/{len(mp4_files)}] ⏭️ JSON Subtitle already exists for: {rel_mp4_path}. Skipping.")
+        if srt_rel_path.lower() in existing_subs and json_rel_path.lower() in existing_subs:
+            print(f"[{idx}/{len(mp4_files)}] ⏭️ Both SRT and JSON exist for: {rel_mp4_path}. Skipping.")
             skipped_count += 1
             continue
 
