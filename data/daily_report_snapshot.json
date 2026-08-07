@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-08-07 22:10:59",
-  "shift": "📊 BÁO CÁO ĐỊNH KỲ (22:00)",
+  "timestamp": "2026-08-08 03:04:21",
+  "shift": "📊 BÁO CÁO ĐỊNH KỲ (03:00)",
   "grades": {
     "K4 (Age 4)": {
       "mp4": 1356,
-      "srt": 675,
-      "json": 675,
+      "srt": 736,
+      "json": 736,
       "days": 170,
       "folders": 1356
     },
@@ -73,18 +73,18 @@
       "folders": 882
     },
     "Grade 9": {
-      "mp4": 561,
-      "srt": 130,
-      "json": 130,
-      "days": 92,
-      "folders": 561
+      "mp4": 616,
+      "srt": 157,
+      "json": 157,
+      "days": 106,
+      "folders": 616
     },
     "Grade 10": {
-      "mp4": 576,
+      "mp4": 655,
       "srt": 49,
       "json": 49,
-      "days": 92,
-      "folders": 576
+      "days": 105,
+      "folders": 655
     },
     "Grade 11": {
       "mp4": 0,
@@ -101,6 +101,6 @@
       "folders": 0
     }
   },
-  "total_mp4": 16461,
-  "total_srt": 3160
+  "total_mp4": 16595,
+  "total_srt": 3248
 }
