@@ -118,7 +118,7 @@ def run_daily_report():
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
     hour = now.hour
 
-    shift_title = "🌅 BÁO CÁO SÁNG (07:00 AM)" if hour < 12 else "🌇 BÁO CÁO CHIỀU (17:00 PM)"
+    shift_title = f"📊 BÁO CÁO ĐỊNH KỲ ({hour:02d}:00)"
 
     print(f"🔍 Starting Daily Report Generation at {now_str} (GMT+7)...")
 
@@ -237,7 +237,7 @@ def run_daily_report():
         msg += f"▫️ **{g:11s}**: {status_tag}\n"
 
     msg += "\n━━━━━━━━━━━━━━━━━━━━━━━\n"
-    msg += "📌 *Báo cáo tự động 2 lần/ngày (07:00 AM & 17:00 PM GMT+7)*"
+    msg += "📌 *Báo cáo tự động mỗi 6 tiếng/lần*"
 
     # 5. Send via Telegram
     send_telegram_msg(msg)
