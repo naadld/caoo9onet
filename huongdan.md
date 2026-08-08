@@ -15,8 +15,8 @@ Khi người dùng đưa ra yêu cầu cào dữ liệu (ví dụ: *"chạy Lớ
     1. Đã cào đủ **170/170 Ngày học**.
     2. Trong mỗi thư mục Ngày (`Ngày xxx`), **phải có đầy đủ tất cả thư mục Môn học (Subjects)** theo khung chương trình.
     3. Trong từng thư mục Môn học, **phải có tệp video `.mp4` hoàn chỉnh, dung lượng hợp lệ (> 100 KB), không lỗi stream và xem được bình thường**.
-  * 🎯 **Thứ tự ưu tiên cào**: Cào theo thứ tự **từ nhỏ đến lớn** (Các lớp đã hoàn thành 100%: `K4`, `K5`, `Grade 2`, `Grade 5`).
-  * 📌 **Cặp đang cào hiện tại**: `Grade 1 & Grade 3 (01-03)`.
+  * 🎯 **Thứ tự ưu tiên cào**: Cào theo thứ tự **từ nhỏ đến lớn** (Các lớp đã hoàn thành 100%: `K4`, `K5`, `Grade 1`, `Grade 2`, `Grade 3`, `Grade 4`, `Grade 5`, `Grade 6`, `Grade 7`, `Grade 8`, `Grade 9`, `Grade 10`).
+  * 📌 **Cặp đang cào hiện tại**: `Grade 11 & Grade 12 (11-12)`.
 * **Cấu hình lớp theo yêu cầu của người dùng**:
   * **Chạy đơn 1 Lớp** (Ví dụ: *Chạy Lớp 4*): Cấu hình `TARGET_PAIRS = [["Grade 4"]]` trong `scripts/step1_direct_stream.py`.
   * **Chạy cặp song song** (Ví dụ: *Grade 1 & Grade 3*): Cấu hình `TARGET_PAIRS = [["Grade 1", "Grade 3"]]`.

@@ -58,6 +58,6 @@ jobs:
           ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
           EOF
 
-      - name: Run Subtitle Generator (Grade 9)
+      - name: Run Subtitle Generator (Grade 11)
         run: |
-          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 9"
+          python3 -u scripts/step4_generate_subtitles.py --folder "Grade 11"

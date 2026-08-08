@@ -589,8 +589,7 @@ async function handleScheduled(env) {
 
   // Trigger all Step 4s
   const step4Workflows = [
-    { file: "4_generate_subtitles.yml", name: "Grade 9" },
-    { file: "4_generate_subtitles_g10.yml", name: "Grade 10" },
+    { file: "4_generate_subtitles.yml", name: "Grade 11" },
     { file: "4_generate_subtitles_g1.yml", name: "Grade 1" },
     { file: "4_generate_subtitles_g2.yml", name: "Grade 2" },
     { file: "4_generate_subtitles_g3.yml", name: "Grade 3" },

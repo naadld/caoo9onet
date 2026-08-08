@@ -60,7 +60,7 @@ def send_telegram_msg(message):
 
 
 TARGET_PAIRS = [
-    ["Grade 7"]
+    ["Grade 11", "Grade 12"]
 ]
 
 def clean_private_key(info):
